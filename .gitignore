@@ -6,6 +6,9 @@ snapshots/*
 !snapshots/.gitkeep
 certs/*.pem
 !certs/.gitkeep
+var/*
+!var/.gitkeep
+*.zip
 
 # mkcert / lokale Zertifikate
 wsc.local*
