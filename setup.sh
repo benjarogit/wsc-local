@@ -216,11 +216,20 @@ ui_box_end
 ui_dim "Dauer: $((SECONDS / 60))m $((SECONDS % 60))s"
 ui_dim "Kopie: var/credentials.txt"
 echo
-ui_dim "Alltag:"
-ui_dim "  ./start.sh     → Stack starten"
-ui_dim "  ./tools.sh     → Terminal-Menü"
-ui_dim "  ./panel.sh     → Browser-Steuerung"
-ui_dim "  ./tools.sh stop"
+
+# Desktop-Launcher + Panel für Laien
+"$ROOT/scripts/install-desktop.sh" 2>/dev/null || true
+echo
+ui_dim "Alltag (einfach):"
+ui_dim "  Anwendungsmenü → „wsc-local“  (Browser-Steuerung)"
+ui_dim "  oder: ./panel.sh"
+ui_dim "  Terminal: ./start.sh  ·  ./tools.sh  ·  ./tools.sh stop"
 echo
 ui_dim "Fremdes Docker wird nie angefasst – nur dieses Projekt."
+echo
+
+if [[ "${YES:-0}" != "1" && "${WSC_NO_PANEL:-0}" != "1" ]]; then
+    ui_info "Öffne Steuerungs-Panel…"
+    "$ROOT/panel.sh" || true
+fi
 echo

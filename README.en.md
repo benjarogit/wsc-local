@@ -5,8 +5,8 @@
 <h1 align="center">wsc-local</h1>
 
 <p align="center">
-  Local <strong>WoltLab Suite Core</strong> development stack<br>
-  One setup · one login · control via CLI or browser panel
+  <strong>Local</strong> WoltLab Suite Core to try and develop<br>
+  Set up once · one login · control everything in the browser
 </p>
 
 <p align="center">
@@ -15,7 +15,11 @@
 
 ---
 
-## Quick start
+## How to use it
+
+### Once
+
+You need [Docker](https://docs.docker.com/get-docker/) and [mkcert](https://github.com/FiloSottile/mkcert).
 
 ```bash
 git clone https://github.com/benjarogit/wsc-local.git
@@ -23,67 +27,47 @@ cd wsc-local
 ./setup.sh --en
 ```
 
-Then:
+Setup downloads WoltLab, configures `https://wsc.local`, and asks for username & password.
+
+### Every day
+
+| | |
+|--|--|
+| **Easiest** | Open **“wsc-local”** from your app menu |
+| **Or in a terminal** | `./start.sh` — starts everything and opens the control panel |
+
+Done. You can close the terminal — keep working in the **browser**.
+
+---
+
+## Your URLs
+
+| | |
+|--|--|
+| **WoltLab** | https://wsc.local |
+| **Control panel** | http://127.0.0.1:9099 |
+| **Database** | http://localhost:8081 |
+| **Test email** | http://localhost:8025 |
+
+Your login is shown after setup and anytime in the control panel (one-click copy).
+
+---
+
+## What the panel can do
+
+- Status at a glance (ready / attention / problem)
+- Start, stop, open the site
+- Create and restore backups
+- Switch German / English
+
+Other apps and Docker projects on your machine stay untouched.
+
+---
+
+## Start over
 
 ```bash
-./start.sh      # start stack
-./tools.sh      # terminal menu
-./panel.sh      # browser UI (AdminLTE)
+./reset.sh              # remove the environment (keep backups)
+./reset.sh --purge-all  # remove everything
+./setup.sh --en         # set up again
 ```
-
----
-
-## What you get
-
-| Service | URL | Login |
-|---------|-----|-------|
-| **WoltLab** | https://wsc.local | from setup |
-| **phpMyAdmin** | http://localhost:8081 | same credentials |
-| **MailHog** | http://localhost:8025 | — |
-| **Panel** | http://127.0.0.1:9099 | local (`./panel.sh`) |
-
-- Auto-download of WoltLab Suite Core (or your own ZIP)
-- TLS via **mkcert** (`https://wsc.local`)
-- Snapshots: files + MySQL dump
-- **Never touches foreign Docker** – only project `wsc-local` / your `NAME_PREFIX`
-
----
-
-## Requirements
-
-- Docker + Docker Compose
-- [mkcert](https://github.com/FiloSottile/mkcert)
-- Hosts: `127.0.0.1 wsc.local`
-
----
-
-## Commands
-
-| Command | Purpose |
-|---------|---------|
-| `./setup.sh` | One-time install |
-| `./start.sh` | Start stack |
-| `./tools.sh` | Full control (CLI) |
-| `./panel.sh` | Full control (browser) |
-| `./tools.sh create` | Create snapshot |
-| `./tools.sh restore` | Restore snapshot |
-| `./tools.sh doctor` | Health check |
-| `./reset.sh` | Tear down (keep snapshots) |
-| `./reset.sh --purge-all` | Full wipe |
-
-```bash
-ADMIN_PASSWORD='secret' ./setup.sh --yes --en
-./setup.sh --zip ~/Downloads/woltlab.zip
-```
-
----
-
-## Panel
-
-Optional web UI powered by [AdminLTE](https://github.com/ColorlibHQ/AdminLTE): status, start/stop, doctor, snapshots. Bound to **127.0.0.1** only.
-
----
-
-## Security
-
-Local development only. Do not commit `.env` or `var/credentials.txt`.

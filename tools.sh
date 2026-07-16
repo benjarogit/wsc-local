@@ -18,14 +18,34 @@ print_urls() {
 
 stack_running() { container_running "$(cname web)"; }
 
+# Alle Dienste dieses Projekts (nicht nur web)
+all_services_running() {
+    local s
+    for s in web mysql phpmyadmin mailhog; do
+        container_running "$(cname "$s")" || return 1
+    done
+    return 0
+}
+
+ensure_all_services_up() {
+    # Fehlende Begleit-Dienste nachziehen (z. B. nach Rebuild/Repair)
+    if ! all_services_running; then
+        ui_info "Starte fehlende Dienste (phpMyAdmin, MailHog, …)…"
+        compose_stack_up
+        sleep 2
+    fi
+}
+
 status_dot() {
-    if stack_running; then echo -e "${GREEN:-}● läuft${RESET:-}"
+    if all_services_running; then echo -e "${GREEN:-}● läuft${RESET:-}"
+    elif stack_running; then echo -e "${YELLOW:-}● teilweise${RESET:-}"
     else echo -e "${DIM:-}○ gestoppt${RESET:-}"; fi
 }
 
 woltlab_network_name() {
+    # Immer Exit 0 – sonst killt set -o pipefail den Repair, wenn grep nichts findet
     docker network ls --format '{{.Name}}' 2>/dev/null \
-        | grep -E "_net$" | grep -E "${COMPOSE_PROJECT_NAME}|woltlab|wsc" | head -n1
+        | grep -E "_net$" | grep -E "${COMPOSE_PROJECT_NAME}|woltlab|wsc" | head -n1 || true
 }
 
 veth_available() {
@@ -64,12 +84,34 @@ compose_stack_up() { compose up -d; }
 compose_stack_down() { compose down; }
 
 repair_docker_network() {
-    ui_warn "Nur unser Projekt-Netzwerk wird neu aufgebaut…"
+    # Laien: „Verbindung reparieren“ – Stack kurz neu starten, wenn Site/Netz hakt
+    ui_section "Verbindung reparieren"
+    ui_warn "Container dieses Projekts werden kurz neu gestartet (Website kurz offline)."
+    ui_dim "Fremdes Docker bleibt unberührt."
     compose_stack_down >/dev/null 2>&1 || true
     local net_name; net_name="$(woltlab_network_name)"
-    [ -n "$net_name" ] && docker network rm "$net_name" >/dev/null 2>&1 || true
+    if [ -n "$net_name" ]; then
+        ui_info "Projekt-Netzwerk neu: ${net_name}"
+        docker network rm "$net_name" >/dev/null 2>&1 || true
+    fi
     sleep 1
-    compose_stack_up
+    compose_stack_up || { ui_fail "Start nach Repair fehlgeschlagen."; return 1; }
+    wait_for_mysql
+    ensure_all_services_up
+    local i
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        woltlab_reachable && break
+        sleep 2
+    done
+    if all_services_running && woltlab_reachable; then
+        ui_ok "Verbindung OK – alle Dienste laufen, Website erreichbar."
+    elif all_services_running; then
+        ui_warn "Dienste laufen, Website antwortet noch nicht – kurz warten oder erneut prüfen."
+    else
+        ui_fail "Nicht alle Dienste sind zurück. Tippe: Starten oder Prüfen."
+        return 1
+    fi
+    print_urls
 }
 
 create_snapshot() {
@@ -210,15 +252,30 @@ start_webserver() {
     load_env
     ui_section "Webserver starten"
     [ -f "$ROOT/certs/fullchain.pem" ] || { ui_fail "Zerts fehlen – ./setup.sh oder ./scripts/generate-certs.sh"; return 1; }
+    veth_available || { ui_fail "veth fehlt."; return 1; }
+
     if stack_running; then
-        if ! docker_bridge_up || ! woltlab_reachable; then
-            repair_docker_network; sleep 4
+        # web läuft, aber Begleitdienste fehlen oft nach Rebuild/Repair
+        if ! all_services_running; then
+            ensure_all_services_up
         fi
-        ui_ok "Bereits gestartet / repariert."
+        if ! docker_bridge_up || ! woltlab_reachable; then
+            repair_docker_network || return 1
+            print_urls; return 0
+        fi
+        if all_services_running; then
+            ui_ok "Läuft – alle Dienste sind an."
+        else
+            ui_warn "Teilweise gestartet – prüfe Status."
+        fi
         print_urls; return 0
     fi
-    veth_available || { ui_fail "veth fehlt."; return 1; }
-    compose_stack_up && ui_ok "Gestartet." && print_urls
+
+    compose_stack_up || { ui_fail "Start fehlgeschlagen."; return 1; }
+    wait_for_mysql
+    ensure_all_services_up
+    ui_ok "Gestartet."
+    print_urls
 }
 
 stop_webserver() {
@@ -246,10 +303,15 @@ status_webserver() {
 }
 
 rebuild_webserver() {
-    ui_section "Image neu bauen (nur unser web-Service)"
-    compose build --pull webserver
-    compose up -d webserver
-    ui_ok "Fertig."; print_urls
+    ui_section "Website neu bauen"
+    ui_info "Das kann einige Minuten dauern – bitte warten."
+    compose build --pull webserver || { ui_fail "Build fehlgeschlagen."; return 1; }
+    compose up -d webserver || { ui_fail "Start nach Build fehlgeschlagen."; return 1; }
+    # Begleitdienste oft „vergessen“, wenn vorher nur web neu hochgefahren wurde
+    ensure_all_services_up
+    wait_for_mysql
+    ui_ok "Neu gebaut und gestartet."
+    print_urls
 }
 
 doctor() {
@@ -299,15 +361,16 @@ run_menu_loop() {
     load_env
     while true; do
         ui_header "wsc-local  $(status_dot)"
-        echo -e "${BOLD}${CYAN}─── Stack ───${RESET}"
+        echo -e "${BOLD}${CYAN}─── Alltag ───${RESET}"
         echo -e "  ${GREEN}1${RESET}) Starten     ${GREEN}2${RESET}) Stoppen     ${GREEN}3${RESET}) Status"
-        echo -e "  ${GREEN}4${RESET}) Rebuild     ${GREEN}5${RESET}) Doctor      ${GREEN}6${RESET}) Logs"
-        echo -e "  ${GREEN}7${RESET}) URLs/Login  ${GREEN}8${RESET}) Site öffnen ${GREEN}9${RESET}) Netzwerk-Repair"
-        echo -e "${BOLD}${CYAN}─── Snapshots ───${RESET}"
+        echo -e "  ${GREEN}4${RESET}) Neu bauen   ${GREEN}5${RESET}) Prüfen      ${GREEN}6${RESET}) Protokoll"
+        echo -e "  ${GREEN}7${RESET}) Login/URLs  ${GREEN}8${RESET}) Website öffnen  ${GREEN}9${RESET}) Verbindung reparieren"
+        echo -e "${BOLD}${CYAN}─── Sicherungen ───${RESET}"
         echo -e "  ${GREEN}10${RESET}) Erstellen  ${GREEN}11${RESET}) Wiederherstellen"
         echo -e "  ${GREEN}12${RESET}) Auflisten  ${GREEN}13${RESET}) Löschen"
-        echo -e "${BOLD}${CYAN}─── Mehr ───${RESET}"
-        echo -e "  ${GREEN}14${RESET}) Browser-Panel starten (./panel.sh)"
+        echo -e "${BOLD}${CYAN}─── Einfach ───${RESET}"
+        echo -e "  ${GREEN}14${RESET}) Browser-Panel öffnen"
+        echo -e "  ${GREEN}15${RESET}) Desktop-Eintrag installieren"
         echo -e "  ${GREEN}0${RESET}) Beenden"
         read -rp "$(echo -e "${YELLOW}→ Auswahl:${RESET} ")" choice
         case "$choice" in
@@ -316,6 +379,7 @@ run_menu_loop() {
             7) show_credentials ;; 8) open_site ;; 9) repair_docker_network; sleep 2; status_webserver ;;
             10) create_snapshot ;; 11) restore_snapshot ;; 12) list_snapshots ;; 13) delete_snapshot ;;
             14) "$ROOT/panel.sh" ;;
+            15) "$ROOT/scripts/install-desktop.sh" ;;
             0|q|Q) ui_ok "Tschüss."; exit 0 ;;
             *) ui_fail "Ungültig." ;;
         esac
@@ -334,7 +398,8 @@ Usage: ./tools.sh [Befehl]
 Ohne Argument: interaktives Menü.
 Nur dieses Projekt – fremdes Docker wird nie angefasst.
 
-Alternativ Browser-UI: ./panel.sh
+Für Laien einfacher: ./panel.sh  oder Desktop „wsc-local“
+  ./scripts/install-desktop.sh
 EOF
 }
 
