@@ -71,21 +71,6 @@ services:
     networks:
       - wsc-net
 
-  portainer:
-    profiles: ["overview"]
-    image: portainer/portainer-ce:latest
-    container_name: ${NAME_PREFIX:-woltlab}-portainer
-    restart: unless-stopped
-    command:
-      - --no-setup-token
-      - --admin-password-file=/tmp/portainer-admin-password
-    ports:
-      - "${PORTAINER_PORT:-9443}:9443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-      - ./var/portainer-admin-password:/tmp/portainer-admin-password:ro
-
 networks:
   wsc-net:
     name: ${COMPOSE_PROJECT_NAME:-wsc-local}_net
@@ -93,5 +78,3 @@ networks:
 
 volumes:
   mysql-data:
-  portainer_data:
-    name: ${COMPOSE_PROJECT_NAME:-wsc-local}_portainer_data

@@ -9,8 +9,11 @@ load_env
 ADMIN_USER="${ADMIN_USER:-admin}"
 EMAIL="${ADMIN_EMAIL:-${ADMIN_USER}@wsc.local}"
 
-# Kein database.auto am Document-Root (WCF verbietet das) – DB kommt über WCFSETUP_*
-python3 - "$ROOT/woltlab/wsc-dev-config-55.json" "$ADMIN_USER" "$ADMIN_PASSWORD" "$EMAIL" <<'PY'
+mkdir -p "$ROOT/var"
+OUT="$ROOT/var/wsc-dev-config-55.json"
+
+# Kein database.auto am Document-Root – DB kommt über WCFSETUP_*
+python3 - "$OUT" "$ADMIN_USER" "$ADMIN_PASSWORD" "$EMAIL" <<'PY'
 import json, sys
 path, user, pw, email = sys.argv[1:5]
 cfg = {
@@ -24,17 +27,19 @@ cfg = {
             "module_cookie_policy_page": "0",
         }
     },
+    # Admin-Login wird nach der Installation gesetzt (set-admin.php).
+    # Zusätzliche User hier würden die Paket-Installation stören.
     "user": [],
 }
-# "root" ist reserviert; "dev" wird vom Installer selbst angelegt
-if user not in ("root", "dev"):
-    cfg["user"].append({
-        "username": user,
-        "password": pw,
-        "email": email,
-    })
 with open(path, "w", encoding="utf-8") as f:
     json.dump(cfg, f, indent=2)
     f.write("\n")
-print(path)
 PY
+
+WEB="$(cname web)"
+if container_running "$WEB"; then
+    docker cp "$OUT" "$WEB:/var/www/html/wsc-dev-config-55.json" >/dev/null
+    docker exec "$WEB" chown www-data:www-data /var/www/html/wsc-dev-config-55.json
+else
+    cp -f "$OUT" "$ROOT/woltlab/wsc-dev-config-55.json"
+fi

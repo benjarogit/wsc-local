@@ -1,47 +1,42 @@
 #!/usr/bin/env bash
-# ═══════════════════════════════════════════
-#  ui.sh — Shell UI Bibliothek
-#  Einbinden: source "$(dirname "$0")/scripts/ui.sh"  (von tools.sh aus)
-# ═══════════════════════════════════════════
+# Shell-UI: Farben, Schritte, Spinner (TTY)
+# Einbinden: source …/scripts/ui.sh
 
-# ── TTY-Check: Farben nur bei Terminal, sonst leer (für Pipes/Logs) ──
-if [ -t 1 ]; then
+if [[ -t 1 ]]; then
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[1;33m'
     BLUE='\033[0;34m'
     CYAN='\033[0;36m'
-    MAGENTA='\033[0;35m'
     BOLD='\033[1m'
     DIM='\033[2m'
     RESET='\033[0m'
-    NC='\033[0m'
+    _UI_TTY=1
 else
-    RED=''; GREEN=''; YELLOW=''; BLUE=''; CYAN=''; MAGENTA=''
-    BOLD=''; DIM=''; RESET=''; NC=''
+    RED=''; GREEN=''; YELLOW=''; BLUE=''; CYAN=''
+    BOLD=''; DIM=''; RESET=''
+    _UI_TTY=0
 fi
 
-# ── Symbole ──────────────────────────────────
 OK="✓"
 FAIL="✗"
 WARN="⚠"
-INFO="ℹ"
-ARROW="›"
-SPIN="⟳"
+INFO="→"
 
-# ════════════════════════════════════════════
-#  AUSGABE-FUNKTIONEN
-# ════════════════════════════════════════════
+_UI_SPIN_PID=""
+_UI_SPIN_MSG=""
 
 ui_header() {
     local title="$1"
-    local width=58
-    local line
-    line=$(printf '═%.0s' $(seq 1 $width 2>/dev/null) || printf '═%.0s' {1..58})
+    # Anzeige-Breite (Multibyte-sicher via wc -L), Rahmen dynamisch
+    local w pad line
+    w=$(printf '%s' "$title" | wc -L)
+    pad=$((w + 4))
+    line=$(printf '═%.0s' $(seq 1 "$pad"))
     echo ""
-    echo -e "${CYAN}╔${line}╗${RESET}"
-    printf "${CYAN}║${RESET}%*s%s%*s${CYAN}║${RESET}\n" $(( (width - ${#title}) / 2 )) "" "$title" $(( (width - ${#title} + 1) / 2 )) ""
-    echo -e "${CYAN}╚${line}╝${RESET}"
+    echo -e "${CYAN}${BOLD}╔${line}╗${RESET}"
+    echo -e "${CYAN}${BOLD}║${RESET}  ${BOLD}${title}${RESET}  ${CYAN}${BOLD}║${RESET}"
+    echo -e "${CYAN}${BOLD}╚${line}╝${RESET}"
     echo ""
 }
 
@@ -58,57 +53,85 @@ ui_step() {
 }
 
 ui_ok()   { echo -e "  ${GREEN}${OK}${RESET} $1"; }
-ui_fail() { echo -e "${RED}${FAIL}${RESET} $1" >&2; }
+ui_fail() { echo -e "  ${RED}${FAIL}${RESET} $1" >&2; }
 ui_warn() { echo -e "  ${YELLOW}${WARN}${RESET} $1"; }
 ui_info() { echo -e "  ${CYAN}${INFO}${RESET} $1"; }
+ui_dim()  { echo -e "  ${DIM}$1${RESET}"; }
 
 ui_kv() {
-    local key="$1" val="$2" hint="${3:-}"
-    printf "  ${GREEN}${OK}${RESET}  %-14s ${DIM}→${RESET}  %s" "$key" "$val"
-    [[ -n "$hint" ]] && printf "  ${DIM}(%s)${RESET}" "$hint"
-    echo ""
+    local key="$1" val="$2"
+    printf "  ${DIM}%-12s${RESET} %s\n" "$key" "$val"
 }
 
-ui_log() { echo -e "  ${DIM}$1${RESET}"; }
-
-ui_divider() {
-    local w=50
-    echo -e "${DIM}$(printf '─%.0s' $(seq 1 $w 2>/dev/null) || printf '─%.0s' {1..50})${RESET}"
+ui_box_start() {
+    echo -e "${GREEN}${BOLD}════════════════════════════════════════${RESET}"
+}
+ui_box_end() {
+    echo -e "${GREEN}${BOLD}════════════════════════════════════════${RESET}"
 }
 
-ui_infobox() {
-    echo -e "  ${CYAN}│${RESET} $1"
+# Spinner sauber beenden bei Ctrl+C / Exit
+ui_cleanup() {
+    if [[ -n "${_UI_SPIN_PID:-}" ]]; then
+        kill "$_UI_SPIN_PID" 2>/dev/null || true
+        _UI_SPIN_PID=""
+        printf "\r\033[K" 2>/dev/null || true
+    fi
+}
+trap ui_cleanup EXIT INT TERM
+
+# Spinner: ui_spin_start "Text" … ui_spin_done "ok|fail" "Text"
+ui_spin_start() {
+    _UI_SPIN_MSG="$1"
+    if [[ "$_UI_TTY" != "1" ]]; then
+        echo -e "  ${CYAN}${INFO}${RESET} ${_UI_SPIN_MSG}"
+        return 0
+    fi
+    (
+        local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏') i=0
+        while true; do
+            printf "\r  ${CYAN}%s${RESET} %s" "${frames[i]}" "$_UI_SPIN_MSG"
+            i=$(( (i + 1) % ${#frames[@]} ))
+            sleep 0.08
+        done
+    ) &
+    _UI_SPIN_PID=$!
+    disown "$_UI_SPIN_PID" 2>/dev/null || true
 }
 
-ui_prompt_box() {
-    local title="$1"
+ui_spin_done() {
+    local status="${1:-ok}" text="${2:-$_UI_SPIN_MSG}"
+    if [[ -n "${_UI_SPIN_PID:-}" ]]; then
+        kill "$_UI_SPIN_PID" 2>/dev/null || true
+        wait "$_UI_SPIN_PID" 2>/dev/null || true
+        _UI_SPIN_PID=""
+        printf "\r\033[K"
+    fi
+    case "$status" in
+        ok|OK) ui_ok "$text" ;;
+        fail|FAIL) ui_fail "$text" ;;
+        warn|WARN) ui_warn "$text" ;;
+        *) ui_info "$text" ;;
+    esac
+}
+
+# Lange Befehle mit Spinner: ui_run "Label" cmd args…
+ui_run() {
+    local label="$1"
     shift
-    local options=("$@")
-    local i
-    echo ""
-    echo -e "  ${YELLOW}${BOLD}┌─ ${title} ${DIM}$(printf '─%.0s' {1..35})${RESET}"
-    echo -e "  ${YELLOW}${BOLD}│${RESET}"
-    for i in "${!options[@]}"; do
-        local key desc hint
-        IFS='|' read -r key desc hint <<< "${options[$i]}"
-        printf "  ${YELLOW}${BOLD}│${RESET}  ${GREEN}%-10s${RESET}  %-28s ${DIM}%s${RESET}\n" "$key" "$desc" "$hint"
-    done
-    echo -e "  ${YELLOW}${BOLD}│${RESET}"
-    printf "  ${YELLOW}${BOLD}└─${RESET} Auswahl: "
-}
-
-ui_menu() {
-    local title="$1"
-    shift
-    local options=("$@")
-    local i
-    echo ""
-    echo -e "${BOLD}${CYAN}─── ${title} ───${RESET}"
-    echo ""
-    for i in "${!options[@]}"; do
-        echo -e "  ${GREEN}$((i + 1))${RESET}) ${options[$i]}"
-    done
-    echo ""
-    read -rp "$(echo -e "${YELLOW}→ Auswahl (1–${#options[@]}):${RESET} ")" choice
-    echo "$choice"
+    ui_spin_start "$label"
+    local tmp rc
+    tmp="$(mktemp)"
+    set +e
+    "$@" >"$tmp" 2>&1
+    rc=$?
+    set -e
+    if [[ $rc -eq 0 ]]; then
+        ui_spin_done ok "$label"
+    else
+        ui_spin_done fail "$label"
+        [[ -s "$tmp" ]] && sed 's/^/    /' "$tmp" >&2
+    fi
+    rm -f "$tmp"
+    return "$rc"
 }

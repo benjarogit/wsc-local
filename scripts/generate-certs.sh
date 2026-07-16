@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Erzeugt lokale TLS-Zerts für https://wsc.local (mkcert empfohlen).
+# Erzeugt lokale TLS-Zerts für https://wsc.local (mkcert).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,7 +15,11 @@ fi
 
 mkcert -install >/dev/null 2>&1 || true
 cd "${CERT_DIR}"
-mkcert -cert-file fullchain.pem -key-file privkey.pem wsc.local localhost 127.0.0.1 ::1
+# mkcert schreibt Fortschritt nach stderr – komplett schlucken
+if ! mkcert -cert-file fullchain.pem -key-file privkey.pem \
+    wsc.local localhost 127.0.0.1 ::1 >/dev/null 2>&1; then
+    echo "mkcert fehlgeschlagen." >&2
+    exit 1
+fi
 
-echo "OK: ${CERT_DIR}/fullchain.pem + privkey.pem"
-echo "Hosts-Eintrag (falls nötig): 127.0.0.1 wsc.local"
+[[ -f fullchain.pem && -f privkey.pem ]] || { echo "Zertifikate fehlen." >&2; exit 1; }

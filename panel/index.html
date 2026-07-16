@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wsc-local Panel</title>
+  <!-- AdminLTE 3 + Abhängigkeiten (nur benötigte Bundles) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
+  <link rel="icon" href="/logo.png" type="image/png">
+  <style>
+    body.hold-transition { background: #f4f6f9; }
+    .brand-link { display: flex; align-items: center; gap: .65rem; }
+    .brand-link .brand-image { opacity: 1; max-height: 36px; }
+    .content-wrapper { margin-left: 0 !important; background: #f4f6f9; }
+    .main-header { margin-left: 0 !important; border-bottom: 1px solid #dee2e6; }
+    .info-box { box-shadow: none; border: 1px solid #e3e7ec; min-height: 90px; }
+    .card { box-shadow: none; border: 1px solid #e3e7ec; }
+    .log-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .8rem; max-height: 240px; overflow: auto;
+      background: #1f2d3d; color: #e9ecef; border-radius: .25rem;
+      padding: .85rem; white-space: pre-wrap;
+    }
+    .btn-action { min-width: 8rem; margin: 0 .25rem .5rem 0; }
+    #toast-area { position: fixed; top: 1rem; right: 1rem; z-index: 2000; }
+  </style>
+</head>
+<body class="hold-transition layout-top-nav">
+<div class="wrapper">
+  <nav class="main-header navbar navbar-expand-md navbar-white navbar-light">
+    <div class="container">
+      <a href="/" class="navbar-brand brand-link">
+        <img src="/logo.png" alt="wsc-local" class="brand-image img-circle elevation-0">
+        <span class="brand-text font-weight-bold">wsc-local</span>
+      </a>
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item d-none d-sm-inline-block">
+          <span class="nav-link text-muted" id="meta-prefix">—</span>
+        </li>
+        <li class="nav-item">
+          <span class="nav-link"><span id="stack-badge" class="badge badge-secondary">…</span></span>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="content-wrapper">
+    <div class="content-header">
+      <div class="container">
+        <h1 class="m-0 text-dark" style="font-size:1.4rem;">Steuerung</h1>
+        <p class="text-muted mb-0 small">Start, Status, Snapshots – nur dieses Projekt, nie fremdes Docker.</p>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="container">
+        <div class="row" id="service-boxes"></div>
+
+        <div class="row">
+          <div class="col-lg-8">
+            <div class="card card-outline card-primary">
+              <div class="card-header"><h3 class="card-title">Aktionen</h3></div>
+              <div class="card-body">
+                <button type="button" class="btn btn-success btn-action" data-action="start"><i class="fas fa-play mr-1"></i>Starten</button>
+                <button type="button" class="btn btn-default btn-action" data-action="stop"><i class="fas fa-stop mr-1"></i>Stoppen</button>
+                <button type="button" class="btn btn-info btn-action" data-action="doctor"><i class="fas fa-stethoscope mr-1"></i>Doctor</button>
+                <button type="button" class="btn btn-default btn-action" data-action="repair"><i class="fas fa-network-wired mr-1"></i>Netzwerk</button>
+                <button type="button" class="btn btn-default btn-action" data-action="rebuild"><i class="fas fa-hammer mr-1"></i>Rebuild</button>
+              </div>
+            </div>
+
+            <div class="card card-outline card-success">
+              <div class="card-header">
+                <h3 class="card-title">Snapshots</h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-sm btn-success" data-action="snapshot-create">
+                    <i class="fas fa-camera mr-1"></i>Erstellen
+                  </button>
+                </div>
+              </div>
+              <div class="card-body p-0" id="snapshots"></div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Links &amp; Login</h3></div>
+              <div class="card-body">
+                <ul class="list-unstyled" id="links"></ul>
+                <hr>
+                <div id="creds" class="small text-muted">—</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Ausgabe</h3></div>
+              <div class="card-body p-2"><div id="output" class="log-box mb-0">Bereit.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Bestätigen</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body" id="confirmBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Fortfahren</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

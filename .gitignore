@@ -19,3 +19,7 @@ wsc.local*
 *.code-workspace
 .idea/
 .vscode/
+
+# Python
+__pycache__/
+*.pyc

@@ -38,15 +38,14 @@ if [[ -n "$ZIP_PATH" ]]; then
     cp -f "$ZIP_PATH" "$TMP_ZIP"
 elif [[ -n "$ZIP_URL" ]]; then
     msg "↓ Lade $ZIP_URL …" "↓ Downloading $ZIP_URL …"
-    curl -fL --progress-bar -o "$TMP_ZIP" "$ZIP_URL"
+    if [[ "${WSC_QUIET:-0}" == "1" ]]; then curl -fsSL -o "$TMP_ZIP" "$ZIP_URL"; else curl -fL --progress-bar -o "$TMP_ZIP" "$ZIP_URL"; fi
 else
     URL="https://assets.woltlab.com/release/woltlab-suite-${WSC_VERSION}.zip"
     msg "↓ Lade WoltLab Suite Core ${WSC_VERSION}…" "↓ Downloading WoltLab Suite Core ${WSC_VERSION}…"
-    curl -fL --progress-bar -o "$TMP_ZIP" "$URL"
+    if [[ "${WSC_QUIET:-0}" == "1" ]]; then curl -fsSL -o "$TMP_ZIP" "$URL"; else curl -fL --progress-bar -o "$TMP_ZIP" "$URL"; fi
     if [[ -n "${WSC_SHA256:-}" ]]; then
-        echo "${WSC_SHA256}  ${TMP_ZIP}" | sha256sum -c - \
+        echo "${WSC_SHA256}  ${TMP_ZIP}" | sha256sum -c - >/dev/null \
             || die "SHA-256 stimmt nicht (Datei beschädigt oder falsche Version)."
-        msg "✓ SHA-256 OK" "✓ SHA-256 OK"
     fi
 fi
 
@@ -57,14 +56,14 @@ mkdir -p "$TMP_DIR"
 unzip -q "$TMP_ZIP" -d "$TMP_DIR"
 
 if [[ -d "$TMP_DIR/upload" ]]; then
-    cp -a "$TMP_DIR/upload/." "$ROOT/woltlab/"
+    cp -r "$TMP_DIR/upload/." "$ROOT/woltlab/"
 elif [[ -f "$TMP_DIR/install.php" ]]; then
-    cp -a "$TMP_DIR/." "$ROOT/woltlab/"
+    cp -r "$TMP_DIR/." "$ROOT/woltlab/"
 else
     # ein Unterordner?
     sub=$(find "$TMP_DIR" -mindepth 1 -maxdepth 1 -type d | head -n1)
     if [[ -n "$sub" && -f "$sub/install.php" ]]; then
-        cp -a "$sub/." "$ROOT/woltlab/"
+        cp -r "$sub/." "$ROOT/woltlab/"
     else
         rm -rf "$TMP_DIR"
         die "Unerwartete ZIP-Struktur (kein install.php)."
@@ -73,4 +72,13 @@ fi
 rm -rf "$TMP_DIR"
 
 [[ -f "$ROOT/woltlab/install.php" ]] || die "Nach Entpacken fehlt install.php."
+
+# Apache = www-data; zugleich a+rwX damit Host-Skripte schreiben können
+if docker info >/dev/null 2>&1; then
+    docker run --rm -v "$ROOT/woltlab:/var/www/html" php:8.3-apache-bookworm \
+        bash -c 'chown -R www-data:www-data /var/www/html && chmod -R a+rwX /var/www/html' \
+        >/dev/null 2>&1 || true
+else
+    chmod -R a+rwX "$ROOT/woltlab" 2>/dev/null || true
+fi
 msg "✓ Download fertig." "✓ Download complete."

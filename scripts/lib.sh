@@ -39,11 +39,35 @@ load_env() {
     PHPMYADMIN_PORT="${PHPMYADMIN_PORT:-8081}"
     MAILHOG_UI_PORT="${MAILHOG_UI_PORT:-8025}"
     MAILHOG_SMTP_PORT="${MAILHOG_SMTP_PORT:-1025}"
-    PORTAINER_PORT="${PORTAINER_PORT:-9443}"
+    PANEL_PORT="${PANEL_PORT:-9099}"
 }
 
 compose() {
     docker compose --project-directory "$ROOT" "$@"
+}
+
+# Compose up: Buildx-Warnung unterdrücken, Build-Log nur bei Fehler zeigen
+compose_up() {
+    export DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-0}"
+    export COMPOSE_DOCKER_CLI_BUILD="${COMPOSE_DOCKER_CLI_BUILD:-0}"
+    local tmp rc
+    tmp="$(mktemp)"
+    set +e
+    compose "$@" >"$tmp" 2>&1
+    rc=$?
+    set -e
+    if [[ $rc -ne 0 ]]; then
+        grep -Ev 'requires buildx plugin' "$tmp" >&2 || cat "$tmp" >&2
+        rm -f "$tmp"
+        return "$rc"
+    fi
+    # Erfolg: still (Setup zeigt Spinner/✓) – Log nur bei DEBUG
+    if [[ "${WSC_DEBUG:-0}" == "1" ]]; then
+        grep -E 'Container .*(Started|Healthy|Running)' "$tmp" \
+            | awk '!seen[$0]++' | sed 's/^ */  /' || true
+    fi
+    rm -f "$tmp"
+    return 0
 }
 
 cname() {
@@ -65,26 +89,6 @@ container_exists() {
 
 container_running() {
     docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$1"
-}
-
-# Fremdes Portainer (nicht unser Prefix-Container)
-foreign_portainer_running() {
-    local ours
-    ours="$(cname portainer)"
-    while IFS= read -r name; do
-        [[ -z "$name" ]] && continue
-        [[ "$name" == "$ours" ]] && continue
-        if [[ "$name" == *portainer* ]]; then
-            return 0
-        fi
-    done < <(docker ps --format '{{.Names}}')
-    # Port 9443 belegt von etwas anderem?
-    if port_in_use "${PORTAINER_PORT:-9443}"; then
-        if ! container_running "$ours"; then
-            return 0
-        fi
-    fi
-    return 1
 }
 
 require_docker() {
@@ -116,30 +120,3 @@ ensure_hosts() {
     fi
 }
 
-gen_portainer_password_file() {
-    local pw="$1" out="$ROOT/var/portainer-admin-password"
-    mkdir -p "$ROOT/var"
-    local hash=""
-    if command -v python3 >/dev/null 2>&1; then
-        hash=$(ADMIN_PW="$pw" python3 - <<'PY' 2>/dev/null || true
-import os
-pw = os.environ["ADMIN_PW"]
-try:
-    import bcrypt
-    print(bcrypt.hashpw(pw.encode(), bcrypt.gensalt(rounds=10)).decode(), end="")
-except Exception:
-    pass
-PY
-)
-    fi
-    if [[ -z "$hash" ]] && command -v htpasswd >/dev/null 2>&1; then
-        hash=$(htpasswd -nbB admin "$pw" | cut -d: -f2)
-    fi
-    if [[ -z "$hash" ]]; then
-        hash=$(docker run --rm httpd:2.4-alpine htpasswd -nbB admin "$pw" 2>/dev/null | cut -d: -f2)
-    fi
-    [[ -n "$hash" ]] || return 1
-    # Portainer erwartet bcrypt-Hash ohne trailing newline-Probleme
-    printf '%s' "$hash" >"$out"
-    chmod 600 "$out"
-}

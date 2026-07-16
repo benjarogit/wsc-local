@@ -1,6 +1,21 @@
-# wsc-local
+<p align="center">
+  <img src="panel/logo.png" alt="wsc-local" width="96" height="96">
+</p>
 
-Lokaler **WoltLab Suite Core**-Dev-Stack – ein Befehl, ein Login.
+<h1 align="center">wsc-local</h1>
+
+<p align="center">
+  Lokaler <strong>WoltLab Suite Core</strong>-Dev-Stack<br>
+  Ein Setup · ein Login · Steuerung per Terminal oder Browser-Panel
+</p>
+
+<p align="center">
+  <a href="README.en.md">English</a>
+</p>
+
+---
+
+## Schnellstart
 
 ```bash
 git clone https://github.com/benjarogit/wsc-local.git
@@ -8,54 +23,87 @@ cd wsc-local
 ./setup.sh
 ```
 
-English: see [README.en.md](README.en.md)
+Danach:
+
+```bash
+./start.sh      # Stack starten
+./tools.sh      # Terminal-Menü
+./panel.sh      # Browser-UI (AdminLTE)
+```
+
+---
 
 ## Was du bekommst
 
 | Dienst | URL | Login |
 |--------|-----|-------|
-| WoltLab | https://wsc.local | `ADMIN_USER` / Passwort aus Setup |
-| phpMyAdmin | http://localhost:8081 | dieselben Zugangsdaten |
-| MailHog | http://localhost:8025 | (kein Login) |
-| Portainer | https://localhost:9443 | dieselben (nur wenn neu angelegt) |
+| **WoltLab** | https://wsc.local | aus Setup |
+| **phpMyAdmin** | http://localhost:8081 | dieselben Daten |
+| **MailHog** | http://localhost:8025 | — |
+| **Panel** | http://127.0.0.1:9099 | lokal (`./panel.sh`) |
 
-Portainer startet nur, wenn noch keines läuft – bestehende Instanzen werden **nicht** überschrieben.
+- Automatischer Download von WoltLab Suite Core (oder eigenes ZIP)
+- TLS mit **mkcert** (`https://wsc.local`)
+- Snapshots: Dateien + MySQL-Dump
+- **Fremdes Docker bleibt unberührt** – nur Projekt `wsc-local` / dein `NAME_PREFIX`
+
+---
 
 ## Voraussetzungen
 
 - Docker + Docker Compose
-- [mkcert](https://github.com/FiloSottile/mkcert) (Pflicht)
-- Hosts: `127.0.0.1 wsc.local`
+- [mkcert](https://github.com/FiloSottile/mkcert)
+- Hosts-Eintrag: `127.0.0.1 wsc.local` (Setup kann anbieten)
 
-## Setup-Optionen
+---
+
+## Befehle
+
+| Befehl | Zweck |
+|--------|--------|
+| `./setup.sh` | Einmalig installieren |
+| `./start.sh` | Stack starten |
+| `./tools.sh` | Alles steuern (CLI-Menü) |
+| `./panel.sh` | Alles steuern (Browser) |
+| `./tools.sh create` | Snapshot erstellen |
+| `./tools.sh restore` | Snapshot einspielen |
+| `./tools.sh doctor` | Gesundheitscheck |
+| `./reset.sh` | Stack weg (Snapshots bleiben) |
+| `./reset.sh --purge-all` | Komplett bei Null |
+
+### Setup-Optionen
 
 ```bash
-./setup.sh                          # interaktiv
-ADMIN_PASSWORD='dein-langes-pw' ./setup.sh --yes
+./setup.sh
+ADMIN_PASSWORD='geheim' ./setup.sh --yes
 ./setup.sh --zip ~/Downloads/woltlab.zip
 ./setup.sh --zip-url https://example.com/woltlab.zip
-./setup.sh --skip-portainer
-./setup.sh --en                     # English prompts
+./setup.sh --en
 ```
 
-Konflikt bei Ports/Namen? `NAME_PREFIX=wsc2` setzen (Setup fragt danach) und ggf. Ports in `.env` anpassen.
+Konflikt bei Ports/Namen? Anderen `NAME_PREFIX` wählen (Setup fragt danach).
 
-## Alltag
+---
 
-```bash
-./tools.sh          # Menü: Start/Stop/Status/Snapshots/Doctor
-./tools.sh start
-./tools.sh doctor
-./reset.sh          # Stack weg, Snapshots bleiben
-./reset.sh --purge-all --yes   # komplett bei 0
-```
+## Panel
 
-Desktop: App-Menü → **WSC Local Übersicht** (nach Setup).
+Optionale Web-Oberfläche mit [AdminLTE](https://github.com/ColorlibHQ/AdminLTE):
+
+- Status der Container
+- Start / Stop / Doctor / Rebuild
+- Snapshots erstellen, restore, löschen
+- Links & Login
+
+Nur auf **127.0.0.1** – kein Netzwerk-Zugriff von außen.
+
+---
 
 ## Sicherheit
 
-Nur für lokale Entwicklung. Ein Passwort für Admin + MySQL ist Absicht und in `.env` (nicht committen).
+Nur für **lokale Entwicklung**. `.env` und `var/credentials.txt` nicht committen.
 
-## Lizenz / WoltLab
+---
 
-Auto-Download nutzt das öffentliche [WoltLab Suite Core](https://www.woltlab.com/de/woltlab-suite-download/)-ZIP. Kommerzielle Apps (Forum etc.) separat nachinstallieren.
+## WoltLab
+
+Auto-Download nutzt das öffentliche [WoltLab Suite Core](https://www.woltlab.com/de/woltlab-suite-download/)-ZIP. Kommerzielle Apps (Forum usw.) separat nachinstallieren.
