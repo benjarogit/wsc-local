@@ -1,0 +1,18 @@
+# Laufzeit / persönliche Daten
+.env
+woltlab/*
+!woltlab/.gitkeep
+snapshots/*
+!snapshots/.gitkeep
+certs/*.pem
+!certs/.gitkeep
+
+# mkcert / lokale Zertifikate
+wsc.local*
+*.local.pem
+
+# Editor / OS
+.DS_Store
+*.code-workspace
+.idea/
+.vscode/

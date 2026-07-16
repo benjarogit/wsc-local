@@ -1,0 +1,73 @@
+services:
+  webserver:
+    build: .
+    container_name: woltlab-web
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./woltlab:/var/www/html
+      - ./config/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./config/000-https.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./certs/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - ./certs/privkey.pem:/etc/ssl/private/privkey.pem:ro
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - woltlab-network
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+
+  database:
+    image: mysql:8.0
+    container_name: woltlab-mysql
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - woltlab-network
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-woltlab}
+      MYSQL_USER: ${MYSQL_USER:-woltlab}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-woltlab123}
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: woltlab-phpmyadmin
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    networks:
+      - woltlab-network
+    environment:
+      PMA_HOST: database
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: woltlab-mailhog
+    ports:
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+    networks:
+      - woltlab-network
+
+networks:
+  woltlab-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
