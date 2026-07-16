@@ -13,6 +13,10 @@
   <a href="README.md">Deutsch</a> (default)
 </p>
 
+<p align="center">
+  <img src="docs/panel.png" alt="wsc-local control panel" width="720">
+</p>
+
 ---
 
 ## How to use it

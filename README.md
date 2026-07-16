@@ -13,6 +13,10 @@
   <a href="README.en.md">English</a>
 </p>
 
+<p align="center">
+  <img src="docs/panel.png" alt="wsc-local Steuerung" width="720">
+</p>
+
 ---
 
 ## So geht’s

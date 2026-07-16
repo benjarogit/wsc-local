@@ -8,6 +8,7 @@ import re
 import secrets
 import subprocess
 import threading
+import time
 import traceback
 import urllib.parse
 from datetime import datetime
@@ -117,7 +118,17 @@ def docker_ok() -> bool:
     return r.returncode == 0
 
 
-def site_reachable() -> bool:
+# Status-Polling würde sonst alle paar Sekunden Access-Logs vollschreiben
+_SITE_CACHE: tuple[float, bool] | None = None
+_SITE_CACHE_TTL = 25.0
+
+
+def site_reachable(*, force: bool = False) -> bool:
+    """HTTPS-Check mit Cache – eigener User-Agent, damit Logs filterbar bleiben."""
+    global _SITE_CACHE
+    now = time.monotonic()
+    if not force and _SITE_CACHE and (now - _SITE_CACHE[0]) < _SITE_CACHE_TTL:
+        return _SITE_CACHE[1]
     r = subprocess.run(
         [
             "curl",
@@ -126,6 +137,8 @@ def site_reachable() -> bool:
             "2",
             "--max-time",
             "4",
+            "-A",
+            "wsc-local-health/1",
             "-o",
             "/dev/null",
             "-w",
@@ -137,7 +150,36 @@ def site_reachable() -> bool:
         check=False,
     )
     code = (r.stdout or "").strip()
-    return code in {"200", "301", "302", "303", "401", "403"}
+    ok = code in {"200", "301", "302", "303", "401", "403"}
+    _SITE_CACHE = (now, ok)
+    return ok
+
+
+def _clean_log_body(body: str) -> str:
+    """Bekannte harmlose / Panel-interne Zeilen für Laien-Details ausblenden."""
+    keep: list[str] = []
+    for line in body.splitlines():
+        if "wsc-local-health" in line:
+            continue
+        if 'curl/' in line and '"GET / HTTP' in line:
+            continue
+        if is_harmless_noise_line(line):
+            continue
+        keep.append(line)
+    return "\n".join(keep).strip()
+
+
+def is_harmless_noise_line(line: str) -> bool:
+    return bool(
+        re.search(
+            r"mysql_native_password|MY-013360|MY-011068|MY-010918|MY-010068|MY-011810|"
+            r"AH00558: apache2: Could not reliably determine|"
+            r"buildx plugin|"
+            r"\[APIv1\] KEEPALIVE",
+            line,
+            re.I,
+        )
+    )
 
 
 def run_tools(*args: str, timeout: int = 600) -> tuple[int, str]:
@@ -191,8 +233,8 @@ def relative_de(dt: datetime) -> str:
     return dt.strftime("%d.%m.%Y")
 
 
-def fetch_logs(tail: int = 60) -> tuple[int, str]:
-    """Nur lesend – stoppt keine Container. Primär Website-Logs."""
+def fetch_logs(tail: int = 80) -> tuple[int, str]:
+    """Nur lesend – stoppt keine Container. Harmlose/Panel-Zeilen ausgefiltert."""
     chunks: list[str] = []
     stopped: list[str] = []
     for svc in ("web", "mysql", "phpmyadmin", "mailhog"):
@@ -209,15 +251,21 @@ def fetch_logs(tail: int = 60) -> tuple[int, str]:
             timeout=20,
             check=False,
         )
-        body = ((r.stdout or "") + (r.stderr or "")).strip()
-        # Docker schreibt Logs oft nach stderr
-        chunks.append(f"=== {label} ===\n{body or '(leer)'}")
+        raw = ((r.stdout or "") + (r.stderr or "")).strip()
+        body = _clean_log_body(raw)
+        if not body:
+            body = "(keine besonderen Meldungen – Dienst läuft normal)"
+        chunks.append(f"=== {label} ===\n{body}")
     if stopped:
         chunks.append(
             "Hinweis: Gestoppt: "
             + ", ".join(stopped)
             + ". Mit „Starten“ alle Dienste wieder anschalten."
         )
+    chunks.append(
+        "Hinweis: Übliche Start-/Deprecation-Hinweise und Panel-Statuschecks "
+        "werden hier ausgeblendet."
+    )
     return 0, "\n\n".join(chunks)
 
 

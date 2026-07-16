@@ -66,55 +66,141 @@
     return String(s || '').replace(/\x1b\[[0-9;]*m/g, '');
   }
 
-  function summarizeOutput(raw) {
+  function isHarmlessLogLine(line) {
+    return (
+      /mysql_native_password/i.test(line)
+      || /MY-013360/i.test(line)
+      || /buildx plugin/i.test(line)
+      || /level=warning msg="Docker Compose requires/i.test(line)
+      || /AH00558: apache2: Could not reliably determine/i.test(line)
+    );
+  }
+
+  function isRealErrorLine(line) {
+    if (isHarmlessLogLine(line)) return false;
+    if (/level=warning/i.test(line) && !/\b(error|fatal|crit)\b/i.test(line)) return false;
+    return /\b(error|fatal|crit|exception|emergency|panic)\b/i.test(line)
+      || /\[ERROR\]/i.test(line)
+      || /PHP Fatal/i.test(line);
+  }
+
+  function isRealWarnLine(line) {
+    if (isHarmlessLogLine(line)) return false;
+    if (isRealErrorLine(line)) return false;
+    return /\[Warning\]/i.test(line)
+      || /\b(warn|warning|deprecated)\b/i.test(line)
+      || /⚠/.test(line);
+  }
+
+  function summarizeLogs(text) {
+    const sections = text.split(/=== /).filter(Boolean);
+    const checks = [];
+    const highlights = [];
+    let harmlessMysql = false;
+    let realWarn = false;
+    let realErr = false;
+    let anyStopped = false;
+
+    for (const s of sections) {
+      const rows = s.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (!rows.length) continue;
+      const title = rows[0].replace(/=+/g, '').trim();
+      const name = title.split(/\s*[–—]\s*/)[0].trim() || title;
+      const body = rows.slice(1);
+      const stopped = /gestoppt|stopped|keine Logs/i.test(title);
+
+      if (body.some((l) => /mysql_native_password|MY-013360/i.test(l))) {
+        harmlessMysql = true;
+      }
+
+      const err = [...body].reverse().find(isRealErrorLine);
+      const warn = [...body].reverse().find(isRealWarnLine);
+
+      if (stopped) {
+        checks.push({ label: `${name} (${t('logsStopped')})`, kind: 'warn' });
+        anyStopped = true;
+      } else if (err) {
+        checks.push({ label: name, kind: 'fail' });
+        realErr = true;
+      } else if (warn) {
+        checks.push({ label: name, kind: 'warn' });
+        realWarn = true;
+      } else {
+        checks.push({ label: name, kind: 'pass' });
+      }
+    }
+
+    if (realErr) {
+      highlights.push(t('logsHasErrors'));
+    } else if (realWarn) {
+      highlights.push(t('logsHasWarnings'));
+    } else {
+      highlights.push(t('logsOkSummary'));
+      if (harmlessMysql) highlights.push(t('logsHarmlessMysql'));
+    }
+    highlights.push(t('logsSeeDetails'));
+
+    let level = 'ok';
+    if (realErr) level = 'error';
+    else if (realWarn || anyStopped) level = 'warn';
+
+    return {
+      message: t('logsLoaded'),
+      lines: highlights.slice(0, 4),
+      checks: checks.slice(0, 8),
+      level,
+    };
+  }
+
+  function summarizeOutput(raw, action) {
     const text = stripAnsi(raw).trim();
     if (!text) return { lines: [], checks: [], level: 'ok' };
+
+    // Docker-Logs von „Protokoll laden“
+    if (action === 'logs' || /^=== /.test(text) || /\n=== /.test(text)) {
+      return summarizeLogs(text);
+    }
+
     const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
     const checks = [];
     let level = 'ok';
     const bullet = [];
 
+    // Nur echte UI-Statuszeilen (✓/✗/⚠) – kein Docker-Build-Rauschen
     for (const line of lines) {
-      const clean = line.replace(/^[→✓✗⚠●○]\s*/, '').replace(/^[-*]\s*/, '');
-      if (/✓|OK|erreichbar|bereit|fertig|Gestartet|Läuft|pass/i.test(line) && !/nicht|fehl|warn/i.test(line)) {
-        checks.push({ label: clean.slice(0, 80), kind: 'pass' });
-      } else if (/✗|fehl|Fehler|fail|error/i.test(line)) {
-        checks.push({ label: clean.slice(0, 80), kind: 'fail' });
+      if (/^✓\s/.test(line) || /^\[ok\]/i.test(line)) {
+        const clean = line.replace(/^✓\s*/, '').slice(0, 80);
+        if (clean) checks.push({ label: clean, kind: 'pass' });
+      } else if (/^✗\s/.test(line) || /^\[fail\]/i.test(line)) {
+        checks.push({ label: line.replace(/^✗\s*/, '').slice(0, 80), kind: 'fail' });
         level = 'error';
-      } else if (/⚠|warn|Hinweis|nicht erreichbar|gestoppt|fehlt/i.test(line)) {
-        checks.push({ label: clean.slice(0, 80), kind: 'warn' });
+      } else if (/^⚠\s/.test(line) || /^\[warn\]/i.test(line)) {
+        checks.push({ label: line.replace(/^⚠\s*/, '').slice(0, 80), kind: 'warn' });
         if (level === 'ok') level = 'warn';
       }
     }
 
-    // Kurzfassung: letzte sinnvolle Zeilen
     const interesting = lines.filter((l) =>
-      /✓|✗|⚠|OK|Fehler|fertig|Hinweis|Website|MySQL|WoltLab|Docker|TLS|php|Mail/i.test(l)
+      /^[✓✗⚠]/.test(l)
+      || /MySQL bereit|Neu gebaut|Gestartet|Verbindung OK|fehlgeschlagen|nicht erreichbar/i.test(l)
     );
-    const pick = (interesting.length ? interesting : lines).slice(-6);
-    for (const l of pick) bullet.push(l.replace(/^[→]\s*/, '').slice(0, 120));
+    const pick = (interesting.length ? interesting : lines.filter((l) => !/level=warning|buildx|Pulling from|Step \d/i.test(l))).slice(-5);
+    for (const l of pick) bullet.push(l.replace(/^[→✓✗⚠]\s*/, '').slice(0, 120));
 
-    // Logs: Dienst-Blöcke
-    if (/^=== /.test(text)) {
-      const sections = text.split(/=== /).filter(Boolean).slice(0, 6);
-      return {
-        lines: sections.map((s) => {
-          const title = s.split('\n')[0].replace(/=+/g, '').trim();
-          const body = s.split('\n').slice(1).filter(Boolean);
-          return body.length ? `${title}: ${body.length} ${lang === 'de' ? 'Zeilen' : 'lines'}` : title;
-        }),
-        checks: sections.map((s) => {
-          const title = s.split('\n')[0].replace(/=+/g, '').trim();
-          const kind = /gestoppt|stopped/i.test(title) ? 'warn' : 'pass';
-          return { label: title.slice(0, 60), kind };
-        }),
-        level: /gestoppt|stopped/i.test(text) ? 'warn' : 'ok',
-      };
+    // Docker-Compose-Warnung nur einmal, nicht als Erfolg
+    if (/buildx plugin/i.test(text) && level === 'ok') {
+      level = 'warn';
+      if (!checks.some((c) => /buildx/i.test(c.label))) {
+        checks.push({
+          label: lang === 'de' ? 'Hinweis: Docker buildx-Warnung (meist harmlos)' : 'Note: Docker buildx warning (usually harmless)',
+          kind: 'warn',
+        });
+      }
     }
 
     return {
       lines: bullet.slice(0, 5),
-      checks: checks.slice(0, 12),
+      checks: checks.slice(0, 10),
       level,
     };
   }
@@ -155,11 +241,11 @@
   }
 
   function pushActivity(entry) {
-    const sum = summarizeOutput(entry.raw || '');
+    const sum = summarizeOutput(entry.raw || '', entry.action || '');
     activity.unshift({
       id: Date.now() + Math.random(),
       title: entry.title,
-      message: entry.message || '',
+      message: entry.message || sum.message || '',
       level: entry.level || sum.level || 'ok',
       lines: entry.lines || sum.lines,
       checks: entry.checks || sum.checks,
@@ -511,19 +597,29 @@
         setLast(`${label} ${t('runningBg')}`);
         toast(data.message || `${label} ${t('started')}`);
         const job = await waitJob(data.job_id, label);
-        const level = job.status === 'ok' ? (summarizeOutput(job.output).level || 'ok') : 'error';
+        const sum = summarizeOutput(job.output || '', action);
+        const level = job.status === 'ok' ? (sum.level || 'ok') : 'error';
         finishRunning(label, {
-          message: job.message || (job.status === 'ok' ? t('finished') : t('failed')),
-          level: job.status === 'ok' ? level : 'error',
+          action,
+          message: job.status === 'ok'
+            ? (sum.message || job.message || t('finished'))
+            : (job.message || t('failed')),
+          level,
+          lines: sum.lines,
+          checks: sum.checks,
           raw: job.output || job.error || '',
         });
-        setLast(job.message || `${label}: ${job.status === 'ok' ? t('finished') : t('failed')}`);
-        toast(job.message || (job.status === 'ok' ? t('finished') : t('failed')), job.status === 'ok');
+        const lastMsg = job.status === 'ok'
+          ? (sum.message || `${label}: ${t('finished')}`)
+          : (job.message || `${label}: ${t('failed')}`);
+        setLast(lastMsg);
+        toast(lastMsg, job.status === 'ok');
         await refresh();
         return;
       }
 
       finishRunning(label, {
+        action,
         message: data.message || t('finished'),
         level: 'ok',
         raw: data.output || '',
