@@ -23,3 +23,9 @@ wsc.local*
 # Python
 __pycache__/
 *.pyc
+
+# Local Workbench runtime data
+.wsc-local/
+
+# Optional development dependencies
+node_modules/

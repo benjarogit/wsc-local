@@ -1,77 +1,168 @@
-<p align="center">
-  <img src="panel/logo.png" alt="wsc-local" width="96" height="96">
-</p>
+# wsc-local · WoltLab Workbench
 
-<h1 align="center">wsc-local</h1>
+**[Deutsch (default)](README.md) · [English](README.en.md)**
 
-<p align="center">
-  <strong>Local</strong> WoltLab Suite Core to try and develop<br>
-  Set up once · one login · control everything in the browser
-</p>
+Prepare, automatically install, and manage local WoltLab Suite installations through a clear browser dashboard and the same CLI. Multiple projects run separately, each with its own files, database, ports, and credentials.
 
-<p align="center">
-  <a href="README.md">Deutsch</a> (default)
-</p>
+**Linux · macOS · Windows through WSL2** · **German by default, English available in the dashboard**
 
-<p align="center">
-  <img src="docs/panel.png" alt="wsc-local control panel" width="720">
-</p>
+<a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local home with local WoltLab projects" width="1100"></a>
 
----
+## Quick start
 
-## How to use it
+### Install prerequisites once
 
-### Once
+- **Python 3.10 or newer.**
+- **Docker with Docker Compose**, running and accessible to your user. Linux containers are required.
+- **mkcert** for trusted local HTTPS; Linux browsers may also require NSS.
+- Internet access for container images and Core downloads. Your own installation ZIP is also supported.
 
-You need [Docker](https://docs.docker.com/get-docker/) and [mkcert](https://github.com/FiloSottile/mkcert).
+[Platform instructions](docs/platforms.md) cover Linux, macOS, and Windows/WSL2, including certificate trust. Node.js is needed only for development tests.
+
+### Linux and macOS
 
 ```bash
 git clone https://github.com/benjarogit/wsc-local.git
 cd wsc-local
-./setup.sh --en
+./setup.sh
 ```
 
-Setup downloads WoltLab, configures `https://wsc.local`, and asks for username & password.
+Setup checks prerequisites, guides the one-time HTTPS trust step in your terminal, and opens the dashboard. **System check** explains missing prerequisites and the next steps.
 
-### Every day
+Later, use `./start.sh` or `./panel.sh`. To skip opening a browser: `./start.sh --no-open`. To choose another dashboard port: `./start.sh --port 9199`. The default address is `http://127.0.0.1:9099/`.
 
-| | |
-|--|--|
-| **Easiest** | Open **“wsc-local”** from your app menu |
-| **Or in a terminal** | `./start.sh` — starts everything and opens the control panel |
+### Windows
 
-Done. You can close the terminal — keep working in the **browser**.
+1. Install [WSL2](https://learn.microsoft.com/windows/wsl/install) with a Linux distribution.
+2. Start Docker Desktop, use **Linux containers**, and enable WSL integration for that distribution.
+3. Install Python and mkcert in WSL. Also install mkcert on Windows so your Windows browser trusts the same local CA.
+4. Clone the repository and **double-click `Start-wsc-local.cmd`**, or run `./setup.sh` inside WSL.
 
----
+With multiple distributions: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Detailed commands and setup](docs/platforms.md#windows-mit-wsl2)
 
-## Your URLs
+## Your Suite in three steps
 
-| | |
-|--|--|
-| **WoltLab** | https://wsc.local |
-| **Control panel** | http://127.0.0.1:9099 |
-| **Database** | http://localhost:8081 |
-| **Test email** | http://localhost:8025 |
+1. **Prepare project:** choose a name, Suite version, and source. Nginx/PHP-FPM with MariaDB is recommended. Optional settings include Apache, compatible PHP profiles, MySQL 8, and a custom administrator account.
+2. **Review login details:** inspect the securely generated account and optionally change the name, email, and password.
+3. **Set up:** the Workbench starts the environment, configures HTTPS, and completes WoltLab installation. It verifies the website, assets, and actual administrator login. Open the website or administration directly from the project card afterwards.
 
-Your login is shown after setup and anytime in the control panel (one-click copy).
+You do not need to click through the WoltLab installer. A spinner and installation stages show progress. Reloading reconnects to running tasks, even if the initial start response was lost.
 
----
+## Interface and features
 
-## What the panel can do
+- **Projects:** status, website, administration, and start/stop directly on the card. **Manage** opens Overview, Credentials, Services, Backups, and Tools.
+- **Credentials:** view and copy administrator and separately grouped database credentials. Passwords start masked. Change administrator credentials in WoltLab after installation.
+- **Services:** web server, PHP, and database status and logs. Enable the optional Mailpit mailbox separately. For WoltLab test mail, use SMTP `mail:1025` without authentication.
+- **Backups:** capture files and database together, verify checksums, and restore a matching state. Restore first backs up the current state.
+- **Export and server migration:** download files, SQL dump, project configuration, checksums, and import instructions. **Prepare server migration** adds target-server guidance and uses the same export format. Restoring on the target server is guided; direct SSH deployment is not included.
+- **WoltLab tools:** diagnostics, upload limits with a change preview, and the official Recovery Tool with cleanup. Domain and directory tools create a backup and show instructions; they do not automatically change application paths or database values.
+- **Removal:** delete project files, database, containers, networks, and local credentials after typing the project name. Shared images, download caches, and the local CA remain available.
 
-- Status at a glance (ready / attention / problem)
-- Start, stop, open the site
-- Create and restore backups
-- Switch German / English
+Information buttons open explanations. Confirmations, inputs, and previews use keyboard-accessible dialogs with Cancel. [Tool and migration details](docs/tools.md)
 
-Other apps and Docker projects on your machine stay untouched.
+### Language and appearance
 
----
+**German is the default**, regardless of your browser language. Use **EN / DE** in the header to switch dashboard language. The choice is saved in this browser, and open project sections are restored. CLI output and technical service logs retain their original language.
 
-## Start over
+Monitor, sun, and moon icons directly select **System, Light, or Dark**. The active mode is highlighted; System follows your device preference. This changes the Workbench appearance, not your WoltLab website's design.
+
+### Screenshots
+
+Click a thumbnail to open the full image. These show the actual interface; credentials are masked or anonymized for documentation.
+
+<p>
+  <a href="docs/screenshots/create-en.png" title="Prepare a project"><img src="docs/screenshots/create-en.png" alt="Prepare a project" width="280"></a>
+  <a href="docs/screenshots/advanced-en.png" title="Advanced settings"><img src="docs/screenshots/advanced-en.png" alt="Advanced settings" width="280"></a>
+  <a href="docs/screenshots/installing-en.png" title="Automatic setup"><img src="docs/screenshots/installing-en.png" alt="Automatic setup" width="280"></a>
+</p>
+<p>
+  <a href="docs/screenshots/overview-en.png" title="Project details"><img src="docs/screenshots/overview-en.png" alt="Project details" width="280"></a>
+  <a href="docs/screenshots/credentials-en.png" title="Credentials – masked"><img src="docs/screenshots/credentials-en.png" alt="Credentials – masked" width="280"></a>
+  <a href="docs/screenshots/services-en.png" title="Services and logs"><img src="docs/screenshots/services-en.png" alt="Services and logs" width="280"></a>
+</p>
+<p>
+  <a href="docs/screenshots/backups-en.png" title="Backups and export"><img src="docs/screenshots/backups-en.png" alt="Backups and export" width="280"></a>
+  <a href="docs/screenshots/tools-en.png" title="WoltLab tools"><img src="docs/screenshots/tools-en.png" alt="WoltLab tools" width="280"></a>
+  <a href="docs/screenshots/system-en.png" title="System checks"><img src="docs/screenshots/system-en.png" alt="System checks" width="280"></a>
+</p>
+<p>
+  <a href="docs/screenshots/help-en.png" title="Help and getting started"><img src="docs/screenshots/help-en.png" alt="Help and getting started" width="280"></a>
+  <a href="docs/screenshots/migration-en.png" title="Migration dialog"><img src="docs/screenshots/migration-en.png" alt="Migration dialog" width="280"></a>
+  <a href="docs/screenshots/dark-en.png" title="Dark mode"><img src="docs/screenshots/dark-en.png" alt="Dark mode" width="280"></a>
+</p>
+
+## Suite versions and installation archives
+
+Profiles follow the [official WoltLab documentation](https://manual.woltlab.com/en/php-compatibility/). Alpha and legacy versions require explicit acknowledgement.
+
+- **WSC 6.2:** automatic Core 6.2.8 download with SHA-256 verification, or your own ZIP. The default profile uses PHP 8.4 and local HTTPS.
+- **WSC 6.3:** an unofficial development archive from [YoureCom/wsc-63-testbuilds](https://github.com/YoureCom/wsc-63-testbuilds), built from WoltLab/WCF. The profile uses PHP 8.5 and HTTPS for local tests.
+- **WSC 5.5, 6.0, and 6.1:** a matching installation ZIP is required. Legacy profiles are marked accordingly.
+
+Select custom ZIPs directly in the dashboard: up to 256 MiB and containing `install.php`. Licensed applications require your own suitable archive and valid WoltLab license. Local installation of the free Core does not require license credentials.
+
+The inspected WSC 6.2/6.3 code needs a targeted correction for local ports. Only an exactly recognized code block is changed; originals and checksums are documented under `config/compatibility/`. Compatibility must be rechecked after WoltLab updates.
+
+## CLI and shareable project profiles
 
 ```bash
-./reset.sh              # remove the environment (keep backups)
-./reset.sh --purge-all  # remove everything
-./setup.sh --en         # set up again
+./wsc --version
+./wsc check
+./wsc create my-forum --download-core
+./wsc install my-forum
+./wsc list
+./wsc start my-forum
+./wsc stop my-forum
+./wsc status my-forum
+./wsc logs my-forum --service database
+./wsc doctor my-forum
+./wsc snapshot my-forum
+./wsc snapshots my-forum
+./wsc restore my-forum SNAPSHOT_PATH
+./wsc export my-forum
+./wsc remove my-forum
 ```
+
+Download a project profile under **Overview**. It contains Suite, PHP, web server, and database selections, without passwords or local ports:
+
+```bash
+./wsc create second-project --profile my-forum.wsc-local.json --download-core
+```
+
+The new project gets independent credentials and ports. Profiles exclude website files and database content; use a backup or export for complete data.
+
+## Data, HTTPS, and migration
+
+Projects default to `~/.local/share/wsc-local/projects/`; secrets stay separately in `~/.config/wsc-local/secrets/`. Override these with `WSC_LOCAL_HOME` and `XDG_CONFIG_HOME`. On Windows, these paths are inside WSL.
+
+The dashboard and published container ports bind to loopback. Local HTTPS uses mkcert. Let's Encrypt belongs to public target-server domains, not `localhost`.
+
+Exports remove Workbench-managed local database credentials from `config.inc.php` and exclude local `.env` and TLS keys. They still contain WoltLab content and its database; handle them as complete backups. Temporary recovery and authentication files are excluded.
+
+`./wsc import SOURCE project-name` detects older wsc-local files, legacy snapshots, and Workbench export packages. Raw database directories are not copied between database profiles; a complete migration requires a matching dump or export. [Test coverage and limitations](docs/user-test.md)
+
+## Updates and older installations
+
+```bash
+git pull --ff-only
+./panel.sh
+```
+
+The starter updates only the dashboard server belonging to this repository and protects running tasks. Version identifiers prevent changes through outdated interface files. Project data is stored outside the repository.
+
+The previous single-instance stack is explicitly available through `./setup.sh --legacy` and `./start.sh --legacy`. `tools.sh` and `reset.sh` belong to that older stack. Use the dashboard or `./wsc` for Workbench projects.
+
+## Tests, inspiration, and release
+
+```bash
+python3 -m unittest discover -s tests -v
+npm ci
+npx playwright install chromium
+npm run test:ui
+```
+
+CI checks portable logic on Linux, macOS, and Windows and browser flows using isolated API responses. Real WoltLab/Docker installations were tested locally on Linux. Full Docker/browser acceptance on macOS and Windows/WSL2 remains a separate platform check. [Detailed test notes](docs/user-test.md)
+
+[wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) informs WoltLab-specific profiles; [DDEV](https://github.com/ddev/ddev) project configuration; [Lando](https://docs.lando.dev/plugins/) profiles and optional services; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direct service controls. The Workbench remains WoltLab-specific. Font Awesome Free is bundled locally with [license and sources](panel/vendor/fontawesome/).
+
+[Product principles](docs/product.md) · [Changes and release notes](CHANGELOG.md) · [GitHub releases](https://github.com/benjarogit/wsc-local/releases)

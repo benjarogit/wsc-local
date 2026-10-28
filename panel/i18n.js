@@ -1,243 +1,71 @@
-/* wsc-local panel i18n – DE default */
-window.WSC_I18N = {
-  de: {
-    title: 'wsc-local – Steuerung',
-    loading: 'Lädt…',
-    checkingStatus: 'Status wird geprüft.',
-    refreshed: 'Aktualisiert',
-    badgeRunning: 'läuft',
-    badgeStopped: 'gestoppt',
-    badgeWorking: 'arbeitet…',
-    whatToDo: 'Was möchtest du tun?',
-    openSite: 'Website öffnen',
-    start: 'Starten',
-    stop: 'Stoppen',
-    doctor: 'Prüfen',
-    advanced: 'Erweitert',
-    repair: 'Verbindung reparieren',
-    rebuild: 'Neu bauen',
-    logs: 'Protokoll laden',
-    logsLoaded: 'Letzte Meldungen der Dienste geladen.',
-    logsOkSummary: 'Keine Auffälligkeiten – alles wirkt normal.',
-    logsStopped: 'gestoppt',
-    logsSeeDetails: 'Roh-Logs bei Bedarf unter Technische Details.',
-    logsHarmlessMysql: 'Datenbank: übliche MySQL-Hinweiszeile (für lokal unproblematisch).',
-    logsHasErrors: 'Es gibt Fehlerzeilen – Details unten öffnen.',
-    logsHasWarnings: 'Es gibt Hinweise – meist harmlos, Details unten.',
-    advancedHint: 'Verbindung reparieren = Container kurz neu starten, wenn Site/Netz hakt. Neu bauen = Website-Image neu erstellen. Beides kann Minuten dauern.',
-    reset: 'Alles zurücksetzen…',
-    resetHint: 'Löscht nur diese lokale Installation. Fremdes Docker bleibt unberührt.',
-    activity: 'Aktivität & Ergebnisse',
-    activityHint: 'Meldungen und Prüfergebnisse erscheinen hier als Karten.',
-    clear: 'Leeren',
-    ready: 'Bereit.',
-    noActivity: 'Noch keine Einträge. Starte eine Aktion oder „Prüfen“.',
-    details: 'Technische Details',
-    hideDetails: 'Details ausblenden',
-    backups: 'Sicherungen',
-    createBackup: 'Sicherung erstellen',
-    noBackups: 'Noch keine Sicherung.',
-    when: 'Wann',
-    size: 'Größe',
-    actions: 'Aktionen',
-    restore: 'Wiederherstellen',
-    delete: 'Löschen',
-    overview: 'Übersicht',
-    lastMessage: 'Letzte Meldung',
-    login: 'Login (überall gleich)',
-    loginHint: 'Nur für diese lokale Umgebung.',
-    user: 'Benutzer',
-    password: 'Passwort',
-    copy: 'Kopieren',
-    passwordCopied: 'Passwort kopiert',
-    copyFailed: 'Kopieren fehlgeschlagen',
-    quickAccess: 'Schnellzugriff',
-    website: 'Website',
-    github: 'GitHub',
-    githubTitle: 'Repository auf GitHub',
-    confirm: 'Bestätigen',
-    confirmTitle: 'Bestätigen',
-    cancel: 'Abbrechen',
-    continue: 'Fortfahren',
-    close: 'Schließen',
-    resetTitle: 'Alles zurücksetzen?',
-    resetBody: 'Die lokale WoltLab-Installation wird gelöscht. Danach: ./setup.sh. Fremde Docker-Projekte bleiben unberührt.',
-    resetType: 'Zur Sicherheit tippe: RESET',
-    resetPurge: 'Auch Sicherungen und Zertifikate löschen',
-    resetFinal: 'Endgültig zurücksetzen',
-    tipBackup: 'Tipp: Vor größeren Änderungen eine Sicherung erstellen.',
-    hintRunning: 'Umgebung läuft. Vor größeren Änderungen eine Sicherung anlegen.',
-    hintStopped: 'Mit „Starten“ die Umgebung anschalten.',
-    hintPartial: 'Nicht alle Dienste laufen – „Starten“ oder „Verbindung reparieren“.',
-    confirmStop: 'Umgebung wirklich stoppen? Die Website ist dann offline.',
-    confirmRebuild: 'Website neu bauen? Kann einige Minuten dauern. Die Umgebung bleibt dabei kurz unvollständig.',
-    confirmRepair: 'Verbindung reparieren?\n\nStartet die Container dieses Projekts kurz neu (Website ~30 Sek. offline). Hilft, wenn die Site nicht erreichbar ist.',
-    confirmRestore: 'Sicherung wiederherstellen?\n\nAktuelle Dateien und Datenbank werden überschrieben.',
-    confirmDelete: 'Diese Sicherung endgültig löschen?',
-    typeReset: 'Bitte genau RESET tippen',
-    waitBusy: 'Bitte warten – ein Vorgang läuft noch.',
-    netError: 'Verbindung zum Panel unterbrochen. Lange Aktionen laufen im Hintergrund – Seite neu laden oder Status beobachten.',
-    panelDown: 'Panel nicht erreichbar',
-    panelDownHint: 'Im Terminal: ./panel.sh',
-    docker: 'Docker',
-    https: 'HTTPS',
-    siteFlag: 'Website',
-    services: 'Dienste',
-    backupLabel: 'Sicherung',
-    noBackupYet: 'Noch keine Sicherung',
-    backup: 'Sicherung',
-    runningBg: 'läuft im Hintergrund…',
-    started: 'gestartet…',
-    finished: 'fertig',
-    failed: 'fehlgeschlagen',
-    error: 'Fehler',
-    ok: 'OK',
-    working: 'läuft…',
-    resetStarted: 'Zurücksetzen gestartet. Danach: ./setup.sh',
-    langDe: 'DE',
-    langEn: 'EN',
-    langSwitch: 'Sprache',
-    healthOk: 'Alles bereit',
-    healthOkHint: 'Website öffnen oder Sicherung anlegen.',
-    healthWarn: 'Hinweis',
-    healthWarnHint: '„Prüfen“ oder „Verbindung reparieren“ helfen oft.',
-    healthError: 'Problem',
-    healthErrorHint: 'Details in der Aktivität nach „Prüfen“.',
-    healthStopped: 'Gestoppt',
-    healthStoppedHint: 'Mit „Starten“ die Umgebung anschalten.',
-    healthWorking: 'Arbeitet',
-    healthWorkingHint: 'Bitte warten – Dienste können kurz offline sein.',
-    actionLabels: {
-      start: 'Starten',
-      stop: 'Stoppen',
-      doctor: 'Prüfen',
-      repair: 'Verbindung reparieren',
-      rebuild: 'Neu bauen',
-      logs: 'Protokoll laden',
-      snapshot_create: 'Sicherung erstellen',
-      snapshot_restore: 'Sicherung wiederherstellen',
-      snapshot_delete: 'Sicherung löschen',
-      reset: 'Zurücksetzen',
-    },
-  },
-  en: {
-    title: 'wsc-local – Control',
-    loading: 'Loading…',
-    checkingStatus: 'Checking status.',
-    refreshed: 'Updated',
-    badgeRunning: 'running',
-    badgeStopped: 'stopped',
-    badgeWorking: 'working…',
-    whatToDo: 'What do you want to do?',
-    openSite: 'Open website',
-    start: 'Start',
-    stop: 'Stop',
-    doctor: 'Check',
-    advanced: 'Advanced',
-    repair: 'Repair connection',
-    rebuild: 'Rebuild',
-    logs: 'Load log',
-    logsLoaded: 'Latest service messages loaded.',
-    logsOkSummary: 'Nothing unusual – looks normal.',
-    logsStopped: 'stopped',
-    logsSeeDetails: 'Raw logs under Technical details if needed.',
-    logsHarmlessMysql: 'Database: usual MySQL notice (fine for local use).',
-    logsHasErrors: 'There are error lines – open details below.',
-    logsHasWarnings: 'There are notices – usually harmless; see details.',
-    advancedHint: 'Repair connection = briefly restart containers if the site/network is stuck. Rebuild = recreate the website image. Both can take minutes.',
-    reset: 'Reset everything…',
-    resetHint: 'Only removes this local install. Other Docker projects stay untouched.',
-    activity: 'Activity & results',
-    activityHint: 'Messages and check results appear here as cards.',
-    clear: 'Clear',
-    ready: 'Ready.',
-    noActivity: 'No entries yet. Run an action or “Check”.',
-    details: 'Technical details',
-    hideDetails: 'Hide details',
-    backups: 'Backups',
-    createBackup: 'Create backup',
-    noBackups: 'No backups yet.',
-    when: 'When',
-    size: 'Size',
-    actions: 'Actions',
-    restore: 'Restore',
-    delete: 'Delete',
-    overview: 'Overview',
-    lastMessage: 'Last message',
-    login: 'Login (same everywhere)',
-    loginHint: 'Only for this local environment.',
-    user: 'User',
-    password: 'Password',
-    copy: 'Copy',
-    passwordCopied: 'Password copied',
-    copyFailed: 'Copy failed',
-    quickAccess: 'Quick access',
-    website: 'Website',
-    github: 'GitHub',
-    githubTitle: 'Repository on GitHub',
-    confirm: 'Confirm',
-    confirmTitle: 'Confirm',
-    cancel: 'Cancel',
-    continue: 'Continue',
-    close: 'Close',
-    resetTitle: 'Reset everything?',
-    resetBody: 'The local WoltLab install will be deleted. Then run ./setup.sh. Other Docker projects stay untouched.',
-    resetType: 'For safety type: RESET',
-    resetPurge: 'Also delete backups and certificates',
-    resetFinal: 'Reset permanently',
-    tipBackup: 'Tip: create a backup before bigger changes.',
-    hintRunning: 'Environment is running. Create a backup before bigger changes.',
-    hintStopped: 'Use “Start” to turn the environment on.',
-    hintPartial: 'Not all services are up – use “Start” or “Repair connection”.',
-    confirmStop: 'Really stop the environment? The website will go offline.',
-    confirmRebuild: 'Rebuild the website? This can take a few minutes. The environment may be incomplete briefly.',
-    confirmRepair: 'Repair connection?\n\nBriefly restarts this project’s containers (website ~30s offline). Helps when the site is unreachable.',
-    confirmRestore: 'Restore this backup?\n\nCurrent files and database will be overwritten.',
-    confirmDelete: 'Permanently delete this backup?',
-    typeReset: 'Please type RESET exactly',
-    waitBusy: 'Please wait – another task is still running.',
-    netError: 'Lost connection to the panel. Long tasks keep running in the background – reload or watch the status.',
-    panelDown: 'Panel unreachable',
-    panelDownHint: 'In a terminal: ./panel.sh',
-    docker: 'Docker',
-    https: 'HTTPS',
-    siteFlag: 'Website',
-    services: 'Services',
-    backupLabel: 'Backup',
-    noBackupYet: 'No backup yet',
-    backup: 'Backup',
-    runningBg: 'running in background…',
-    started: 'started…',
-    finished: 'done',
-    failed: 'failed',
-    error: 'Error',
-    ok: 'OK',
-    working: 'running…',
-    resetStarted: 'Reset started. Then: ./setup.sh',
-    langDe: 'DE',
-    langEn: 'EN',
-    langSwitch: 'Language',
-    healthOk: 'All ready',
-    healthOkHint: 'Open the website or create a backup.',
-    healthWarn: 'Attention',
-    healthWarnHint: '“Check” or “Repair connection” often helps.',
-    healthError: 'Problem',
-    healthErrorHint: 'See activity details after “Check”.',
-    healthStopped: 'Stopped',
-    healthStoppedHint: 'Use “Start” to turn the environment on.',
-    healthWorking: 'Working',
-    healthWorkingHint: 'Please wait – services may be briefly offline.',
-    actionLabels: {
-      start: 'Start',
-      stop: 'Stop',
-      doctor: 'Check',
-      repair: 'Repair connection',
-      rebuild: 'Rebuild',
-      logs: 'Load log',
-      snapshot_create: 'Create backup',
-      snapshot_restore: 'Restore backup',
-      snapshot_delete: 'Delete backup',
-      reset: 'Reset',
-    },
-  },
-};
+// Catalog lookups apply only to authored UI copy. Interpolated values stay untouched.
+(() => {
+  const key='wsc-ui-language';
+  let language='de';
+  try {if(localStorage.getItem(key)==='en')language='en';}catch(_){}
+  const requested=new URL(window.location.href).searchParams.get('lang');
+  if(['de','en'].includes(requested))language=requested;
+  const english=window.WorkbenchEnglish;
+  function text(source) {
+    if(language!=='en'||typeof source!=='string')return source;
+    const match=source.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    const original=match[2];
+    let translated=english[original];
+    if(translated===undefined){
+      if(original.startsWith('Linux-Container · Docker '))translated=original.replace('Linux-Container','Linux containers');
+      else if(/^.+ bauen und starten – beim ersten Mal kann das mehrere Minuten dauern$/.test(original))translated='Building and starting '+original.split(' bauen und starten')[0]+' – the first run can take several minutes';
+      else if(original.startsWith('Installationsschritt: '))translated='Installation step: '+text(original.slice(21));
+      else if(original.startsWith('WoltLab-Core installieren ('))translated=original.replace('WoltLab-Core installieren','Installing WoltLab Core');
+      else if(original.startsWith('lokale Browser-/HTTPS-Prüfung ('))translated=original.replace('lokale Browser-/HTTPS-Prüfung','Local browser/HTTPS check');
+      if(/^(\{\d+\}) kopieren$/.test(original))translated=original.replace(/^(\{\d+\}) kopieren$/,'Copy $1');
+      if(/^(\{\d+\}) verwalten$/.test(original))translated=original.replace(/^(\{\d+\}) verwalten$/,'Manage $1');
+      const prefix=original.match(/^(\{\d+\})+(.*)$/s);
+      if(prefix&&english[prefix[2]]!==undefined)translated=prefix[1]+english[prefix[2]];
+    }
+    return translated===undefined?source:match[1]+translated+match[3];
+  }
+  function markup(source) {
+    if(language!=='en')return source;
+    return source.split(/(<[^>]+>)/g).map(part=>part.startsWith('<')
+      ? part.replace(/((?:aria-label|title|placeholder)\s*=\s*)(["'])(.*?)\2/g,(_,prefix,quote,value)=>prefix+quote+text(value)+quote).replaceAll('https://manual.woltlab.com/de/','https://manual.woltlab.com/en/')
+      : text(part)).join('');
+  }
+  function html(parts,...values) {
+    const source=typeof parts==='string'?parts:parts.map((part,i)=>part+(i<values.length?`{${i}}`:'')).join('');
+    const translated=source.includes('<')?markup(source):text(source);
+    return translated.replace(/\{(\d+)\}/g,(marker,index)=>index<values.length?String(values[index]):marker);
+  }
+  function localizeResponse(data) {
+    if(language!=='en'||!data||typeof data!=='object')return data;
+    if(Array.isArray(data)){data.forEach(localizeResponse);return data;}
+    for(const [field,value]of Object.entries(data)){
+      if(['error','message','label','help','detail','status_error','stage'].includes(field)&&typeof value==='string')data[field]=text(value);
+      else if(value&&typeof value==='object')localizeResponse(value);
+    }
+    return data;
+  }
+  document.documentElement.lang=language;
+  // This script runs before the application renders any project or credentials.
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node;while((node=walker.nextNode())){
+    if(node.parentElement.closest('script,style,code,pre'))continue;
+    node.nodeValue=text(node.nodeValue);
+  }
+  for(const element of document.querySelectorAll('[aria-label],[title],[placeholder]')){
+    for(const attribute of ['aria-label','title','placeholder'])if(element.hasAttribute(attribute))element.setAttribute(attribute,text(element.getAttribute(attribute)));
+  }
+  if(language==='en')document.querySelectorAll('a[href^="https://manual.woltlab.com/de/"]').forEach(link=>link.href=link.href.replace('/de/','/en/'));
+  const button=document.getElementById('language-toggle');
+  button.textContent=language==='de'?'EN':'DE';
+  button.title=language==='de'?'English':'Deutsch';
+  button.setAttribute('aria-label',language==='de'?'Switch to English':'Auf Deutsch umschalten');
+  button.addEventListener('click',()=>{
+    try{
+      localStorage.setItem(key,language==='de'?'en':'de');
+      const open=document.querySelector('.project-drawer:not([hidden])')?.closest('[data-project]');
+      sessionStorage.setItem('wsc-language-view',JSON.stringify({view:document.querySelector('.app-nav [aria-current=page]')?.dataset.view||'projects',name:open?.dataset.project,tab:open?.querySelector('[aria-selected=true]')?.dataset.tab}));
+    }catch(_){}
+    const url=new URL(window.location.href);url.searchParams.set('lang',language==='de'?'en':'de');window.location.assign(url.href);
+  });
+  window.WorkbenchLocale={language,t:text,html,localizeResponse};
+})();

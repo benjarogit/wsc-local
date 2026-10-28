@@ -1,382 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>wsc-local – Steuerung</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
-  <link rel="icon" href="/logo.svg?v=5" type="image/svg+xml">
-  <style>
-    :root {
-      --wsc-teal: #0f766e;
-      --wsc-border: #e3e7ec;
-      --wsc-bg: #f0f2f5;
-    }
-    body.hold-transition { background: var(--wsc-bg); }
-    .content-wrapper { margin-left: 0 !important; background: var(--wsc-bg); }
-    .main-header {
-      margin-left: 0 !important;
-      border-bottom: 1px solid var(--wsc-border);
-      box-shadow: none !important;
-    }
-    .main-header .container {
-      display: flex; align-items: center; flex-wrap: wrap; min-height: 3rem;
-    }
-    .brand-link.navbar-brand {
-      display: inline-flex !important; align-items: center; gap: .6rem;
-      padding: .35rem 0 !important; margin-right: 1rem; float: none !important;
-    }
-    .brand-logo {
-      width: 32px !important; height: 32px !important; max-height: none !important;
-      object-fit: contain !important; border-radius: 7px !important;
-      display: block !important; margin: 0 !important; float: none !important;
-      border: 0 !important; box-shadow: none !important;
-    }
-    .brand-text { font-weight: 700; color: #1e293b !important; font-size: 1.1rem; }
-    .card { box-shadow: none !important; border: 1px solid var(--wsc-border); margin-bottom: .85rem; }
-    .card-outline.card-primary { border-top-color: var(--wsc-teal); }
-    .card-outline.card-success { border-top-color: #198754; }
-
-    .status-card {
-      background: #fff; border: 1px solid var(--wsc-border); border-radius: .35rem;
-      padding: .85rem 1rem; margin-bottom: .85rem;
-    }
-    .status-card.ok { border-color: #bbf7d0; background: #f0fdf4; }
-    .status-card.warn { border-color: #fde68a; background: #fffbeb; }
-    .status-card.error { border-color: #fecaca; background: #fef2f2; }
-    .status-top {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
-    }
-    .status-title { display: flex; align-items: center; gap: .55rem; font-weight: 700; color: #0f172a; font-size: 1.05rem; }
-    .status-title .mark {
-      width: 1.6rem; height: 1.6rem; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: .75rem;
-    }
-    .status-card.ok .mark { background: #198754; }
-    .status-card.warn .mark { background: #d97706; }
-    .status-card.error .mark { background: #dc3545; }
-    .status-meta { font-size: .8rem; color: #64748b; }
-    .flag-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .65rem; }
-    .flag {
-      display: inline-flex; align-items: center; gap: .35rem;
-      padding: .2rem .55rem; border-radius: 999px; font-size: .78rem;
-      background: rgba(255,255,255,.72); border: 1px solid var(--wsc-border); color: #334155;
-    }
-    .flag .dot { width: .45rem; height: .45rem; border-radius: 50%; background: #adb5bd; }
-    .flag.on .dot { background: #198754; }
-    .flag.off .dot { background: #dc3545; }
-    .svc-mini {
-      display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .55rem; padding-top: .55rem;
-      border-top: 1px solid rgba(15, 23, 42, .06);
-    }
-    .svc-chip {
-      font-size: .75rem; color: #475569;
-      display: inline-flex; align-items: center; gap: .3rem;
-    }
-    .svc-chip .dot { width: .4rem; height: .4rem; border-radius: 50%; background: #adb5bd; }
-    .svc-chip.up .dot { background: #198754; }
-    .svc-chip.down .dot { background: #dc3545; }
-    .status-details {
-      margin: .5rem 0 0; padding-left: 1.1rem; font-size: .8rem; color: #64748b;
-    }
-
-    .btn-row { display: flex; flex-wrap: wrap; gap: .5rem; }
-    .btn-row .btn { min-width: 7.5rem; }
-    .btn-primary { background: var(--wsc-teal); border-color: var(--wsc-teal); }
-    .btn-primary:hover { background: #0d9488; border-color: #0d9488; }
-    .btn-primary:focus { box-shadow: 0 0 0 .2rem rgba(15, 118, 110, .35); }
-    #btn-open-site { min-width: 10rem; font-weight: 600; }
-
-    .last-line {
-      font-size: .85rem; color: #334155; padding: .45rem .6rem;
-      background: #f8fafc; border: 1px solid var(--wsc-border); border-radius: .25rem;
-      min-height: 2.25rem;
-    }
-    .cred-row {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: .5rem; margin-bottom: .3rem; font-size: .9rem;
-    }
-    .quick-links { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .65rem; }
-    .quick-links a {
-      font-size: .8rem; color: var(--wsc-teal); border: 1px solid var(--wsc-border);
-      border-radius: .25rem; padding: .3rem .55rem; text-decoration: none; background: #fff;
-    }
-    .quick-links a:hover { border-color: var(--wsc-teal); text-decoration: none; }
-    .quick-links a:focus { outline: 2px solid var(--wsc-teal); outline-offset: 2px; }
-
-    .activity-feed {
-      display: flex; flex-direction: column; gap: .55rem;
-      max-height: 420px; overflow: auto; padding-right: .15rem;
-    }
-    .activity-empty {
-      text-align: center; color: #64748b; font-size: .9rem;
-      padding: 1.25rem .75rem; border: 1px dashed var(--wsc-border); border-radius: .35rem; background: #f8fafc;
-    }
-    .act-card {
-      border: 1px solid var(--wsc-border); border-radius: .35rem; background: #fff; padding: .7rem .8rem;
-    }
-    .act-card.ok { border-left: 3px solid #198754; }
-    .act-card.warn { border-left: 3px solid #d97706; }
-    .act-card.error { border-left: 3px solid #dc3545; }
-    .act-card.running { border-left: 3px solid var(--wsc-teal); }
-    .act-head {
-      display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem;
-    }
-    .act-title {
-      display: flex; align-items: center; gap: .45rem; font-weight: 600; color: #0f172a; font-size: .95rem;
-    }
-    .act-icon {
-      width: 1.5rem; height: 1.5rem; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: .7rem; flex-shrink: 0;
-    }
-    .act-card.ok .act-icon { background: #198754; }
-    .act-card.warn .act-icon { background: #d97706; }
-    .act-card.error .act-icon { background: #dc3545; }
-    .act-card.running .act-icon { background: var(--wsc-teal); }
-    .act-time { font-size: .75rem; color: #94a3b8; white-space: nowrap; }
-    .act-summary { margin: .4rem 0 0; padding-left: 1.15rem; font-size: .82rem; color: #475569; }
-    .act-summary li { margin-bottom: .15rem; }
-    .act-checks { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .45rem; }
-    .act-check {
-      font-size: .75rem; padding: .15rem .45rem; border-radius: 999px;
-      border: 1px solid var(--wsc-border); background: #f8fafc; color: #334155;
-    }
-    .act-check.pass { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
-    .act-check.fail { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-    .act-check.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-    .act-details {
-      margin-top: .45rem; font-size: .78rem; color: #64748b;
-      background: #f8fafc; border: 1px solid var(--wsc-border); border-radius: .25rem;
-      padding: .5rem .65rem; white-space: pre-wrap; max-height: 160px; overflow: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    }
-    .act-toggle {
-      margin-top: .4rem; padding: 0; border: 0; background: none; color: var(--wsc-teal);
-      font-size: .78rem; cursor: pointer; text-decoration: underline;
-    }
-    .act-toggle:focus { outline: 2px solid var(--wsc-teal); outline-offset: 2px; }
-
-    .lang-switch {
-      display: inline-flex; border: 1px solid var(--wsc-border); border-radius: .25rem; overflow: hidden;
-    }
-    .lang-switch button {
-      border: 0; background: #fff; color: #64748b; font-size: .75rem; font-weight: 600;
-      padding: .2rem .45rem; line-height: 1.2; cursor: pointer;
-    }
-    .lang-switch button.active { background: var(--wsc-teal); color: #fff; }
-    .lang-switch button:focus { outline: 2px solid var(--wsc-teal); outline-offset: 1px; z-index: 1; }
-    .nav-gh {
-      color: #64748b !important; font-size: .9rem; padding: .35rem .5rem !important;
-    }
-    .nav-gh:hover { color: var(--wsc-teal) !important; }
-
-    .busy-bar { display: none; height: 3px; background: #e2e8f0; overflow: hidden; }
-    .busy-bar.on { display: block; }
-    .busy-bar.on::after {
-      content: ""; display: block; height: 100%; width: 40%; background: var(--wsc-teal);
-      animation: slide 1s ease-in-out infinite;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .busy-bar.on::after { animation: none; width: 100%; opacity: .7; }
-    }
-    @keyframes slide {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(350%); }
-    }
-    #toast-area { position: fixed; top: 1rem; right: 1rem; z-index: 2000; max-width: 22rem; }
-    .hint { font-size: .8rem; color: #64748b; }
-    .meta-line { font-size: .8rem; color: #64748b; }
-    details.advanced {
-      border: 1px solid var(--wsc-border); border-radius: .25rem; background: #fff; padding: .55rem .8rem;
-    }
-    details.advanced > summary {
-      cursor: pointer; font-weight: 600; color: #334155; outline: none; font-size: .9rem;
-    }
-    details.advanced > summary:focus-visible {
-      outline: 2px solid var(--wsc-teal); outline-offset: 2px;
-    }
-    details.advanced[open] > summary { margin-bottom: .55rem; }
-    .snap-main { font-weight: 600; color: #0f172a; }
-    .snap-sub { font-size: .75rem; color: #64748b; }
-    .content { padding-top: .75rem !important; }
-  </style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
+  <script src="/theme.js"></script>
+  <title>wsc-local · WoltLab Workbench</title><link rel="icon" href="/logo.png" type="image/png"><link rel="stylesheet" href="/styles.css">
 </head>
-<body class="hold-transition layout-top-nav">
-<div class="wrapper">
-  <nav class="main-header navbar navbar-expand-md navbar-white navbar-light">
-    <div class="container">
-      <a href="/" class="navbar-brand brand-link" title="wsc-local">
-        <img src="/logo.svg?v=5" alt="" class="brand-logo" width="32" height="32">
-        <span class="brand-text">wsc-local</span>
-      </a>
-      <ul class="navbar-nav ml-auto align-items-center">
-        <li class="nav-item">
-          <a class="nav-link nav-gh" id="github-link" href="https://github.com/benjarogit/wsc-local" target="_blank" rel="noopener" data-i18n-title="githubTitle">
-            <i class="fab fa-github" aria-hidden="true"></i>
-            <span class="d-none d-sm-inline ml-1" data-i18n="github">GitHub</span>
-          </a>
-        </li>
-        <li class="nav-item px-1">
-          <div class="lang-switch" role="group" aria-label="Language">
-            <button type="button" id="lang-de" class="active" data-lang="de">DE</button>
-            <button type="button" id="lang-en" data-lang="en">EN</button>
-          </div>
-        </li>
-        <li class="nav-item">
-          <span class="nav-link meta-line py-1" id="meta-line">—</span>
-        </li>
-        <li class="nav-item">
-          <span class="nav-link py-1"><span id="stack-badge" class="badge badge-secondary">…</span></span>
-        </li>
-      </ul>
-    </div>
-  </nav>
-  <div class="busy-bar" id="busy-bar" aria-hidden="true"></div>
-
-  <div class="content-wrapper">
-    <div class="content">
-      <div class="container">
-        <div id="status-card" class="status-card warn" role="status" aria-live="polite">
-          <div class="status-top">
-            <div class="status-title">
-              <span class="mark" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
-              <span id="status-title-text" data-i18n="loading">Lädt…</span>
-            </div>
-            <div class="status-meta" id="status-refreshed"></div>
-          </div>
-          <p class="hint mb-0 mt-1" id="status-hint" data-i18n="checkingStatus">Status wird geprüft.</p>
-          <div class="flag-row" id="flag-row"></div>
-          <div class="svc-mini" id="service-boxes"></div>
-          <ul class="status-details d-none" id="status-details"></ul>
-        </div>
-
-        <div class="row">
-          <div class="col-lg-7">
-            <div class="card card-outline card-primary">
-              <div class="card-header border-0 pb-0">
-                <h3 class="card-title font-weight-bold" data-i18n="whatToDo">Was möchtest du tun?</h3>
-              </div>
-              <div class="card-body">
-                <div class="btn-row mb-2" id="action-row">
-                  <a class="btn btn-primary d-none" id="btn-open-site" href="https://wsc.local" target="_blank" rel="noopener">
-                    <i class="fas fa-external-link-alt mr-1"></i><span data-i18n="openSite">Website öffnen</span>
-                  </a>
-                  <button type="button" class="btn btn-success" id="btn-start" data-action="start">
-                    <i class="fas fa-play mr-1"></i><span data-i18n="start">Starten</span>
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary" data-action="stop">
-                    <i class="fas fa-stop mr-1"></i><span data-i18n="stop">Stoppen</span>
-                  </button>
-                  <button type="button" class="btn btn-outline-secondary" data-action="doctor">
-                    <i class="fas fa-heartbeat mr-1"></i><span data-i18n="doctor">Prüfen</span>
-                  </button>
-                </div>
-                <p class="hint mb-2" id="action-hint" data-i18n="tipBackup">Tipp: Vor größeren Änderungen eine Sicherung erstellen.</p>
-                <details class="advanced mb-3">
-                  <summary data-i18n="advanced">Erweitert</summary>
-                  <div class="btn-row mb-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-action="repair">
-                      <i class="fas fa-network-wired mr-1"></i><span data-i18n="repair">Verbindung reparieren</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-action="rebuild">
-                      <i class="fas fa-hammer mr-1"></i><span data-i18n="rebuild">Neu bauen</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-action="logs">
-                      <i class="fas fa-stream mr-1"></i><span data-i18n="logs">Protokoll laden</span>
-                    </button>
-                  </div>
-                  <p class="hint mb-2" data-i18n="advancedHint">
-                    Verbindung reparieren = Container kurz neu starten, wenn Site/Netz hakt.
-                  </p>
-                  <button type="button" class="btn btn-outline-danger btn-sm" data-action="reset">
-                    <i class="fas fa-trash-alt mr-1"></i><span data-i18n="reset">Alles zurücksetzen…</span>
-                  </button>
-                  <p class="hint mb-0 mt-2" data-i18n="resetHint">Löscht nur diese lokale Installation. Fremdes Docker bleibt unberührt.</p>
-                </details>
-
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div>
-                    <h3 class="h6 font-weight-bold mb-0" data-i18n="activity">Aktivität &amp; Ergebnisse</h3>
-                    <p class="hint mb-0" data-i18n="activityHint">Meldungen und Prüfergebnisse erscheinen hier als Karten.</p>
-                  </div>
-                  <button type="button" class="btn btn-xs btn-default" id="clear-out" data-i18n="clear">Leeren</button>
-                </div>
-                <div id="activity-feed" class="activity-feed" role="log" aria-live="polite"></div>
-              </div>
-            </div>
-
-            <div class="card card-outline card-success">
-              <div class="card-header border-0">
-                <h3 class="card-title font-weight-bold" data-i18n="backups">Sicherungen</h3>
-                <div class="card-tools">
-                  <button type="button" class="btn btn-sm btn-success" data-action="snapshot-create">
-                    <i class="fas fa-camera mr-1"></i><span data-i18n="createBackup">Sicherung erstellen</span>
-                  </button>
-                </div>
-              </div>
-              <div class="card-body p-0" id="snapshots"></div>
-            </div>
-          </div>
-
-          <div class="col-lg-5">
-            <div class="card">
-              <div class="card-header border-0 pb-0">
-                <h3 class="card-title font-weight-bold" data-i18n="overview">Übersicht</h3>
-              </div>
-              <div class="card-body">
-                <div class="hint mb-1" data-i18n="lastMessage">Letzte Meldung</div>
-                <div class="last-line mb-3" id="last-line" aria-live="polite" data-i18n="ready">Bereit.</div>
-
-                <div class="hint mb-1" data-i18n="login">Login (überall gleich)</div>
-                <div class="border rounded p-2 bg-light mb-2" id="creds">—</div>
-                <p class="hint mb-3" data-i18n="loginHint">Nur für diese lokale Umgebung.</p>
-
-                <div class="hint mb-1" data-i18n="quickAccess">Schnellzugriff</div>
-                <div class="quick-links" id="links"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<body>
+  <header class="site-header"><a class="brand" href="/"><img src="/logo.png" alt=""><span>wsc-local <span class="brand-sub">WoltLab Workbench</span></span></a><div class="header-controls"><span class="local-tag">Lokal auf diesem Gerät</span><button type="button" id="language-toggle" class="language-toggle" aria-label="Switch to English" title="English">EN</button><div class="theme-switch" role="group" aria-label="Darstellung"><button type="button" data-color-mode="system" aria-label="System" title="System" aria-pressed="true"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#desktop"></use></svg></button><button type="button" data-color-mode="light" aria-label="Hell" title="Hell" aria-pressed="false"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#sun"></use></svg></button><button type="button" data-color-mode="dark" aria-label="Dunkel" title="Dunkel" aria-pressed="false"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#moon"></use></svg></button></div></div></header>
+  <div class="app-layout">
+    <nav class="app-nav" aria-label="Hauptnavigation"><button class="nav-item active" data-view="projects" aria-current="page"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#folder-open"></use></svg>Projekte</button><button class="nav-item" data-view="system"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#heart-pulse"></use></svg>Systemprüfung <span id="system-dot" class="status-dot" aria-hidden="true"></span></button><button class="nav-item" data-view="help"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#circle-info"></use></svg>Hilfe &amp; Einstieg</button><p>Für WoltLab Suite<br>Linux · macOS · Windows/WSL2</p></nav>
+    <main class="shell">
+      <div id="operation-status" class="operation-status" role="status" aria-live="polite" hidden><span class="operation-spinner" aria-hidden="true"></span><div><strong id="operation-message"></strong><p id="operation-hint" class="hint">Du musst nichts weiter anklicken. Website und Admin-Zugang werden zum Schluss geprüft.</p></div><ol id="install-phases" class="install-phases" aria-label="Einrichtungsschritte" hidden><li data-phase="0">Umgebung</li><li data-phase="1">WoltLab</li><li data-phase="2">Abschlussprüfung</li></ol><div class="operation-track" aria-hidden="true"><span></span></div></div>
+      <div id="operation-result" class="result" role="status" aria-live="polite" hidden></div>
+      <section id="view-projects" class="app-view" aria-labelledby="page-title">
+        <div class="page-heading"><div><h1 id="page-title">Deine WoltLab-Projekte</h1><p>Lokale Installationen einrichten, öffnen und verwalten.</p></div><button class="button primary" data-create-open hidden><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg>Neues Projekt</button></div>
+        <div class="workspace-status"><span id="host-summary">Voraussetzungen werden geprüft …</span><button class="text-button" data-view="system">Systemprüfung öffnen</button></div>
+        <div class="section-head"><h2>Projektübersicht</h2><span id="project-count" class="hint" aria-live="polite">Lade …</span></div>
+        <section id="instances" class="project-list" aria-label="WoltLab-Projekte" aria-busy="true"><div class="empty">Projekte werden geladen …</div></section>
+      </section>
+      <section id="view-system" class="app-view" aria-labelledby="system-heading" hidden>
+        <div class="page-heading"><div><h1 id="system-heading">Systemprüfung</h1><p>Die Workbench prüft, ob dein Gerät für WoltLab bereit ist.</p></div><button id="system-refresh" class="button">Erneut prüfen</button></div>
+        <div id="system-report" aria-live="polite">Voraussetzungen werden geprüft …</div>
+        <aside class="support-note"><strong>Ein gemeinsamer Einstieg</strong><p>Linux und macOS: <code>./setup.sh</code>. Windows: <code>Start-wsc-local.cmd</code> öffnet die Workbench über WSL2. Die einmalige HTTPS-Freigabe wird im Terminal begleitet.</p></aside>
+      </section>
+      <section id="view-help" class="app-view" aria-labelledby="help-heading" hidden>
+        <div class="page-heading"><div><h1 id="help-heading">Hilfe &amp; Einstieg</h1><p>Eine Workbench für WoltLab Suite – mit verständlichen Standardwerten.</p></div></div>
+        <div class="help-grid"><article class="help-card"><h2>In drei Schritten zur fertigen Suite</h2><ol><li><strong>Projekt vorbereiten.</strong> Name und Suite-Version wählen. Die passende Umgebung wird vorgeschlagen.</li><li><strong>Login-Daten prüfen.</strong> Erzeugte Zugangsdaten ansehen und bei Bedarf ändern.</li><li><strong>Einrichten.</strong> Die Workbench installiert WoltLab automatisch und prüft Website und Anmeldung.</li></ol></article><article class="help-card"><h2>Wo finde ich was?</h2><p><strong>Zugangsdaten:</strong> im Projektbereich „Zugangsdaten“.<br><strong>Start, Stopp und Website:</strong> direkt in der Projektkarte.<br><strong>Mail-Test und Logs:</strong> im Bereich „Dienste“.<br><strong>Backup und Server-Export:</strong> unter „Sicherungen“.</p><p>Das teilbare Projektprofil enthält keine Passwörter. Die CLI <code>./wsc</code> verwaltet dieselben Projekte wie das Dashboard.</p></article></div>
+        <article class="help-card"><h2>Offizielle WoltLab-Anleitungen</h2><nav class="help-links" aria-label="WoltLab-Handbuch"><a href="https://manual.woltlab.com/de/" target="_blank" rel="noopener">Handbuch ↗</a><a href="https://manual.woltlab.com/de/php-compatibility/" target="_blank" rel="noopener">PHP-Kompatibilität ↗</a><a href="https://manual.woltlab.com/de/backup/" target="_blank" rel="noopener">Datensicherung ↗</a><a href="https://manual.woltlab.com/de/server-migration/" target="_blank" rel="noopener">Serverumzug ↗</a><a href="https://manual.woltlab.com/de/file-uploads/" target="_blank" rel="noopener">Datei-Uploads ↗</a><a href="https://manual.woltlab.com/de/recovery-tool/" target="_blank" rel="noopener">Recovery ↗</a></nav><p class="icon-attribution">Icons: <a href="https://fontawesome.com/" target="_blank" rel="noopener">Font Awesome Free 7.3.1</a> · <a href="/icons-license.txt" target="_blank" rel="noopener">Lizenz und Attribution</a></p></article>
+      </section>
+      <details id="operation-details" class="log-details"><summary>Protokoll der letzten Aktion</summary><pre id="output">Bereit.</pre></details>
+      <footer><span>WoltLab lokal entwickeln. Login-Daten bleiben auf deinem Gerät.</span><span>Oberflächenstand <code id="ui-version"><!--ui-version--></code></span></footer>
+    </main>
   </div>
-</div>
-
-<div id="toast-area"></div>
-
-<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmTitle">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmTitle" data-i18n="confirmTitle">Bestätigen</h5>
-        <button type="button" class="close" data-dismiss="modal" data-i18n-aria="close" aria-label="Schließen"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p id="confirmBody" class="mb-0"></p>
-        <div id="confirmExtra" class="mt-3 d-none">
-          <label for="confirmInput" class="small font-weight-bold"><span data-i18n="resetType">Zur Sicherheit tippe:</span> <code>RESET</code></label>
-          <input type="text" id="confirmInput" class="form-control" autocomplete="off" placeholder="RESET">
-          <div class="custom-control custom-checkbox mt-2">
-            <input type="checkbox" class="custom-control-input" id="confirmPurge">
-            <label class="custom-control-label small" for="confirmPurge" data-i18n="resetPurge">
-              Auch Sicherungen und Zertifikate löschen
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" data-i18n="cancel">Abbrechen</button>
-        <button type="button" class="btn btn-danger" id="confirmOk" data-i18n="continue">Fortfahren</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/js/adminlte.min.js"></script>
-<script src="/i18n.js?v=4"></script>
-<script src="/app.js?v=11"></script>
+  <dialog id="create-dialog" aria-labelledby="create-heading">
+    <div class="dialog-header"><div><p class="eyebrow">1 · Projekt vorbereiten</p><h2 id="create-heading">Neues WoltLab-Projekt</h2></div><button class="icon-button" type="button" data-create-close aria-label="Dialog schließen">×</button></div>
+    <form id="create-form" class="create-panel">
+      <p id="create-error" class="result error" role="alert" hidden></p>
+      <div class="create-fields"><div><label for="project-name">Projektname</label><input id="project-name" name="project" required autofocus maxlength="40" pattern="[a-z0-9][a-z0-9-]*" autocomplete="off" aria-describedby="name-hint"><p class="hint" id="name-hint">Zum Beispiel mein-forum. Kleinbuchstaben, Zahlen und Bindestriche.</p></div><div><div class="label-with-info"><label for="suite-version">WoltLab Suite</label><button type="button" class="info-button" data-info="versions" aria-label="Versionen und Installationsquellen erklären"><svg class="fa-icon" aria-hidden="true"><use href="/icons.svg#circle-info"></use></svg></button></div><select id="suite-version" name="suite"><option value="6.2">6.2 · Standardprofil</option><option value="6.3">6.3 · Alpha-Testbuild</option><option value="6.1">6.1</option><option value="6.0">6.0 · Legacy</option><option value="5.5">5.5 · Legacy</option></select><p class="hint" id="suite-hint"></p></div></div>
+      <div class="archive-source"><label for="source-mode">Installationsquelle</label><select id="source-mode" name="source"><option value="download">WoltLab Core automatisch laden</option><option value="zip">Eigenes Installations-ZIP</option></select><div id="archive-input" hidden><label for="source-archive">WoltLab-Installationsarchiv</label><input id="source-archive" type="file" accept=".zip,application/zip"><p class="hint">ZIP mit install.php, maximal 256 MiB. Die Suite-Version muss zum Archiv passen.</p></div></div>
+      <label id="version-consent" class="consent" hidden><input id="version-ack" type="checkbox"><span id="version-consent-label"></span></label>
+      <details class="advanced-settings"><summary>Technik und Adminzugang anpassen <span class="hint">optional</span></summary><div class="advanced-grid">
+        <div><label for="webserver">Webserver</label><select id="webserver" name="webserver"><option value="nginx-php-fpm">Nginx + PHP-FPM · empfohlen</option><option value="apache">Apache</option></select></div>
+        <div><label for="php-version">PHP-Profil</label><select id="php-version" name="php"><option value="8.4">PHP 8.4 · empfohlen</option><option value="8.3">PHP 8.3</option><option value="8.2">PHP 8.2</option></select></div>
+        <div><label for="database">Datenbank</label><select id="database" name="database"><option value="mariadb">MariaDB · empfohlen</option><option value="mysql8">MySQL 8</option></select></div>
+        <div><label for="admin-username">Adminname</label><input id="admin-username" name="admin_username" value="admin" maxlength="40" autocomplete="username"></div>
+        <div><label for="admin-email">Admin-E-Mail</label><input id="admin-email" name="admin_email" type="email" value="admin@example.test" autocomplete="email"></div>
+        <div><label for="admin-password">Eigenes Adminpasswort</label><input id="admin-password" name="admin_password" type="password" minlength="12" autocomplete="new-password"><p class="hint">Leer lassen: sicher erzeugen. Eigene Passwörter: mindestens 12 Zeichen.</p></div>
+      </div></details>
+      <div class="form-footer"><p class="hint">Die erzeugten Login-Daten siehst du im nächsten Schritt. WoltLab wird erst installiert, wenn du „Einrichten“ klickst.</p><button class="button primary" type="submit">Projekt vorbereiten</button></div>
+    </form>
+  </dialog>
+  <dialog id="action-dialog" aria-labelledby="action-heading" aria-describedby="action-description">
+    <div class="dialog-header"><h2 id="action-heading"></h2><button class="icon-button" type="button" data-action-dialog-close aria-label="Dialog schließen">×</button></div>
+    <form id="action-form" class="action-dialog-body"><p id="action-description"></p><div id="action-content" class="dialog-content"></div><div id="action-input-wrap" hidden><label id="action-input-label" for="action-input"></label><input id="action-input" aria-describedby="action-input-error"><p id="action-input-error" class="field-error" role="alert" hidden></p></div><div class="dialog-actions"><button class="button" id="action-cancel" type="button">Abbrechen</button><button class="button primary" id="action-accept" type="submit">Weiter</button></div></form>
+  </dialog>
+  <script src="/locale-en.js" defer></script>
+  <script src="/i18n.js" defer></script>
+  <script src="/ui_helpers.js" defer></script>
+  <div id="toast-area" aria-live="polite" aria-atomic="true"></div><script src="/app.js" defer></script>
 </body>
 </html>

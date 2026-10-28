@@ -5,8 +5,8 @@ services:
     build: .
     container_name: ${NAME_PREFIX:-woltlab}-web
     ports:
-      - "${HTTP_PORT:-8080}:80"
-      - "${HTTPS_PORT:-443}:443"
+      - "127.0.0.1:${HTTP_PORT:-8080}:80"
+      - "127.0.0.1:${HTTPS_PORT:-443}:443"
     volumes:
       - ./woltlab:/var/www/html
       - ./config/php.ini:/usr/local/etc/php/php.ini:ro
@@ -26,12 +26,12 @@ services:
       WCFSETUP_DBNAME: ${MYSQL_DATABASE:-woltlab}
 
   database:
-    image: mysql:8.0
+    image: mysql:8.0.46
     container_name: ${NAME_PREFIX:-woltlab}-mysql
     ports:
-      - "${MYSQL_PORT:-3307}:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3307}:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ${LEGACY_DB_PATH:-mysql-data}:/var/lib/mysql
     networks:
       - wsc-net
     environment:
@@ -48,10 +48,10 @@ services:
       start_period: 25s
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin/phpmyadmin@sha256:42a200db07b4e70fbf32c594ad4521cf16399b8e54bbb5adceae98e7566dfbeb
     container_name: ${NAME_PREFIX:-woltlab}-phpmyadmin
     ports:
-      - "${PHPMYADMIN_PORT:-8081}:80"
+      - "127.0.0.1:${PHPMYADMIN_PORT:-8081}:80"
     networks:
       - wsc-net
     environment:
@@ -63,11 +63,11 @@ services:
         condition: service_healthy
 
   mailhog:
-    image: mailhog/mailhog
+    image: mailhog/mailhog@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea
     container_name: ${NAME_PREFIX:-woltlab}-mailhog
     ports:
-      - "${MAILHOG_UI_PORT:-8025}:8025"
-      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILHOG_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILHOG_SMTP_PORT:-1025}:1025"
     networks:
       - wsc-net
 

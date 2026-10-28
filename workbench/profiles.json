@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "source": "https://manual.woltlab.com/de/php-compatibility/",
+  "profiles": [
+    {
+      "suite": "5.5",
+      "php_min": "7.4.21",
+      "php_max": "8.1",
+      "legacy": true,
+      "channel": "stable"
+    },
+    {
+      "suite": "6.0",
+      "php_min": "8.1.2",
+      "php_max": "8.3",
+      "legacy": true,
+      "channel": "stable"
+    },
+    {
+      "suite": "6.1",
+      "php_min": "8.1.2",
+      "php_max": "8.3",
+      "legacy": false,
+      "channel": "stable"
+    },
+    {
+      "suite": "6.2",
+      "php_min": "8.1.2",
+      "php_max": "8.4",
+      "legacy": false,
+      "channel": "stable",
+      "requires_https": true
+    },
+    {
+      "suite": "6.3",
+      "php_min": "8.4.23",
+      "php_max": "8.5",
+      "legacy": false,
+      "channel": "development",
+      "unofficial": true,
+      "requires_https": true,
+      "source": "https://github.com/YoureCom/wsc-63-testbuilds"
+    }
+  ]
+}

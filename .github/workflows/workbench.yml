@@ -1,0 +1,49 @@
+name: Workbench platform checks
+on: [push, pull_request]
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.10', '3.13']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests -v
+      - name: Python syntax
+        run: python -m compileall -q workbench scripts/panel_server.py scripts/panel_version.py
+      - name: Dashboard JavaScript syntax
+        run: node --check panel/app.js
+      - name: Appearance JavaScript syntax
+        run: node --check panel/theme.js
+      - name: Localization logic syntax
+        run: node --check panel/i18n.js
+      - name: English catalog syntax
+        run: node --check panel/locale-en.js
+      - name: Dialog JavaScript syntax
+        run: node --check panel/ui_helpers.js
+      - name: Bash entry points
+        if: runner.os != 'Windows'
+        run: bash -n setup.sh start.sh panel.sh scripts/legacy/setup.sh scripts/legacy/start.sh
+      - name: Windows starter syntax
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/Start-wsc-local.ps1", [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count) { $errors | Format-List; exit 1 }
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui

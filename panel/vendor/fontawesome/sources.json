@@ -1,0 +1,33 @@
+{
+  "version": "7.3.1",
+  "source": "https://raw.githubusercontent.com/FortAwesome/Font-Awesome/7.3.1/svgs/solid/",
+  "sha256": {
+    "circle-info": "dff5b9889006d5a31f890f50a123e1c03e1f03dfdf7709f1bb4912e686fefb30",
+    "moon": "89a6a9ced6bc0431a2bab6a1674c19c7ed300a13173c09da80b85a15705c878a",
+    "sun": "e81c9f3c594c2abde54b8d5a59a68e56fc55ea39e79d9590bc19c75a585b9d38",
+    "desktop": "3616ba8ee3fdd157c4dfcb08c8bf2c38fda71fd53e113f7e35d81e4da521660c",
+    "folder-open": "aff3c50819cdb466c1025555b84a577885cd1b4de93f8d11fc055977712000db",
+    "plus": "5bbf1eb16bee81898fc77d090ab6964606c818e293eec933feb092690c51fbbd",
+    "play": "e9a97623fbb11c9b6ba9452c394f14c86f89805135484f689c27b31b8a239c97",
+    "stop": "dcc3dc3bc8f2c87ddb10972bd9a16722984409df82946e054d1e63c07db7bfeb",
+    "gear": "36f00f6b2f6aaf9956d9c79911d7e3695d978cd378692e714e9e5570f3099f63",
+    "shield-halved": "e38d93113f5dc615551448d8bc189f21daa408d942cd71a43877be5dbedca6a3",
+    "database": "428df86e084deb406c0f636c5c2115b03e0dc4241427f2fc02caf867f0ee9f0c",
+    "box-archive": "be3ee358116de982c01f52d684495b6ab3c18442c0d43c06c5c7e1b8f65f5aa4",
+    "truck-arrow-right": "817dedb68bc4bc6bd58cfc4a1ac5fd8d1a71e9d41a401f283ebfc1b26d5ce080",
+    "arrow-up-right-from-square": "0b5332a63c92fc1f3f1cd8ccfae90cb2e70047a76f50a79a15db6c413b77edab",
+    "wrench": "48cb34fbc8072e18800f870543479cc0c10483ed5291e385fd6002802e39520e",
+    "copy": "5889ffa239ce82860a0d5b34c92b5b4f08e0302faf7b4c3e3b99ed3f841ec3da",
+    "key": "00b1116eff8b8f1febbfe5e50ed4b8af24151c5b82d0d6732fec944d4c067e93",
+    "arrow-rotate-left": "cb327c84dc92264577dec607ed599adec6b857f701e770d42ccc9cce3ea998b6",
+    "trash-can": "81656d819f746a348c621a4c5cfbf2f913ff0d475bead8e59ff86651e35d187e",
+    "upload": "2fb299a5c1df2720cdac966d8457aa5260d2edc4124d835a10a5bcf30b5a7513",
+    "check": "9a288b0cada08192d5edeffe42a31e87e9b219a686cfe9fb7b419b22bce3601e",
+    "xmark": "910f3ba41ec9797aafa46d4cc42fa665ca84a1f24dce09b038772dc65336143c",
+    "heart-pulse": "600357c68f2ee7b5a8064d8c6852e58dc2440167dfd740d3ea59f2e0a34050c5",
+    "life-ring": "e02ae1a68c0ced2e159c74505d00960e02276fa8906530c3bd3185e35d663dd2",
+    "folder-tree": "644bf52233d5c90fe2af43939b2e63f1e1c30f08af9e806fd6618808df2c2ac4",
+    "globe": "c5dd6f0fd9f97240a25047865279f970f055f8ba3f9df623720ee6d00056d6d3",
+    "server": "0c63b592f34bc3c6038be25643aa8dda62809d85e9559ec907ed85b5bc143e46"
+  }
+}
