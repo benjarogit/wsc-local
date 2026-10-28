@@ -490,6 +490,7 @@
     document.querySelectorAll('.app-view').forEach(view=>view.hidden=view.id!==H`view-${name}`);
     document.querySelectorAll('.app-nav [data-view]').forEach(button=>{const active=button.dataset.view===name;button.classList.toggle('active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
     if(name==='system'&&systemReady===null) loadSystem();
+    document.dispatchEvent(new CustomEvent('workbench-view',{detail:name}));
     const heading=document.querySelector(H`#view-${name} h1`);heading.tabIndex=-1;heading.focus({preventScroll:true});
   }
   async function loadSystem() {
@@ -605,10 +606,11 @@
   async function initialize() {
     await Promise.allSettled([refresh(),loadSystem(),loadCatalog()]);
     try{const saved=JSON.parse(sessionStorage.getItem('wsc-language-view'));sessionStorage.removeItem('wsc-language-view');if(saved){showView(saved.view);if(saved.name&&knownProjects?.has(saved.name))await activateProject(saved.name,saved.tab||'overview');}}catch(_){}
+    let serverJobs;try{serverJobs=await api('/api/jobs');if(serverJobs.updating)return;}catch(_){}
     let pending;
     try { pending = JSON.parse(localStorage.getItem('wsc-pending-install')); } catch (_) { try { localStorage.removeItem('wsc-pending-install'); } catch (_) {} }
     if (!pending?.id) {
-      try {const data=await api('/api/jobs');const completed=finishedJobs();const job=data.items?.find(item=>!completed.includes(item.job_id)&&!(item.action==='acp_login'&&item.state!=='running')&&(item.action==='host_install'||knownProjects?.has(item.name)));if(job){pending={id:job.job_id,name:job.name,action:job.action};rememberJob(job);}} catch (_) { /* A previous server may not offer discovery. */ }
+      try {const data=serverJobs||await api('/api/jobs');const completed=finishedJobs();const job=data.items?.find(item=>!completed.includes(item.job_id)&&!(item.action==='acp_login'&&item.state!=='running')&&(item.action==='host_install'||knownProjects?.has(item.name)));if(job){pending={id:job.job_id,name:job.name,action:job.action};rememberJob(job);}} catch (_) { /* A previous server may not offer discovery. */ }
     }
     if (!pending?.id) return;
     if (pending.action!=='host_install' && pending.name && knownProjects && !knownProjects.has(pending.name)) { try {localStorage.removeItem('wsc-pending-install');} catch (_) {} return; }
@@ -626,6 +628,7 @@
     if(recoveredResult) { try { await presentToolResult(pending.action, pending.name, recoveredResult); } catch(error) { showResult(t('Der Vorgang wurde abgeschlossen, aber die Anleitung konnte nicht angezeigt werden. ')+error.message,true); } }
   }
 
+  window.WorkbenchOperations={begin:beginOperation,end:endOperation,result:showResult,refresh,busy:()=>operationInProgress};
   initialize();
   window.setInterval(refresh, 12000);
 })();

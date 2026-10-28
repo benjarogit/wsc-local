@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from panel_version import panel_version
 from host_system import detect_host, open_dashboard, print_report, configure_trust, trust_ready
 import shutil
+import updater
 
 
 def workspace_id() -> str:
@@ -30,7 +31,8 @@ def workspace_id() -> str:
 def request(url: str, payload: dict | None = None, token: str = "") -> dict | None:
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode() if payload is not None else None, headers={"Content-Type": "application/json", "X-Panel-Token": token})
-        with urllib.request.urlopen(req, timeout=3) as response:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(req, timeout=3) as response:
             return json.load(response)
     except (OSError, ValueError, urllib.error.URLError):
         return None
@@ -90,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-open", action="store_true", help="Browser nicht automatisch öffnen")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PANEL_PORT", "9099")))
     parser.add_argument("--check", action="store_true", help="Voraussetzungen prüfen und beenden")
+    parser.add_argument("--stop", action="store_true", help="Eigenes Dashboard am gewählten Port beenden")
     parser.add_argument("--setup", action="store_true", help="Voraussetzungen prüfen und das Dashboard öffnen")
     args = parser.parse_args(argv)
     if detect_host()["kind"] == "windows":
@@ -99,6 +102,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("Dashboard-Port muss zwischen 1024 und 65535 liegen.")
     if args.check:
         return 0 if print_report() else 1
+    if updater.state(ROOT).get("phase") in {"checking","installing"}:
+        print("Ein Update läuft. Warte auf den Dashboard-Neustart.", file=sys.stderr)
+        return 1
+    if args.stop:
+        base=f"http://127.0.0.1:{args.port}"
+        status=request(base+"/api/version")
+        if status: stop_older_server(base,status)
+        print("Dashboard beendet.")
+        return 0
     if args.setup:
         if shutil.which("mkcert") and not trust_ready():
             try:

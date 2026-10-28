@@ -29,3 +29,6 @@ __pycache__/
 
 # Optional development dependencies
 node_modules/
+
+# Release build output
+dist/

@@ -1,5 +1,26 @@
 # Änderungen / Changelog
 
+## 1.2.0 – 2026-10-28
+
+### Deutsch
+
+- Neue Update-Meldung und eigener Bereich **Updates** in deutscher und englischer Oberfläche; aktuelle Version im Dashboard-Fußbereich. Hintergrundprüfung mit Cache, manuelles erneutes Prüfen und Release-Hinweise.
+- Automatische Workbench-Updates über Dashboard und `./wsc update`, wahlweise manuelle Anleitung. Git wird per Fast-forward aktualisiert; ZIP-Dateien werden anhand ihres Dateikatalogs ausgetauscht. Die erste Aktualisierung von 1.1.0 oder älter erfolgt noch manuell.
+- Feste offizielle Release-Quelle, SHA-256- und Dateiprüfung, Schutz persönlicher Daten, lokaler Änderungen und kollidierender Dateien. Laufende Aufträge und gleichzeitig eintreffende Änderungen blockieren den Programmaustausch.
+- Wiederherstellungsstand vor jedem Update, persistenter Fortschritt über den Dashboard-Neustart und Rückkehr zum alten Programm bei Schreib- oder Startfehlern. Zwischenzeitlich geänderte Dateien werden bei der Wiederherstellung geschützt.
+- Neue GitHub-Release-Automation: stabiler Versions-Tag, Prüfungen des exakten Commits, Abgleich von VERSION und Changelog, ZIP mit Dateikatalog und Prüfsummen, Veröffentlichung erst nach erfolgreichen Tests.
+- Zusätzliche Tests für ZIP und Git, Fehlerfälle, echte Dashboard-Neustarts, Wiederherstellung, Browser-Wiederverbindung und Paketbau. Erweiterte Anleitungen und aktuelle Screenshots.
+
+### English
+
+- Update notifications, a dedicated Updates page, release notes and a visible application version in both dashboard languages.
+- Guided automatic application updates for Git and ZIP installations, with preview, confirmation and offline manual instructions. Users on 1.1.0 or earlier perform the first upgrade manually.
+- Official stable release downloads, SHA-256 and managed-file verification, local-change and collision guards, and preserved project data and credentials.
+- Recovery points, persistent progress across a real dashboard restart and automatic recovery after file or startup failures. Tests include a live browser update and a failed replacement followed by a verified restart of the old version.
+- Tag-driven GitHub release automation tests the pinned commit and verifies the version before building and publishing archives, file manifests and checksums.
+
+**Geltungsbereich / Scope:** Aktualisiert wird die Workbench, nicht die WoltLab-Suite. Das 6.3-Profil bleibt ein inoffizieller Entwicklungsbuild. Native Paketinstallationen und vollständige Docker-Abnahmen auf macOS/Windows bleiben gesonderte Zielsystemtests; die CI prüft portable Logik auf allen drei Systemen.
+
 ## 1.1.0 – 2026-10-28
 
 - Neue WoltLab-Installationen übernehmen die gewählte Dashboard-Sprache für Suite-Standard und Adminbenutzer. CLI: Systemsprache bzw. `--language de|en`; gespeicherte Auswahl bei Wiederaufnahme. Sprachprüfung vor Freigabe. / New installations inherit the dashboard language, with CLI locale fallback, explicit override, and final language verification.

@@ -2010,6 +2010,11 @@ def parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
     check = sub.add_parser("check", help="Voraussetzungen auf diesem Gerät prüfen")
     check.add_argument("--json", action="store_true")
+    update = sub.add_parser("update", help="Workbench-Updates prüfen und installieren")
+    update.add_argument("--check", action="store_true", help="Nur nach neuen Releases suchen")
+    update.add_argument("--guide", action="store_true", help="Manuelle Anleitung anzeigen")
+    update.add_argument("--yes", action="store_true", help="Angezeigtes Update ohne Rückfrage installieren")
+    update.add_argument("--json", action="store_true", help="Update-Plan als JSON ausgeben")
     c = sub.add_parser("create", help="Neues WoltLab-Projekt anlegen")
     c.add_argument("name"); c.add_argument("--suite", default="6.2"); c.add_argument("--php"); c.add_argument("--database", choices=("mariadb", "mysql8"), default=None); c.add_argument("--webserver", choices=("nginx-php-fpm", "apache"), default=None); c.add_argument("--profile"); c.add_argument("--port", type=int); c.add_argument("--zip"); c.add_argument("--download-core", action="store_true"); c.add_argument("--version"); c.add_argument("--sha256"); c.add_argument("--legacy", dest="legacy_ack", action="store_true"); c.add_argument("--experimental", dest="experimental_ack", action="store_true", help="inoffizielles Entwicklungsprofil ausdrücklich bestätigen")
     x = sub.add_parser("install", help="WoltLab automatisch einrichten"); x.add_argument("name"); x.add_argument("--language", choices=("de", "en"), help="Installationssprache; Standard: Systemsprache bzw. gespeicherte Auswahl")
@@ -2040,6 +2045,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if print_report(args.json) else 1
         if detect_host()["kind"] == "windows":
             raise ValueError("Unter Windows die CLI in WSL2 ausführen. Start-wsc-local.cmd öffnet das Dashboard.")
+        if args.command == "update":
+            from updater import cli_update
+            return cli_update(args)
         if args.command == "create":
             print(create_project(args))
         elif args.command == "install": print(install_woltlab(args.name, args.language))

@@ -2,7 +2,7 @@
 
 **[Deutsch (default)](README.md) · [English](README.en.md)**
 
-**Current version: [v1.1.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.1.0)** · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) · [Changes](CHANGELOG.md)
+**Current version: [v1.2.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.0)** · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) · [Changes](CHANGELOG.md)
 
 Prepare, automatically install, and manage local WoltLab Suite installations through a clear browser dashboard and the same CLI. Multiple projects run separately, each with its own files, database, ports, and credentials.
 
@@ -37,13 +37,19 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/prerequisites-en.png" title="Prerequisites (example)"><img src="docs/screenshots/prerequisites-en.png" alt="Prerequisites (example)" width="160"><br><sub>Prerequisites (example)</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/mobile-en.png" title="Mobile view"><img src="docs/screenshots/mobile-en.png" alt="Mobile view" height="110"><br><sub>Mobile view</sub></a></td>
   </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/updates-en.png" title="Updates (example)"><img src="docs/screenshots/updates-en.png" alt="Updates (example)" width="160"><br><sub>Updates (example)</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-confirm-en.png" title="Confirm update"><img src="docs/screenshots/update-confirm-en.png" alt="Confirm update" width="160"><br><sub>Confirm update</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-guide-en.png" title="Update instructions"><img src="docs/screenshots/update-guide-en.png" alt="Update instructions" width="160"><br><sub>Update instructions</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-progress-en.png" title="Update progress"><img src="docs/screenshots/update-progress-en.png" alt="Update progress" width="160"><br><sub>Update progress</sub></a></td>
+  </tr>
 </table>
 
-These screenshots show the current version with real WoltLab test projects; passwords stay masked. The prerequisite dialog illustrates a missing HTTPS approval. Only that check result was simulated for the image; no system packages were changed. [Capture details](docs/screenshots/README.md)
+These screenshots show the current version with real WoltLab test projects; passwords stay masked. Prerequisite and update dialogs illustrate labeled examples: missing HTTPS approval and a local test update from 1.2.0 to 1.2.1. Update screenshots come from an actual application replacement and dashboard restart in an isolated test directory; 1.2.1 is not a public release. [Capture details](docs/screenshots/README.md)
 
 ## Quick start
 
-First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
+First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
 
 ### Install prerequisites once
 
@@ -163,12 +169,17 @@ Exports remove Workbench-managed local database credentials from `config.inc.php
 
 ## Updates and older installations
 
+From **1.2.0**, the Workbench announces new stable releases in the dashboard. **Updates** offers an installation preview and automatic update, or manual instructions. Git and ZIP installations are detected. Checksums, local-change protection, a recovery point and automatic dashboard restart are part of the flow; WoltLab projects and credentials are preserved.
+
 ```bash
-git pull --ff-only
-./panel.sh
+./wsc update --check   # Find a newer release
+./wsc update           # Install after preview and confirmation
+./wsc update --guide   # Follow manual instructions instead
 ```
 
-The starter updates only the dashboard server belonging to this repository and protects running tasks. Version identifiers prevent changes through outdated interface files. Project data is stored outside the repository.
+**From 1.1.0 or earlier:** perform the first upgrade with `git pull --ff-only` and `./start.sh`. For ZIP installations, merge the new application files into the existing directory while preserving personal data. The new updater is then available for future releases. [Updates, conflicts and recovery](docs/updating.md#english)
+
+**Releases are automated:** a new version tag triggers GitHub checks; after they pass, the workflow publishes the ZIP and SHA-256 checksum. The current version is visible at the top of this README and in the dashboard footer.
 
 The previous single-instance stack is explicitly available through `./setup.sh --legacy` and `./start.sh --legacy`. `tools.sh` and `reset.sh` belong to that older stack. Use the dashboard or `./wsc` for Workbench projects.
 

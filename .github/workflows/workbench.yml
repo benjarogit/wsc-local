@@ -1,5 +1,14 @@
 name: Workbench platform checks
-on: [push, pull_request]
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        required: false
+        default: ''
+        type: string
 jobs:
   portable:
     strategy:
@@ -10,6 +19,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
@@ -18,6 +29,8 @@ jobs:
         run: python -m compileall -q workbench scripts/panel_server.py scripts/panel_version.py
       - name: Dashboard JavaScript syntax
         run: node --check panel/app.js
+      - name: Update interface syntax
+        run: node --check panel/updates.js
       - name: Appearance JavaScript syntax
         run: node --check panel/theme.js
       - name: Localization logic syntax
@@ -44,9 +57,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
+      - name: Real dashboard update and browser reconnection
+        env:
+          WSC_UPDATE_BROWSER_TEST: '1'
+        run: python -m unittest discover -s tests -p test_update_restart.py -v

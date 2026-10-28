@@ -21,7 +21,7 @@ class BackgroundJobTests(unittest.TestCase):
         self.release = threading.Event()
         self.started = threading.Event()
         self.calls = []
-        panel.JOBS.clear()
+        panel.JOBS.clear();panel.UPDATING=False;panel.STOPPING=False
         def command(*args):
             self.calls.append(args)
             self.started.set()
@@ -198,6 +198,44 @@ class BackgroundJobTests(unittest.TestCase):
                 time.sleep(.005)
             self.assertEqual(job['state'],'done')
             self.assertIn(('install',name,'--language',language),self.calls)
+
+    def test_self_update_blocks_project_mutations_and_requires_confirmation(self):
+        root=Path(self.temp.name);(root/'var').mkdir(exist_ok=True)
+        def apply(*args):
+            self.started.set();self.release.wait(5)
+            raise ValueError('SHA-256 mismatch')
+        with patch.object(panel,'ROOT',root),patch.object(panel.updater,'apply',side_effect=apply):
+            code,_=self.request('/api/updates/apply',{'version':'1.2.1'})
+            self.assertEqual(code,400)
+            code,task=self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})
+            self.assertEqual(code,202);self.assertTrue(self.started.wait(1))
+            try:
+                self.assertEqual(self.request('/api/workbench',{'action':'snapshot','name':'project'})[0],409)
+                self.assertEqual(self.request('/api/server/stop',{'workspace_id':panel.WORKSPACE_ID})[0],409)
+                self.release.set()
+                for _ in range(100):
+                    _,data=self.request('/api/updates/state')
+                    if data.get('phase')=='failed':break
+                    time.sleep(.01)
+                self.assertEqual(data['phase'],'failed');self.assertIn('SHA-256',data['error'])
+                self.assertFalse(panel.UPDATING)
+            finally:panel.UPDATING=False
+
+    def test_update_waits_for_running_project_operation(self):
+        self.request('/api/workbench',{'action':'snapshot','name':'project'})
+        self.assertEqual(self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})[0],409)
+
+    def test_update_cannot_race_a_direct_credential_mutation(self):
+        responses=[]
+        def save(*args):self.started.set();self.release.wait(5)
+        with patch.object(panel,'save_setup_credentials',side_effect=save):
+            worker=threading.Thread(target=lambda:responses.append(self.request('/api/workbench',{'action':'save_credentials','name':'project','username':'admin','email':'admin@example.test','password':''})))
+            worker.start();self.assertTrue(self.started.wait(1))
+            self.assertGreater(panel.ACTIVE_REQUESTS,0)
+            self.assertEqual(self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})[0],409)
+            self.release.set();worker.join(2)
+            self.assertEqual(responses[0][0],200)
+            self.assertEqual(panel.ACTIVE_REQUESTS,0)
 
     def test_restore_validates_selection_before_creating_job(self):
         code, _=self.request('/api/workbench', {'action':'restore','name':'project','snapshot':'../other'})

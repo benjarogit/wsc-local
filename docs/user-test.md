@@ -159,3 +159,17 @@ Die erste GitHub-Matrix fand einen zu strengen Testvergleich für aufgelöste Te
 ## Aktualisierte Dokumentationsbilder (28.10.2026)
 
 Die README-Galerien wurden auf den Produktstand `0e2fb1d` aktualisiert: großes Startseitenbild plus 16 kleine, anklickbare Vorschauen in vier zentrierten Reihen. Insgesamt liegen 34 aktuelle PNG-Aufnahmen in Deutsch und Englisch vor, einschließlich Sprachübernahme vor der Einrichtung, tatsächlicher Installation, direkt angemeldetem ACP, Dark Mode und mobiler Ansicht. Die Voraussetzungen-Vorschau zeigt einen ausdrücklich gekennzeichneten Beispielfall ohne Installation von Systempaketen. Alle Bildziele und PNG-Dateien sowie GitHubs deutsche und englische Darstellung wurden geprüft. Details und Bildzuordnung: [Screenshot-Verzeichnis](screenshots/README.md).
+
+
+## Workbench-Updates und automatische Releases: 1.2.0 (28.10.2026)
+
+- 61 Python-Tests und 21 Chromium-Tests prüfen den neuen Update-Bereich, Vorschau und Abbrechen, Offline-Anleitung, Sprachwechsel, lokale Änderungen und das Wiederverbinden nach einem Dashboard-Neustart.
+- Echte Programmaustausche in isolierten ZIP-Installationen: verifizierter Download-Dateikatalog, Austausch von 1.2.0 auf ein lokales Testpaket 1.2.1, Neustart des tatsächlichen Dashboard-Prozesses und Wiederverbindung des echten Browsers. Die Testversion 1.2.1 wurde nicht öffentlich veröffentlicht.
+- Ein absichtlich ungültiges neues Dashboard löste Wiederherstellung des alten Programms und dessen tatsächlichen Neustart aus. Wiederherstellungserfolg wird erst nach einem erfolgreichen Versionsabruf gemeldet. Ein simulierter Schreibfehler wurde ebenfalls ohne Verlust privater Dateien zurückgesetzt.
+- Eine laufende echte WSC-6.2-Website war vor und nach den Update-/Rückfalltests per HTTPS erreichbar. Ihre drei Docker-Container behielten dieselben IDs; die Updates haben sie nicht neu erstellt.
+- Git wurde in echten lokalen Test-Repositories per Fast-forward aktualisiert und zurückgesetzt. Private Dateien, Codeänderungen, Kollisionen, Prüfsummenfehler, unzulässige ZIP-Pfade, Verknüpfungen und fehlender Speicher werden abgefangen. Das ältere veröffentlichte 1.1.0-ZIP wurde gegen den offiziellen GitHub-Dateikatalog geprüft.
+- Laufende Hintergrundaufträge und ein gleichzeitig bearbeiteter direkter Zugangsdaten-Request blockieren ein Update. Lokale Kontrollanfragen umgehen HTTP-Proxys; Authentifizierungsdaten werden nicht an einen konfigurierten Netzwerkproxy gesendet.
+- Die Release-Paketierung verwendet ausschließlich den geprüften Commit, stimmt Tag und VERSION ab und erzeugt einen Dateikatalog und SHA-256-Dateien. Ein falscher oder instabiler Tag wird abgelehnt. Der Tag-Workflow führt die Prüfungen des fest aufgelösten Commits vor der Veröffentlichung aus.
+- README-Dateien, Hauptbilder, Galerien, Update-Beispiele und ältere Dokumentations-Bildlinks wurden aktualisiert. Die Testprojekte und vorbereiteten Dokumentationsprojekte wurden anschließend vollständig entfernt.
+
+Native macOS-/Windows-Paketinstallationen und vollständige WSL2-/Docker-Desktop-Abnahmen bleiben separate Zielsystemtests. Native Windows-CI überspringt die zwei vollständigen Dashboard-Neustarttests, weil der Produktstart unter Windows über WSL2 erfolgt; portable Update- und Git-Logik wird dort getestet.

@@ -25,6 +25,7 @@ from cli import PROJECTS as WORKBENCH_PROJECTS, PROFILES, project_names, project
 from host_system import system_report
 from acp_login import prepare as prepare_acp_login
 from host_install import installation_plan, launch_installation
+import updater
 PANEL_DIR = ROOT / "panel"
 ENV_FILE = ROOT / ".env"
 TOKEN_FILE = ROOT / "var" / "panel-token"
@@ -32,6 +33,10 @@ SNAPSHOT_DIR = ROOT / "snapshots"
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "9099"))
 PANEL_VERSION = panel_version()
+RELEASE_VERSION = (ROOT / "VERSION").read_text().strip()
+UPDATING = False
+STOPPING = False
+ACTIVE_REQUESTS = 0
 WORKSPACE_ID = hashlib.sha256(str(ROOT.resolve()).encode()).hexdigest()[:16]
 
 
@@ -282,8 +287,9 @@ class Handler(BaseHTTPRequestHandler):
             meta = f'<meta name="panel-token" content="{TOKEN}"><meta name="panel-version" content="{PANEL_VERSION}">'
             html = html.replace("<head>", f"<head>\n  {meta}", 1) if "<head>" in html else meta + html
             html = html.replace('href="/styles.css"', f'href="/styles.css?v={PANEL_VERSION}"').replace('src="/app.js"', f'src="/app.js?v={PANEL_VERSION}"').replace('src="/theme.js"', f'src="/theme.js?v={PANEL_VERSION}"').replace('src="/ui_helpers.js"', f'src="/ui_helpers.js?v={PANEL_VERSION}"')
-            for asset in ('i18n.js', 'locale-en.js'):
+            for asset in ('i18n.js', 'locale-en.js', 'updates.js'):
                 html = html.replace(f'src="/{asset}"', f'src="/{asset}?v={PANEL_VERSION}"')
+            html = html.replace('<!--release-version-->', RELEASE_VERSION)
             html = html.replace('id="ui-version"', f'id="ui-version" title="{PANEL_VERSION}"').replace('<!--ui-version-->', PANEL_VERSION[:6])
             data = html.encode("utf-8")
         self.send_response(200)
@@ -298,13 +304,13 @@ class Handler(BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         if path == "/api/version":
             with JOBS_LOCK:
-                active = max(ACTIVE_COMMANDS, sum(job.get("state") == "running" for job in JOBS.values()))
-            self._json(200, {"version": PANEL_VERSION, "release_version": (ROOT / "VERSION").read_text().strip(), "workspace_id": WORKSPACE_ID, "active_jobs": active})
+                active = max(ACTIVE_COMMANDS, ACTIVE_REQUESTS, sum(job.get("state") == "running" for job in JOBS.values()))
+            self._json(200, {"version": PANEL_VERSION, "release_version": RELEASE_VERSION, "workspace_id": WORKSPACE_ID, "active_jobs": active})
             return
         if path in ("/", "/index.html"):
             self._send_file(PANEL_DIR / "index.html", "text/html; charset=utf-8", inject_token=True)
             return
-        if path in {"/app.js", "/theme.js", "/ui_helpers.js", "/i18n.js", "/locale-en.js"}:
+        if path in {"/app.js", "/theme.js", "/ui_helpers.js", "/i18n.js", "/locale-en.js", "/updates.js"}:
             self._send_file(PANEL_DIR / path.lstrip("/"), "application/javascript; charset=utf-8")
             return
         if path == "/styles.css":
@@ -319,6 +325,27 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not self._check_auth():
             self._json(401, {"error": "Unauthorized"})
+            return
+        if path == "/api/updates/state":
+            result = updater.state(ROOT)
+            with JOBS_LOCK:
+                last_update = next((job for job in reversed(list(JOBS.values())) if job.get("action") == "self_update"), None)
+                failed = last_update if last_update and last_update.get("state") == "failed" else None
+            if failed and (result.get("id") == failed.get("id") or result.get("phase") not in {"checking","installing","installed","restarting","restoring"}): result = {**result, "phase": result.get("phase") if result.get("phase") in {"failed", "rolled_back"} else "failed", "error": failed.get("error", "Update fehlgeschlagen.")}
+            self._json(200, result)
+            return
+        if path == "/api/updates":
+            ongoing = updater.state(ROOT)
+            if ongoing.get("phase") in {"checking", "installing", "installed", "restarting", "restoring"}:
+                target = ongoing.get("target", RELEASE_VERSION)
+                self._json(200, {"current": RELEASE_VERSION, "latest": target, "available": True, "can_apply": False, "problems": [], "mode": updater.installation_mode(ROOT), "notes": "", "release_url": updater.RELEASES+"/tag/v"+target, "guide": updater.manual_guide(ROOT,target), "state": ongoing})
+                return
+            try:
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                result = updater.plan(ROOT, force=query.get("refresh") == ["1"])
+                self._json(200, result)
+            except Exception as exc:
+                self._json(503, {"error": str(exc), "current": RELEASE_VERSION, "guide": updater.manual_guide(ROOT)})
             return
         if path == "/api/system":
             self._json(200, {**system_report(), "installation": installation_plan()})
@@ -362,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
             with JOBS_LOCK:
                 items = [{**{field: value for field, value in job.items() if field != "result"}, "job_id": key} for key, job in JOBS.items() if job.get("state") == "running" or time.time() - job.get("created_at", 0) < 300]
             items.sort(key=lambda job: job.get("created_at", 0), reverse=True)
-            self._json(200, {"items": items})
+            self._json(200, {"items": items, "updating": UPDATING})
             return
         job_match = re.fullmatch(r"/api/jobs/([a-f0-9]{32})", path)
         if job_match:
@@ -449,10 +476,32 @@ class Handler(BaseHTTPRequestHandler):
         self._json(404, {"error": "Not found"})
 
     def do_POST(self) -> None:
+        global ACTIVE_REQUESTS
         if not self._check_auth():
             self._json(401, {"error": "Unauthorized"})
             return
         route = urllib.parse.urlparse(self.path).path
+        registered = route not in {"/api/updates/apply", "/api/server/stop"}
+        with JOBS_LOCK:
+            if STOPPING or ((UPDATING or updater.state(ROOT).get("phase") in {"checking","installing","installed","restarting","restoring"}) and route != "/api/server/stop"):
+                self._json(409, {"error": "Die Workbench wird aktualisiert. Bitte warte bis zum Neustart."})
+                return
+            if registered: ACTIVE_REQUESTS += 1
+        try:
+            self._post()
+        finally:
+            if registered:
+                with JOBS_LOCK: ACTIVE_REQUESTS -= 1
+
+    def _post(self) -> None:
+        if not self._check_auth():
+            self._json(401, {"error": "Unauthorized"})
+            return
+        global UPDATING, STOPPING
+        route = urllib.parse.urlparse(self.path).path
+        if UPDATING and route != "/api/server/stop":
+            self._json(409, {"error": "Die Workbench wird aktualisiert. Bitte warte bis zum Neustart."})
+            return
         if route == "/api/server/stop":
             try:
                 length = int(self.headers.get("Content-Length", "0"))
@@ -461,7 +510,8 @@ class Handler(BaseHTTPRequestHandler):
                     self._json(409, {"error": "Der Server gehört zu einer anderen Workbench."})
                     return
                 with JOBS_LOCK:
-                    active = ACTIVE_COMMANDS > 0 or any(job.get("state") == "running" for job in JOBS.values())
+                    active = ACTIVE_COMMANDS > 0 or ACTIVE_REQUESTS > 0 or any(job.get("state") == "running" for job in JOBS.values())
+                    if not active: STOPPING = True
                 if active:
                     self._json(409, {"error": "Eine Einrichtung läuft noch."})
                     return
@@ -470,8 +520,49 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, TypeError):
                 self._json(400, {"error": "Ungültige Serveranfrage."})
             return
-        if (route == "/api/workbench" or route.endswith("/archive") or route.endswith("/acp-login") or route == "/api/system/install") and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
+        if (route == "/api/workbench" or route.endswith("/archive") or route.endswith("/acp-login") or route == "/api/system/install" or route == "/api/updates/apply") and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
             self._json(409, {"version_mismatch": True, "version": PANEL_VERSION, "error": "Die Dashboard-Oberfläche ist veraltet. Lade die Seite neu, bevor du weiterarbeitest. Dein Projekt wurde durch diesen Klick nicht verändert."})
+            return
+        if route == "/api/updates/apply":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if not 0 < length <= 4096: raise ValueError("Ungültige Update-Anfrage.")
+                body = json.loads(self.rfile.read(length))
+                target = body.get("version", "")
+                updater.version(target)
+                if body.get("confirm") is not True: raise ValueError("Bitte das Update zuerst bestätigen.")
+                with JOBS_LOCK:
+                    if UPDATING or STOPPING or updater.state(ROOT).get("phase") in {"checking","installing","installed","restarting","restoring"} or ACTIVE_REQUESTS or ACTIVE_COMMANDS or any(job.get("state") == "running" for job in JOBS.values()):
+                        self._json(409, {"error": "Ein Vorgang läuft noch. Bitte warte bis zum Abschluss."})
+                        return
+                    UPDATING = True
+                    job_id = uuid.uuid4().hex
+                    JOBS[job_id] = {"name": "system", "action": "self_update", "id": job_id, "target": target, "created_at": time.time(), "state": "running", "stage": "Update wird installiert …"}
+                def execute_update():
+                    global UPDATING
+                    try:
+                        result = updater.apply(ROOT, target, job_id)
+                        with JOBS_LOCK: JOBS[job_id].update(state="done", result=result)
+                        with (ROOT / "var/update-restart.log").open("ab") as log:
+                            recovery_process = subprocess.Popen([sys.executable, result["recovery"], "--restart", str(ROOT), str(PORT)], cwd=ROOT, stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True, env={**os.environ,"WSC_UPDATE_PANEL_TOKEN":TOKEN})
+                        threading.Thread(target=recovery_process.wait, daemon=True).start()
+                    except Exception as exc:
+                        record = updater.state(ROOT)
+                        message = (record.get("error") if record.get("id") == job_id else "") or str(exc)
+                        try:
+                            if updater.state(ROOT).get("id") == job_id: updater.write_state(ROOT, phase="failed" if updater.state(ROOT).get("phase") != "rolled_back" else "rolled_back", error=message)
+                        except OSError: pass
+                        with JOBS_LOCK: JOBS[job_id].update(state="failed", error=message)
+                        UPDATING = False
+                threading.Thread(target=execute_update, daemon=True).start()
+                self._json(202, {"update_id": job_id, "target": target})
+            except (ValueError, TypeError) as exc:
+                self._json(400, {"error": str(exc)})
+            except Exception as exc:
+                UPDATING = False
+                with JOBS_LOCK:
+                    if "job_id" in locals(): JOBS[job_id].update(state="failed", error=str(exc))
+                self._json(500, {"error": "Das Update konnte nicht gestartet werden. " + str(exc)})
             return
         acp_match = re.fullmatch(r"/api/instances/([a-z0-9][a-z0-9-]{0,39})/acp-login", route)
         if acp_match or route == "/api/system/install":
@@ -728,6 +819,9 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
+    updater.atomic_json(ROOT / "var/panel-runtime.json", {"pid":os.getpid(),"port":PORT,"workspace_id":WORKSPACE_ID})
+    registry = ROOT / "var/panel-runtimes" / f"{PORT}.json"
+    updater.atomic_json(registry, {"pid":os.getpid(),"port":PORT,"workspace_id":WORKSPACE_ID})
     (ROOT / "var/panel.pid").write_text(str(os.getpid()) + "\n")
     print(f"wsc-local Panel: http://{HOST}:{PORT}", flush=True)
     try:
@@ -736,6 +830,9 @@ def main() -> None:
         print("\nPanel beendet.", flush=True)
     finally:
         httpd.server_close()
+        try:
+            if json.loads(registry.read_text()).get("pid") == os.getpid(): registry.unlink(missing_ok=True)
+        except (OSError,ValueError):pass
 
 
 if __name__ == "__main__":

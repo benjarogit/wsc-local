@@ -2,7 +2,7 @@
 
 **[Deutsch](README.md) · [English](README.en.md)**
 
-**Aktuelle Version: [v1.1.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.1.0)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) · [Änderungen](CHANGELOG.md)
+**Aktuelle Version: [v1.2.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.0)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) · [Änderungen](CHANGELOG.md)
 
 WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – über ein übersichtliches Browser-Dashboard und dieselbe CLI. Mehrere Projekte laufen getrennt nebeneinander, mit eigenen Dateien, Datenbanken, Ports und Zugangsdaten.
 
@@ -37,13 +37,19 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/prerequisites-de.png" title="Voraussetzungen (Beispiel)"><img src="docs/screenshots/prerequisites-de.png" alt="Voraussetzungen (Beispiel)" width="160"><br><sub>Voraussetzungen (Beispiel)</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/mobile-de.png" title="Mobile Ansicht"><img src="docs/screenshots/mobile-de.png" alt="Mobile Ansicht" height="110"><br><sub>Mobile Ansicht</sub></a></td>
   </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/updates-de.png" title="Update-Übersicht (Beispiel)"><img src="docs/screenshots/updates-de.png" alt="Update-Übersicht (Beispiel)" width="160"><br><sub>Update-Übersicht (Beispiel)</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-confirm-de.png" title="Update bestätigen"><img src="docs/screenshots/update-confirm-de.png" alt="Update bestätigen" width="160"><br><sub>Update bestätigen</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-guide-de.png" title="Update-Anleitung"><img src="docs/screenshots/update-guide-de.png" alt="Update-Anleitung" width="160"><br><sub>Update-Anleitung</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/update-progress-de.png" title="Update-Fortschritt"><img src="docs/screenshots/update-progress-de.png" alt="Update-Fortschritt" width="160"><br><sub>Update-Fortschritt</sub></a></td>
+  </tr>
 </table>
 
-Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Der Voraussetzungen-Dialog zeigt beispielhaft eine fehlende HTTPS-Freigabe. Für diese Aufnahme wurde nur das Prüfergebnis simuliert; Systempakete wurden nicht verändert. [Aufnahmen und Ablauf](docs/screenshots/README.md)
+Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Voraussetzungen- und Update-Dialoge zeigen gekennzeichnete Beispielfälle: eine fehlende HTTPS-Freigabe und ein lokales Test-Update von 1.2.0 auf 1.2.1. Die Update-Aufnahmen stammen aus einem echten Programmaustausch mit Dashboard-Neustart in einem isolierten Testordner; 1.2.1 ist keine öffentliche Veröffentlichung. [Aufnahmen und Ablauf](docs/screenshots/README.md)
 
 ## Schnellstart
 
-Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
+Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
 
 ### Voraussetzungen einmalig installieren
 
@@ -163,12 +169,17 @@ Exporte entfernen Workbench-eigene lokale Datenbankzugangsdaten aus `config.inc.
 
 ## Aktualisieren und alte Installation
 
+Ab **1.2.0** meldet die Workbench neue stabile Releases direkt im Dashboard. Unter **Updates** kannst du nach Vorschau automatisch aktualisieren oder die manuelle Anleitung öffnen. Git- und ZIP-Installationen werden erkannt. Prüfsummen, Schutz lokaler Änderungen, Wiederherstellungsstand und automatischer Dashboard-Neustart gehören zum Ablauf; WoltLab-Projekte und Zugangsdaten bleiben erhalten.
+
 ```bash
-git pull --ff-only
-./panel.sh
+./wsc update --check   # Neue Version suchen
+./wsc update           # Mit Vorschau und Bestätigung installieren
+./wsc update --guide   # Wahlweise selbst aktualisieren
 ```
 
-Der Starter aktualisiert ausschließlich den zu diesem Repository gehörenden Dashboard-Server und schützt laufende Vorgänge. Versionskennungen verhindern Änderungen mit einer veralteten Oberfläche. Projektdateien liegen außerhalb des Repositories.
+**Von 1.1.0 oder älter:** einmal `git pull --ff-only` und `./start.sh` ausführen. Bei einer ZIP-Installation die Programmdateien nach Anleitung in den bestehenden Ordner übernehmen und persönliche Daten erhalten. Danach steht die Updatefunktion für kommende Releases bereit. [Update, Konflikte und Wiederherstellung im Detail](docs/updating.md)
+
+**Releases entstehen automatisch:** Ein neuer Versions-Tag startet die GitHub-Prüfungen; nach deren Erfolg veröffentlicht der Workflow ZIP und SHA-256-Prüfsumme. Die Version steht oben in dieser README und im Dashboard-Fußbereich.
 
 Der frühere Einzel-Stack ist ausdrücklich über `./setup.sh --legacy` und `./start.sh --legacy` verfügbar. `tools.sh` und `reset.sh` gehören zu diesem alten Stack; für Workbench-Projekte verwende das Dashboard beziehungsweise `./wsc`.
 

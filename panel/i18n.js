@@ -12,7 +12,8 @@
     const original=match[2];
     let translated=english[original];
     if(translated===undefined){
-      if(original.startsWith('Kein Systemterminal verfügbar. Starte im Terminal: '))translated='No system terminal is available. Run in a terminal: '+original.slice('Kein Systemterminal verfügbar. Starte im Terminal: '.length);
+      if(original.startsWith('GitHub ist derzeit nicht erreichbar (HTTP '))translated=original.replace('GitHub ist derzeit nicht erreichbar (HTTP ','GitHub is currently unavailable (HTTP ').replace('). Prüfe die Verbindung oder versuche es später erneut.','). Check your connection or try again later.');
+      else if(original.startsWith('Kein Systemterminal verfügbar. Starte im Terminal: '))translated='No system terminal is available. Run in a terminal: '+original.slice('Kein Systemterminal verfügbar. Starte im Terminal: '.length);
       else if(original.startsWith('Das Systemterminal konnte nicht geöffnet werden. Starte: '))translated='The system terminal could not be opened. Run: '+original.slice('Das Systemterminal konnte nicht geöffnet werden. Starte: '.length);
       else if(original.startsWith('Linux-Container · Docker '))translated=original.replace('Linux-Container','Linux containers');
       else if(/^.+ bauen und starten – beim ersten Mal kann das mehrere Minuten dauern$/.test(original))translated='Building and starting '+original.split(' bauen und starten')[0]+' – the first run can take several minutes';
