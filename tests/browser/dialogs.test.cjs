@@ -18,11 +18,13 @@ async function fixture(options={}){
  await page.route('**/api/**',async route=>{
   const req=route.request(),url=new URL(req.url());let data={};let status=200;
   if(url.pathname==='/api/instances')data={items:removed?[]:[{name:'e2e-project',suite:'6.3',php:'8.5',webserver:'nginx-php-fpm',database:'mariadb',url:'https://e2e-project.localhost:8081',running:true,site_ready:true,files_available:true,experimental:true,tls_enabled:true,recovery_enabled:recovery,installation:{state:'ready'},services:[{name:'web',state:'running'},{name:'php',state:'running'},{name:'database',state:'running'}]}]};
-  else if(url.pathname==='/api/system')data={ready:true,host:{label:'Test Linux',architecture:'x64'},checks:[]};
+  else if(url.pathname==='/api/system')data={ready:!options.missingHost,host:{label:'Test Linux',architecture:'x64'},checks:[],installation:{supported:true,steps:['Install packages'],command:'bash ./setup.sh --install-deps'}};
   else if(url.pathname==='/api/catalog')data={profiles:[]};
   else if(url.pathname.endsWith('/snapshots'))data={items:[{name:'20261028_120000'}]};
   else if(url.pathname.endsWith('/exports'))data={items:[{name:'e2e-project-20261028_120000.tar.gz',size:1024}]};
-  else if(url.pathname==='/api/workbench'){
+  else if(url.pathname.endsWith('/acp-login')||url.pathname==='/api/system/install'){
+   const action=url.pathname.endsWith('/acp-login')?'acp_login':'host_install';calls.push({action});const id=String(jobs.size+1).padStart(32,'0');jobs.set(id,{action,polls:0});data={job_id:id,name:'e2e-project',action};status=202;
+  }else if(url.pathname==='/api/workbench'){
    const body=req.postDataJSON();calls.push(body);
    if(body.action==='uploads_preview')data={ok:true,output:'upload_max_filesize = 256M\npost_max_size = 320M'};
    else{const id=String(jobs.size+1).padStart(32,'0');jobs.set(id,{action:body.action,polls:0});if(options.dropResponse){options.dropResponse=false;return route.abort('connectionaborted');}data={job_id:id,name:body.name,action:body.action};status=202;}
@@ -30,7 +32,7 @@ async function fixture(options={}){
   else if(url.pathname.startsWith('/api/jobs/')){
    const job=jobs.get(url.pathname.split('/').pop());job.polls++;const done=job.polls>=2;
    if(done&&job.action==='remove')removed=true;if(done&&job.action==='recovery_install')recovery=true;if(done&&job.action==='recovery_remove')recovery=false;
-   data={name:'e2e-project',action:job.action,state:done?'done':'running',stage:'Sicherung und Werkzeug werden vorbereitet',output:'Sicherung: /isolated/snapshot\nhttps://manual.woltlab.com/de/',error:''};
+   data={name:'e2e-project',action:job.action,state:done?'done':'running',stage:'Sicherung und Werkzeug werden vorbereitet',output:'Sicherung: /isolated/snapshot\nhttps://manual.woltlab.com/de/',error:'',result:job.action==='acp_login'?{url:'https://e2e-project.localhost:8081/wsc-local-acp-test.php',token:'one-use-token'}:{completed:true}};if(done&&job.action==='host_install')options.missingHost=false;if(options.failAcp&&job.action==='acp_login'){data.state='failed';data.error='Admin password changed';}
   }else if(url.pathname.endsWith('/recovery'))data={url:'https://e2e-project.localhost:8081/wsc-recovery.php',directory:'/isolated/project/site'};
   else if(url.pathname.endsWith('/credentials'))data={admin:{username:options.username||'admin',email:'admin@example.test',password:options.password||'test-password'},database:{host:'database',name:'woltlab',username:'wsc',password:'test-db-password'}};
   else return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:'Unmocked route '+url.pathname})});
@@ -70,3 +72,11 @@ test('German is default; English persists and leaves credentials untouched',asyn
  await page.reload({waitUntil:'networkidle'});assert.equal(await page.locator('html').getAttribute('lang'),'en');
  await page.locator('#language-toggle').click();await page.waitForFunction(()=>document.documentElement.lang==='de');assert.equal(await page.locator('#page-title').innerText(),'Deine WoltLab-Projekte');assert.deepEqual(errors,[]);await context.close();
 });
+
+test('language is an icon switch with an explicit saved state',async()=>{const {context,page}=await fixture();const button=page.locator('#language-toggle');assert.equal(await button.getAttribute('role'),'switch');assert.equal(await button.getAttribute('aria-checked'),'false');assert.equal(await button.locator('use').getAttribute('href'),'/icons.svg#globe');await button.click();await page.waitForFunction(()=>document.documentElement.lang==='en');assert.equal(await button.getAttribute('aria-checked'),'true');await context.close();});
+
+test('ACP click hands a one-use token to a new tab by POST',async()=>{const {context,page,card,errors}=await fixture();let posted=null;await context.route('**/wsc-local-acp-test.php',async route=>{posted=route.request();await route.fulfill({body:'ACP session received',contentType:'text/plain'});});const popupPromise=page.waitForEvent('popup');await card.locator('[data-action=acp_login]').click();const popup=await popupPromise;await popup.waitForURL('**/wsc-local-acp-test.php');await popup.waitForLoadState();assert.equal(posted.method(),'POST');assert.equal(posted.postData(),'token=one-use-token');assert.equal(new URL(posted.url()).search,'');assert.deepEqual(errors,[]);await context.close();});
+
+test('failed ACP login explains the normal manual fallback',async()=>{const {context,page,card,errors}=await fixture({failAcp:true});await card.locator('[data-action=acp_login]').click();await page.locator('#action-dialog').waitFor({state:'visible'});assert.match(await page.locator('#action-description').innerText(),/password changed/);assert.equal(await page.locator('#action-content a').getAttribute('href'),'https://e2e-project.localhost:8081/acp/');assert.deepEqual(errors,[]);await context.close();});
+
+test('missing prerequisites require preview before launching the terminal',async()=>{const {context,page,calls,errors}=await fixture({missingHost:true});await page.locator('.app-nav [data-view=system]').click();await page.locator('[data-action=host_install]').click();assert.match(await page.locator('#action-content').innerText(),/Install packages/);await page.locator('#action-cancel').click();assert.equal(calls.length,0);await page.locator('[data-action=host_install]').click();await page.locator('#action-accept').click();await completed(page);assert.equal(calls[0].action,'host_install');assert.equal(await page.locator('[data-action=host_install]').count(),0);assert.deepEqual(errors,[]);await context.close();});

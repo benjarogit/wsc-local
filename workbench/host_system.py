@@ -15,6 +15,16 @@ from typing import Any
 TRUST_FILE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "wsc-local/host-trust.json"
 
 
+def refresh_host_path() -> None:
+    """Discover Homebrew installed by the terminal after the dashboard started."""
+    if detect_host()['kind'] != 'macos':
+        return
+    existing = os.environ.get('PATH', '').split(os.pathsep)
+    additions = [str(Path(prefix)/'bin') for prefix in ('/opt/homebrew', '/usr/local') if (Path(prefix)/'bin').is_dir() and str(Path(prefix)/'bin') not in existing]
+    if additions:
+        os.environ['PATH'] = os.pathsep.join(additions + existing)
+
+
 def certificate_root() -> Path | None:
     executable = shutil.which("mkcert.exe") if detect_host()["kind"] == "wsl2" else shutil.which("mkcert")
     if not executable:
@@ -58,6 +68,7 @@ def _run(command: list[str], timeout: int = 8) -> tuple[bool, str]:
 
 
 def system_report() -> dict[str, Any]:
+    refresh_host_path()
     host = detect_host()
     checks: list[dict[str, Any]] = []
     def add(key: str, label: str, okay: bool, detail: str, help_text: str, url: str = "") -> None:
@@ -84,6 +95,7 @@ def system_report() -> dict[str, Any]:
 
 def tls_environment() -> dict[str, str]:
     """Use one CA in WSL and Windows so the user's actual browser trusts TLS."""
+    refresh_host_path()
     env = os.environ.copy()
     if detect_host()["kind"] != "wsl2":
         return env
@@ -103,6 +115,7 @@ def tls_environment() -> dict[str, str]:
 
 def configure_trust() -> dict[str, str]:
     """Run the one-time trust step in the user's terminal, before daemonizing."""
+    refresh_host_path()
     executable = shutil.which("mkcert")
     if not executable:
         raise RuntimeError("mkcert fehlt. Die Installationshinweise stehen in der Systemprüfung.")

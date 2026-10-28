@@ -13,7 +13,8 @@ def panel_version() -> str:
         "panel/index.html", "panel/app.js", "panel/styles.css", "panel/theme.js", "panel/ui_helpers.js", "panel/i18n.js", "panel/locale-en.js", "panel/vendor/fontawesome/icons.svg",
         "scripts/panel_server.py", "scripts/panel_version.py",
         "workbench/cli.py", "workbench/profiles.json",
-        "workbench/host_system.py", "workbench/launcher.py",
+        "workbench/host_system.py", "workbench/launcher.py", "workbench/acp_login.py", "workbench/host_install.py",
+        "scripts/install-host.sh", "Install-wsc-local.ps1",
     ):
         digest.update(name.encode())
         digest.update((root / name).read_bytes())

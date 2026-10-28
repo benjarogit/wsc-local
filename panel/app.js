@@ -12,6 +12,7 @@
   const resultMessage = document.getElementById('operation-result');
   let lastProjects = '';
   let knownProjects = null;
+  let projectDetails = [];
   let operationInProgress = false;
   const spinnerMarkup = '<span class="button-spinner" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity=".3"/><path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>';
 
@@ -129,7 +130,7 @@
       }
       if (!response.ok || job.state === 'failed') {
         finishJob(id);
-        throw new Error(job.error || t('Der Vorgangsstatus ist nicht verfügbar. Lade die Projektübersicht neu.'));
+        throw new Error(t(job.error) || t('Der Vorgangsstatus ist nicht verfügbar. Lade die Projektübersicht neu.'));
       }
       const label = H`${name || job.name}: ${t(job.stage) || t('Vorgang läuft …')}`;
       if (operationMessage.textContent !== label) operationMessage.textContent = label;
@@ -143,9 +144,40 @@
       if (job.state === 'done') {
         finishJob(id);
         const messages = { install: t('WoltLab ist eingerichtet. Website und Administration können jetzt geöffnet werden.'), snapshot: t('Sicherung erstellt und geprüft.'), export: t('Server-Export erstellt.'), restore: t('Sicherung wiederhergestellt.') };
-        return { ok: true, output: job.output, message: messages[action] || t('Vorgang abgeschlossen.') };
+        return { ok: true, output: job.output, result: job.result, message: messages[action] || t('Vorgang abgeschlossen.') };
       }
     }
+  }
+
+  async function openACP(button) {
+    const tab = window.open('about:blank', '_blank');
+    if(!tab){showResult(t('Bitte erlaube ein neues Browserfenster und versuche es erneut.'),true);return;}
+    tab.opener=null;
+    tab.document.title=t('ACP-Anmeldung');
+    tab.document.body.textContent=t('ACP-Anmeldung wird vorbereitet …');
+    beginOperation(button,t('ACP-Anmeldung wird vorbereitet …'),t('Anmelden …'));
+    try {
+      const data=await api(`/api/instances/${encodeURIComponent(button.dataset.name)}/acp-login`,{method:'POST',body:'{}'});
+      if(tab.closed)throw new Error(t('Das Anmeldefenster wurde geschlossen. Bitte erneut öffnen.'));
+      const form=tab.document.createElement('form');form.method='POST';form.action=localUrl(data.result.url);
+      const token=tab.document.createElement('input');token.type='hidden';token.name='token';token.value=data.result.token;form.append(token);tab.document.body.append(form);form.submit();
+      showResult(t('Die Administration wird mit deinem gespeicherten Adminzugang geöffnet.'));
+    } catch(error) {
+      if(!tab.closed)tab.close();showResult(error.message,true);
+      const project=projectDetails.find(item=>item.name===button.dataset.name);
+      await ask({title:t('ACP-Anmeldung nicht abgeschlossen'),description:error.message,body:project?H`<p><a class="button" href="${esc(localUrl(project.url+'/acp/'))}" target="_blank" rel="noopener">ACP manuell öffnen ↗</a></p>`:'',confirm:t('Schließen'),cancel:''});
+    } finally {endOperation();await refresh();}
+  }
+
+  let hostInstallation=null;
+  async function installHost(button) {
+    if(!hostInstallation)return;
+    const accepted=await ask({title:t('Voraussetzungen einrichten'),description:t('Die Einrichtung läuft in deinem Systemterminal. Bestätige dort bei Bedarf Systemabfragen.'),body:H`<ul>${hostInstallation.steps.map(step=>H`<li>${esc(t(step))}</li>`).join('')}</ul><p>${esc(t('Bereits installierte Programme werden nicht ersetzt. Ein Neustart, erneutes Anmelden oder die erste Docker-Desktop-Freigabe kann erforderlich sein.'))}</p><p><code>${esc(hostInstallation.command)}</code></p>`,confirm:t('Systemterminal öffnen')});
+    if(!accepted)return;
+    beginOperation(button,t('Bitte schließe die Einrichtung im Systemterminal ab …'),t('Einrichtung läuft …'));
+    try{const data=await api('/api/system/install',{method:'POST',body:'{}'});output.textContent=data.output||'';await loadSystem();showResult(systemReady?t('Dein Gerät ist bereit.'):t('Einrichtung beendet. Die Systemprüfung zeigt die noch nötigen Schritte.'));}
+    catch(error){showResult(error.message,true);output.textContent=error.message;}
+    finally{endOperation();await loadSystem();}
   }
 
   function showResult(message, isError = false) {
@@ -179,7 +211,7 @@
       : project.status_error ? action(project.port_mismatch ? 'repair-ports' : 'doctor', project.port_mismatch ? t('Ports korrigieren') : t('Problem prüfen'), 'primary')
       : canInstall ? drawer(t('Login-Daten prüfen & einrichten'), 'credentials', 'primary')
       : needsArchive ? drawer(t('Installationsarchiv hinzufügen'), 'overview', 'primary')
-      : ready && project.running ? H`<a class="button primary" href="${esc(localUrl(project.url))}" target="_blank" rel="noopener">${icon('arrow-up-right-from-square')}Website öffnen</a><a class="button" href="${esc(localUrl(project.url + '/acp/'))}" target="_blank" rel="noopener">${icon('gear')}Administration</a>${action('stop',t('Stoppen'))}`
+      : ready && project.running ? H`<a class="button primary" href="${esc(localUrl(project.url))}" target="_blank" rel="noopener">${icon('arrow-up-right-from-square')}Website öffnen</a>${action('acp_login',t('ACP öffnen'))}${action('stop',t('Stoppen'))}`
       : ready ? action('start',t('Projekt starten'),'primary') : action('doctor',t('Installation prüfen'),'primary');
     const setup = project.status_error ? project.status_error : busy ? project.installation?.stage || t('Umgebung wird vorbereitet …') : canInstall ? t('Nächster Schritt: Adminzugang prüfen und WoltLab automatisch einrichten.') : needsArchive ? t('Für dieses Projekt fehlt noch ein passendes WoltLab-Installationsarchiv.') : phase === 'failed' ? t('Die Einrichtung wurde unterbrochen. Unter „Werkzeuge“ findest du Diagnose und Protokoll.') : '';
     const badge = phase === 'failed' || project.status_error ? 'failed' : ready && project.running ? 'ready' : busy ? 'running' : '';
@@ -239,6 +271,7 @@
     try {
       const data = await api('/api/instances');
       const projects = data.items || [];
+      projectDetails = projects;
       knownProjects = new Set(projects.map((project) => project.name));
       document.querySelector('#view-projects .page-heading [data-create-open]').hidden=projects.length===0;
 
@@ -464,10 +497,10 @@
     systemCheck=(async()=>{
       const button=document.getElementById('system-refresh');button.disabled=true;button.classList.add('is-busy');button.innerHTML=spinnerMarkup+t('Wird geprüft …');
       try {
-        const data=await api('/api/system');systemReady=data.ready;
+        const data=await api('/api/system');systemReady=data.ready;hostInstallation=data.installation;
         document.getElementById('host-summary').textContent=H`${data.host.label} · ${data.ready?t('Bereit für WoltLab'):t('Vorbereitung erforderlich')}`;
         document.getElementById('system-dot').classList.toggle('ready',data.ready);document.getElementById('system-dot').classList.toggle('missing',!data.ready);
-        document.getElementById('system-report').innerHTML=H`<div class="system-summary ${data.ready?'ready':'missing'}"><strong>${data.ready?t('Dein Gerät ist bereit.'):t('Diese Voraussetzungen fehlen noch.')}</strong><p>${esc(data.host.label)} · ${esc(data.host.architecture)}</p></div><div class="system-checks">${data.checks.map(check=>H`<article class="system-check"><span class="check-symbol ${check.status}" aria-hidden="true">${check.status==='ready'?'✓':'!'}</span><div><h2>${esc(check.label)}</h2><p>${esc(check.detail)}</p>${check.help?H`<p class="check-help">${esc(check.help)}</p>`:''}${check.status!=='ready'&&check.url?H`<a href="${esc(check.url)}" target="_blank" rel="noopener">Installationsanleitung ↗</a>`:''}</div><span class="badge ${check.status==='ready'?'ready':'failed'}">${check.status==='ready'?t('Bereit'):t('Erforderlich')}</span></article>`).join('')}</div>`;
+        document.getElementById('system-report').innerHTML=H`<div class="system-summary ${data.ready?'ready':'missing'}"><strong>${data.ready?t('Dein Gerät ist bereit.'):t('Diese Voraussetzungen fehlen noch.')}</strong><p>${esc(data.host.label)} · ${esc(data.host.architecture)}</p>${!data.ready&&data.installation?.supported?H`<button class="button primary" data-action="host_install">${icon('gear')}Fehlendes einrichten</button>`:''}</div><div class="system-checks">${data.checks.map(check=>H`<article class="system-check"><span class="check-symbol ${check.status}" aria-hidden="true">${check.status==='ready'?'✓':'!'}</span><div><h2>${esc(check.label)}</h2><p>${esc(check.detail)}</p>${check.help?H`<p class="check-help">${esc(check.help)}</p>`:''}${check.status!=='ready'&&check.url?H`<a href="${esc(check.url)}" target="_blank" rel="noopener">Installationsanleitung ↗</a>`:''}</div><span class="badge ${check.status==='ready'?'ready':'failed'}">${check.status==='ready'?t('Bereit'):t('Erforderlich')}</span></article>`).join('')}</div>`;
       } catch(error) {systemReady=false;document.getElementById('host-summary').textContent=t('Systemprüfung nicht erreichbar');document.getElementById('system-report').textContent=error.message;}
       finally {button.disabled=false;button.classList.remove('is-busy');button.textContent=t('Erneut prüfen');systemCheck=null;}
     })();return systemCheck;
@@ -497,7 +530,11 @@
     const open=event.target.closest('[data-project-open]');if(open){const view=projectViews.get(open.dataset.projectOpen);activateProject(open.dataset.projectOpen,open.dataset.projectTab,!(view?.open&&open.textContent.trim()===t('Schließen')));}
     const tab=event.target.closest('[data-tab]');if(tab)activateProject(tab.closest('.project').dataset.project,tab.dataset.tab);
     const button = event.target.closest('[data-action]');
-    if (button && !operationInProgress && !document.getElementById('action-dialog').open) run(button.dataset.action, button.dataset.name, button);
+    if (button && !operationInProgress && !document.getElementById('action-dialog').open) {
+      if(button.dataset.action==='acp_login') openACP(button);
+      else if(button.dataset.action==='host_install') installHost(button);
+      else run(button.dataset.action, button.dataset.name, button);
+    }
     const reveal = event.target.closest('[data-reveal]');
     if (reveal) {
       const input = reveal.closest('.credential-value').querySelector('input');
@@ -571,10 +608,10 @@
     let pending;
     try { pending = JSON.parse(localStorage.getItem('wsc-pending-install')); } catch (_) { try { localStorage.removeItem('wsc-pending-install'); } catch (_) {} }
     if (!pending?.id) {
-      try {const data=await api('/api/jobs');const completed=finishedJobs();const job=data.items?.find(item=>!completed.includes(item.job_id)&&knownProjects?.has(item.name));if(job){pending={id:job.job_id,name:job.name,action:job.action};rememberJob(job);}} catch (_) { /* A previous server may not offer discovery. */ }
+      try {const data=await api('/api/jobs');const completed=finishedJobs();const job=data.items?.find(item=>!completed.includes(item.job_id)&&!(item.action==='acp_login'&&item.state!=='running')&&(item.action==='host_install'||knownProjects?.has(item.name)));if(job){pending={id:job.job_id,name:job.name,action:job.action};rememberJob(job);}} catch (_) { /* A previous server may not offer discovery. */ }
     }
     if (!pending?.id) return;
-    if (pending.name && knownProjects && !knownProjects.has(pending.name)) { try {localStorage.removeItem('wsc-pending-install');} catch (_) {} return; }
+    if (pending.action!=='host_install' && pending.name && knownProjects && !knownProjects.has(pending.name)) { try {localStorage.removeItem('wsc-pending-install');} catch (_) {} return; }
     beginOperation(null, H`${pending.name}: ${pending.action==='install'?t('Einrichtungsstatus'):t('Vorgangsstatus')} wird geladen …`, '');
     let recoveredResult = null;
     try {
@@ -584,6 +621,8 @@
       showResult(result.message);
     } catch (error) { output.textContent = error.message; showResult(error.message, true); }
     finally { endOperation(); await refresh(); }
+    if(recoveredResult && pending.action==='acp_login')showResult(t('Bitte klicke erneut auf „ACP öffnen“, um ein neues Anmeldefenster zu öffnen.'));
+    if(recoveredResult && pending.action==='host_install')await loadSystem();
     if(recoveredResult) { try { await presentToolResult(pending.action, pending.name, recoveredResult); } catch(error) { showResult(t('Der Vorgang wurde abgeschlossen, aber die Anleitung konnte nicht angezeigt werden. ')+error.message,true); } }
   }
 

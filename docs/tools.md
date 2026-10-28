@@ -53,3 +53,10 @@ python3 -m unittest discover -s tests -v
 ```
 
 Die tatsächlich mit Docker und WoltLab ausgeführten Tests stehen im [Testprotokoll](user-test.md). Native macOS-/Windows-Abnahmen und ein echter Remote-Umzug bleiben gesonderte Prüfungen.
+
+
+## Direkt in die Administration
+
+**ACP öffnen** verwendet den lokal gespeicherten Adminzugang für eine normale WoltLab-Anmeldung. Es werden keine Passwörter zurückgesetzt und keine Zwei-Faktor-Prüfungen umgangen. Die Workbench übergibt die so erhaltenen Sitzungscookies per POST mit einem zufälligen Einmal-Token an die lokale Projektadresse. Das Hilfsskript löscht sich vor der Weiterleitung; die Übergabe ist maximal 60 Sekunden gültig. Passwort und Cookies werden nicht im Aufgabenprotokoll ausgegeben. Temporäre Anmeldeskripte sind von Sicherungen und Exporten ausgeschlossen.
+
+Ein neues Browserfenster muss erlaubt sein. Bei verändertem Adminpasswort, Zwei-Faktor-Anmeldung oder fehlgeschlagener Anmeldung erklärt der Dialog den Fehler und bietet **ACP manuell öffnen** an. Nach einem Neuladen der Workbench klickst du erneut auf **ACP öffnen**, um eine neue Einmal-Übergabe zu erhalten.

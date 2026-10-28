@@ -8,9 +8,9 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
 
 <a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: Startseite mit lokalen WoltLab-Projekten" width="1100"></a>
 
-Vorschau anklicken, um den Screenshot groß zu öffnen.
+<p align="center">Vorschau anklicken, um den Screenshot groß zu öffnen.</p>
 
-<table>
+<table align="center">
   <tr>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/create-de.png" title="Projekt vorbereiten"><img src="docs/screenshots/create-de.png" alt="Projekt vorbereiten" width="160"><br><sub>Projekt vorbereiten</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/advanced-de.png" title="Erweiterte Einstellungen"><img src="docs/screenshots/advanced-de.png" alt="Erweiterte Einstellungen" width="160"><br><sub>Erweiterte Einstellungen</sub></a></td>
@@ -34,6 +34,12 @@ Vorschau anklicken, um den Screenshot groß zu öffnen.
 ## Schnellstart
 
 ### Voraussetzungen einmalig installieren
+
+**Geführte Einrichtung:** Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **`Install-wsc-local.cmd` doppelklicken** (oder `Start-wsc-local.ps1 -InstallDependencies`). Danach den normalen Starter öffnen. Wenn das Dashboard bereits läuft, bietet **Systemprüfung → Fehlendes einrichten** denselben Ablauf mit Vorschau an.
+
+Die Einrichtung installiert fehlende Pakete und richtet lokales HTTPS im Systemterminal ein. Linux verwendet apt/dnf/pacman, macOS Homebrew, Windows winget und WSL2. Systempasswörter werden ausschließlich im Terminal bzw. im Betriebssystemdialog eingegeben. WSL-Ersteinrichtung, Docker-Desktop-Freigabe, Neustarts oder erneutes Anmelden können erforderlich bleiben. Vorhandene Docker-Installationen werden nicht ersetzt; bei Konflikten nennt die Systemprüfung die nächsten Schritte. [Plattformen und Grenzen](docs/platforms.md)
+
+Alternativ kannst du die Voraussetzungen selbst installieren:
 
 - **Python 3.10 oder neuer.**
 - **Docker mit Docker Compose**, gestartet und vom aktuellen Benutzer erreichbar. Die Workbench benötigt Linux-Container.
@@ -74,6 +80,7 @@ Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschrit
 ## Oberfläche und Funktionen
 
 - **Projekte:** Zustand, Website, Administration und Start/Stopp direkt an der Karte. **Verwalten** öffnet die Bereiche Übersicht, Zugangsdaten, Dienste, Sicherungen und Werkzeuge.
+- **ACP öffnen:** Meldet dich mit dem gespeicherten Adminzugang direkt in der Administration an. Die Sitzung wird über eine kurz gültige Einmal-Übergabe übertragen; Passwörter stehen nicht in URLs. Bei geändertem Passwort oder Zwei-Faktor-Anmeldung bietet der Dialog die normale ACP-Anmeldung an.
 - **Zugangsdaten:** Anzeigen und Kopieren von Admin- und getrennten Datenbankdaten. Passwörter bleiben zunächst verborgen. Nach der Installation änderst du den Adminzugang in WoltLab.
 - **Dienste:** Status und Logs von Webserver, PHP und Datenbank. Den optionalen Mailpit-Testdienst schaltest du separat ein. Für Test-E-Mails in WoltLab: SMTP `mail:1025`, ohne Anmeldung.
 - **Sicherungen:** Dateisystem und Datenbank gemeinsam sichern, Prüfsummen kontrollieren und einen Stand wiederherstellen. Vor dem Restore wird der aktuelle Stand gesichert.
@@ -85,7 +92,7 @@ Informationssymbole öffnen Erklärungen. Bestätigungen, Eingaben und Vorschaue
 
 ### Sprache und Darstellung
 
-**Deutsch ist der Standard**, unabhängig von der Browsersprache. Über **EN / DE** oben wechselst du die Dashboard-Sprache; die Auswahl bleibt in diesem Browser gespeichert. Die aktuellen Projektbereiche werden beim Wechsel wieder geöffnet. CLI-Ausgaben und technische Dienstprotokolle bleiben in ihrer Originalsprache.
+**Deutsch ist der Standard**, unabhängig von der Browsersprache. Über den **DE/EN-Schalter mit Globus-Icon** oben wechselst du die Dashboard-Sprache; die Auswahl bleibt in diesem Browser gespeichert. Die aktuellen Projektbereiche werden beim Wechsel wieder geöffnet. CLI-Ausgaben und technische Dienstprotokolle bleiben in ihrer Originalsprache.
 
 Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der aktive Modus ist markiert; System folgt der Geräteeinstellung. Die Darstellung ändert die Workbench, nicht das Design deiner WoltLab-Website.
 

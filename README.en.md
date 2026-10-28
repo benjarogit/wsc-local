@@ -8,9 +8,9 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
 
 <a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local home with local WoltLab projects" width="1100"></a>
 
-Click a thumbnail to open the full-size screenshot.
+<p align="center">Click a thumbnail to open the full-size screenshot.</p>
 
-<table>
+<table align="center">
   <tr>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/create-en.png" title="Prepare a project"><img src="docs/screenshots/create-en.png" alt="Prepare a project" width="160"><br><sub>Prepare a project</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/advanced-en.png" title="Advanced settings"><img src="docs/screenshots/advanced-en.png" alt="Advanced settings" width="160"><br><sub>Advanced settings</sub></a></td>
@@ -34,6 +34,12 @@ Click a thumbnail to open the full-size screenshot.
 ## Quick start
 
 ### Install prerequisites once
+
+**Guided setup:** Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **double-click `Install-wsc-local.cmd`** (or `Start-wsc-local.ps1 -InstallDependencies`). Then open the normal launcher. If the dashboard is already running, **System check → Set up missing prerequisites** starts the same flow after a preview.
+
+Setup installs missing packages and configures local HTTPS in your system terminal. Linux uses apt/dnf/pacman, macOS uses Homebrew, and Windows uses winget and WSL2. Enter system passwords only in the terminal or operating system prompt. WSL initialization, first-time Docker Desktop approval, restarting or signing in again may still be required. Existing Docker installations are not replaced; the system check explains remaining conflicts. [Platform details and limitations](docs/platforms.md)
+
+You can also install prerequisites yourself:
 
 - **Python 3.10 or newer.**
 - **Docker with Docker Compose**, running and accessible to your user. Linux containers are required.
@@ -74,6 +80,7 @@ You do not need to click through the WoltLab installer. A spinner and installati
 ## Interface and features
 
 - **Projects:** status, website, administration, and start/stop directly on the card. **Manage** opens Overview, Credentials, Services, Backups, and Tools.
+- **Open ACP:** signs in to the administration using the saved administrator credentials. A short-lived, one-use handoff transfers the session; passwords never appear in URLs. If the password changed or two-factor authentication is enabled, a dialog offers the normal ACP login.
 - **Credentials:** view and copy administrator and separately grouped database credentials. Passwords start masked. Change administrator credentials in WoltLab after installation.
 - **Services:** web server, PHP, and database status and logs. Enable the optional Mailpit mailbox separately. For WoltLab test mail, use SMTP `mail:1025` without authentication.
 - **Backups:** capture files and database together, verify checksums, and restore a matching state. Restore first backs up the current state.
@@ -85,7 +92,7 @@ Information buttons open explanations. Confirmations, inputs, and previews use k
 
 ### Language and appearance
 
-**German is the default**, regardless of your browser language. Use **EN / DE** in the header to switch dashboard language. The choice is saved in this browser, and open project sections are restored. CLI output and technical service logs retain their original language.
+**German is the default**, regardless of your browser language. Use the **DE/EN switch with its globe icon** in the header to switch dashboard language. The choice is saved in this browser, and open project sections are restored. CLI output and technical service logs retain their original language.
 
 Monitor, sun, and moon icons directly select **System, Light, or Dark**. The active mode is highlighted; System follows your device preference. This changes the Workbench appearance, not your WoltLab website's design.
 

@@ -2,10 +2,15 @@
 param(
     [string]$Distribution = '',
     [switch]$Check,
-    [switch]$NoOpen
+    [switch]$NoOpen,
+    [switch]$InstallDependencies
 )
 $ErrorActionPreference = 'Stop'
 try {
+    if ($InstallDependencies) {
+        & (Join-Path $PSScriptRoot 'Install-wsc-local.ps1') -Distribution $Distribution
+        exit $LASTEXITCODE
+    }
     if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
         throw 'WSL2 fehlt. In einer administrativen PowerShell: wsl --install. Danach Windows neu starten.'
     }
@@ -42,6 +47,6 @@ try {
     exit $LASTEXITCODE
 } catch {
     Write-Host ('Start nicht moeglich: ' + $_.Exception.Message) -ForegroundColor Red
-    Write-Host 'Anleitung: docs/platforms.md'
+    Write-Host 'Gefuehrte Installation: Install-wsc-local.cmd doppelklicken. Anleitung: docs/platforms.md'
     exit 1
 }

@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "workbench"))
 from cli import PROJECTS as WORKBENCH_PROJECTS, PROFILES, project_names, project_status, read_project, parse_env, save_setup_credentials  # noqa: E402
 from host_system import system_report
+from acp_login import prepare as prepare_acp_login
+from host_install import installation_plan, launch_installation
 PANEL_DIR = ROOT / "panel"
 ENV_FILE = ROOT / ".env"
 TOKEN_FILE = ROOT / "var" / "panel-token"
@@ -68,7 +70,7 @@ PROJECT = ENV.get("COMPOSE_PROJECT_NAME", "wsc-local")
 ADMIN_USER = ENV.get("ADMIN_USER", "admin")
 PHPMYADMIN_PORT = ENV.get("PHPMYADMIN_PORT", "8081")
 MAILHOG_UI_PORT = ENV.get("MAILHOG_UI_PORT", "8025")
-JOBS: dict[str, dict[str, str]] = {}
+JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 ACTIVE_COMMANDS = 0
 BACKGROUND_ACTIONS = frozenset({"install", "start", "stop", "doctor", "snapshot", "export", "restore", "remove", "recovery_install", "recovery_remove", "tls_enable", "tls_disable", "mail_start", "mail_stop", "guide_domain", "guide_directory", "guide_migration", "uploads_apply"})
@@ -319,7 +321,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json(401, {"error": "Unauthorized"})
             return
         if path == "/api/system":
-            self._json(200, system_report())
+            self._json(200, {**system_report(), "installation": installation_plan()})
             return
         if path == "/api/catalog":
             php = {"5.5": ["8.1"], "6.0": ["8.3", "8.2"], "6.1": ["8.3", "8.2"], "6.2": ["8.4", "8.3", "8.2"], "6.3": ["8.5"]}
@@ -358,7 +360,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path == "/api/jobs":
             with JOBS_LOCK:
-                items = [{**job, "job_id": key} for key, job in JOBS.items() if job.get("state") == "running" or time.time() - job.get("created_at", 0) < 300]
+                items = [{**{field: value for field, value in job.items() if field != "result"}, "job_id": key} for key, job in JOBS.items() if job.get("state") == "running" or time.time() - job.get("created_at", 0) < 300]
             items.sort(key=lambda job: job.get("created_at", 0), reverse=True)
             self._json(200, {"items": items})
             return
@@ -468,8 +470,30 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, TypeError):
                 self._json(400, {"error": "Ungültige Serveranfrage."})
             return
-        if (route == "/api/workbench" or route.endswith("/archive")) and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
+        if (route == "/api/workbench" or route.endswith("/archive") or route.endswith("/acp-login") or route == "/api/system/install") and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
             self._json(409, {"version_mismatch": True, "version": PANEL_VERSION, "error": "Die Dashboard-Oberfläche ist veraltet. Lade die Seite neu, bevor du weiterarbeitest. Dein Projekt wurde durch diesen Klick nicht verändert."})
+            return
+        acp_match = re.fullmatch(r"/api/instances/([a-z0-9][a-z0-9-]{0,39})/acp-login", route)
+        if acp_match or route == "/api/system/install":
+            name = acp_match.group(1) if acp_match else "system"
+            action = "acp_login" if acp_match else "host_install"
+            agent = self.headers.get("User-Agent", "")
+            with JOBS_LOCK:
+                if any(job.get("state") == "running" and (job.get("name") == name or action == "host_install") for job in JOBS.values()):
+                    self._json(409, {"error": "Ein Vorgang läuft noch. Bitte warte bis zum Abschluss."})
+                    return
+                job_id = uuid.uuid4().hex
+                JOBS[job_id] = {"name": name, "action": action, "created_at": time.time(), "stage": "ACP-Anmeldung wird vorbereitet …" if acp_match else "Bitte schließe die Einrichtung im Systemterminal ab …", "state": "running", "output": "", "error": ""}
+            def execute_special():
+                try:
+                    result = prepare_acp_login(name, agent) if action == "acp_login" else launch_installation(ROOT)
+                    with JOBS_LOCK:
+                        JOBS[job_id].update(state="done", result=result, output="Vorgang abgeschlossen.")
+                except Exception as exc:
+                    with JOBS_LOCK:
+                        JOBS[job_id].update(state="failed", error=str(exc))
+            threading.Thread(target=execute_special, daemon=True).start()
+            self._json(202, {"job_id": job_id, "name": name, "action": action})
             return
         archive_match = re.fullmatch(r"/api/instances/([a-z0-9][a-z0-9-]{0,39})/archive", route)
         if archive_match:

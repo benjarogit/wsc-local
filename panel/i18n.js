@@ -12,7 +12,9 @@
     const original=match[2];
     let translated=english[original];
     if(translated===undefined){
-      if(original.startsWith('Linux-Container · Docker '))translated=original.replace('Linux-Container','Linux containers');
+      if(original.startsWith('Kein Systemterminal verfügbar. Starte im Terminal: '))translated='No system terminal is available. Run in a terminal: '+original.slice('Kein Systemterminal verfügbar. Starte im Terminal: '.length);
+      else if(original.startsWith('Das Systemterminal konnte nicht geöffnet werden. Starte: '))translated='The system terminal could not be opened. Run: '+original.slice('Das Systemterminal konnte nicht geöffnet werden. Starte: '.length);
+      else if(original.startsWith('Linux-Container · Docker '))translated=original.replace('Linux-Container','Linux containers');
       else if(/^.+ bauen und starten – beim ersten Mal kann das mehrere Minuten dauern$/.test(original))translated='Building and starting '+original.split(' bauen und starten')[0]+' – the first run can take several minutes';
       else if(original.startsWith('Installationsschritt: '))translated='Installation step: '+text(original.slice(21));
       else if(original.startsWith('WoltLab-Core installieren ('))translated=original.replace('WoltLab-Core installieren','Installing WoltLab Core');
@@ -56,9 +58,10 @@
   }
   if(language==='en')document.querySelectorAll('a[href^="https://manual.woltlab.com/de/"]').forEach(link=>link.href=link.href.replace('/de/','/en/'));
   const button=document.getElementById('language-toggle');
-  button.textContent=language==='de'?'EN':'DE';
+  button.setAttribute('aria-checked',String(language==='en'));
+  button.dataset.language=language;
   button.title=language==='de'?'English':'Deutsch';
-  button.setAttribute('aria-label',language==='de'?'Switch to English':'Auf Deutsch umschalten');
+  button.setAttribute('aria-label',language==='de'?'Englische Oberfläche':'English interface');
   button.addEventListener('click',()=>{
     try{
       localStorage.setItem(key,language==='de'?'en':'de');

@@ -28,15 +28,18 @@ jobs:
         run: node --check panel/ui_helpers.js
       - name: Bash entry points
         if: runner.os != 'Windows'
-        run: bash -n setup.sh start.sh panel.sh scripts/legacy/setup.sh scripts/legacy/start.sh
+        run: bash -n scripts/install-host.sh setup.sh start.sh panel.sh scripts/legacy/setup.sh scripts/legacy/start.sh
       - name: Windows starter syntax
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $tokens = $null
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/Start-wsc-local.ps1", [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count) { $errors | Format-List; exit 1 }
+          foreach ($file in @('Start-wsc-local.ps1','Install-wsc-local.ps1')) {
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $file), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) { $errors | Format-List; exit 1 }
+          }
+          ./Install-wsc-local.ps1 -DryRun
   ui:
     runs-on: ubuntu-latest
     steps:

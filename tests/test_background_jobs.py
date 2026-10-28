@@ -140,6 +140,48 @@ class BackgroundJobTests(unittest.TestCase):
         code, _=self.request('/api/server/stop', {'workspace_id':panel.WORKSPACE_ID})
         self.assertEqual(409,code)
 
+    def test_acp_login_is_background_and_forwards_browser_agent(self):
+        def login(name, agent):
+            self.assertEqual(name,'project')
+            self.assertTrue(agent)
+            self.started.set();self.release.wait(5)
+            return {'url':'https://project.localhost/once.php','token':'single-use','expires_in':60}
+        with patch.object(panel,'prepare_acp_login',side_effect=login):
+            code,task=self.request('/api/instances/project/acp-login',{})
+            self.assertEqual(code,202);self.assertTrue(self.started.wait(1))
+            self.assertEqual(self.request('/api/workbench',{'action':'remove','name':'project'})[0],409)
+            self.release.set()
+            for _ in range(100):
+                _,job=self.request('/api/jobs/'+task['job_id'])
+                if job['state']!='running':break
+                time.sleep(.01)
+            self.assertEqual(job['state'],'done');self.assertEqual(job['result']['token'],'single-use')
+            self.assertNotIn('single-use',job['output'])
+
+    def test_host_installer_waits_for_completion(self):
+        def install(root):
+            self.started.set();self.release.wait(5)
+            return {'completed':True}
+        with patch.object(panel,'launch_installation',side_effect=install):
+            code,task=self.request('/api/system/install',{})
+            self.assertEqual(code,202);self.assertTrue(self.started.wait(1))
+            self.assertEqual(self.request('/api/system/install',{})[0],409)
+            self.assertEqual(self.request('/api/server/stop',{'workspace_id':panel.WORKSPACE_ID})[0],409)
+            self.release.set()
+            for _ in range(100):
+                _,job=self.request('/api/jobs/'+task['job_id'])
+                if job['state']!='running':break
+                time.sleep(.01)
+            self.assertEqual(job['state'],'done');self.assertTrue(job['result']['completed'])
+
+    def test_stale_clients_cannot_start_login_or_host_install(self):
+        for path in ('/api/instances/project/acp-login','/api/system/install'):
+            request=urllib.request.Request(self.base+path,data=b'{}',headers={'X-Panel-Token':panel.TOKEN})
+            with self.assertRaises(urllib.error.HTTPError) as error:urllib.request.urlopen(request)
+            self.assertEqual(error.exception.code,409)
+            error.exception.close()
+        self.assertFalse(panel.JOBS)
+
     def test_restore_validates_selection_before_creating_job(self):
         code, _=self.request('/api/workbench', {'action':'restore','name':'project','snapshot':'../other'})
         self.assertEqual(400,code)

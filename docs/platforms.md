@@ -2,6 +2,18 @@
 
 Alle Plattformen verwenden denselben Python-Projektmanager, dieselben WoltLab-Profile und dasselbe lokale Browser-Dashboard. Windows läuft wie vereinbart über WSL2; die nativen Windows-Starter übernehmen den Einstieg.
 
+## Geführte Installation fehlender Voraussetzungen
+
+Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **`Install-wsc-local.cmd` doppelklicken**; alternativ `Start-wsc-local.ps1 -InstallDependencies`. Vorab ohne Änderungen ansehen: `bash ./setup.sh --install-deps --dry-run` bzw. `Install-wsc-local.ps1 -DryRun`.
+
+Im laufenden Dashboard öffnet **Systemprüfung → Fehlendes einrichten** eine Vorschau und danach ein Systemterminal. Dort laufen Paketinstallation und HTTPS-Freigabe. Die Workbench wartet auf das Skriptende und prüft anschließend erneut. Ein geöffnetes Terminal allein bedeutet noch keinen Erfolg. Bei fehlendem grafischem Terminal erscheint der direkt ausführbare Befehl. Das Dashboard benötigt selbst Python 3.10+; ohne Python verwendest du den nativen Einstieg oben.
+
+- **Linux:** apt/dnf/pacman für Python, mkcert und NSS. Fehlendes Docker wird für diese lokale Entwicklungsumgebung über das [offizielle Docker-Installationsskript](https://github.com/docker/docker-install) eingerichtet; auf Arch über native Pakete. Das Docker-Skript verändert Paketquellen und benötigt sudo. Eine Docker-Gruppenmitgliedschaft gewährt administrativen Zugriff; danach neu anmelden und die Workbench neu starten. Bestehendes Docker wird nicht ersetzt. Kann dessen Compose-Plugin aus den vorhandenen Quellen nicht installiert werden, bleiben die Meldungen im Terminal und die offizielle Anleitung verfügbar.
+- **macOS:** bei Bedarf [Homebrew](https://docs.brew.sh/Installation), fehlende Pakete und Docker Desktop. Homebrew/Systemabfragen und die erste Docker-Desktop-Freigabe bleiben sichtbar.
+- **Windows/WSL2:** winget-Pakete `Docker.DockerDesktop` und `FiloSottile.mkcert`, fehlendes WSL mit Ubuntu über `wsl --install`. Windows-Neustart und das erstmalige Anlegen des Ubuntu-Benutzers bleiben gegebenenfalls erforderlich. Danach das Skript erneut starten. Die Docker-Desktop-WSL-Integration muss für die gewählte Distribution freigegeben sein. Nach neu installierten Windows-Programmen WSL neu öffnen, damit der Suchpfad aktualisiert ist.
+
+Systempasswörter werden niemals im Dashboard abgefragt. Nicht unterstützte Linux-Paketverwaltungen erhalten die manuelle Anleitung. Ein nativer macOS-/Windows-Paketinstallationslauf ist vorerst **nicht als getestet ausgewiesen**; CI prüft dort portable Logik und Skriptsyntax, keine Administratorinstallationen.
+
 ## Linux
 
 Benötigt werden Python 3.10+, Docker Engine oder Docker Desktop mit Compose sowie mkcert. Bei Firefox/Chromium gehört NSS zur lokalen Zertifikatsfreigabe. Unter Debian/Ubuntu zum Beispiel:

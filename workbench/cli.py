@@ -1640,7 +1640,7 @@ def snapshot(name: str, export: bool = False) -> Path:
         database.write_text(dump.stdout, encoding="utf-8")
         if export:
             export_site = work / "site"
-            shutil.copytree(root / "site", export_site, ignore=shutil.ignore_patterns("wsc-local-check.html", "wsc-local-browser-check.php", "wsc-recovery.php", "wsc-recovery-auth.php"))
+            shutil.copytree(root / "site", export_site, ignore=shutil.ignore_patterns("wsc-local-check.html", "wsc-local-browser-check.php", "wsc-recovery.php", "wsc-recovery-auth.php", "wsc-local-acp-*.php"))
             redact_export_database_config(export_site)
             manifest = {"schema": 1, "project": name, "created_at": datetime.now(timezone.utc).isoformat(), "files_sha256": tree_hash(export_site), "database_sha256": file_hash(database), "suite_version": cfg["suite_version"], "php_version": cfg["php_version"]}
             (work / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -1679,7 +1679,7 @@ WoltLab-Handbuch (eigene Anleitung und Quellen):
                 raise RuntimeError("Server-Export ist leer oder unvollständig.")
         else:
             target.mkdir()
-            shutil.copytree(root / "site", target / "site", ignore=shutil.ignore_patterns("wsc-local-check.html", "wsc-local-browser-check.php", "wsc-recovery.php", "wsc-recovery-auth.php"))
+            shutil.copytree(root / "site", target / "site", ignore=shutil.ignore_patterns("wsc-local-check.html", "wsc-local-browser-check.php", "wsc-recovery.php", "wsc-recovery-auth.php", "wsc-local-acp-*.php"))
             shutil.copy2(database, target / "database.sql")
             meta = {"schema": 1, "project": name, "created_at": datetime.now(timezone.utc).isoformat(), "files_sha256": tree_hash(target / "site"), "database_sha256": file_hash(database), "suite_version": cfg["suite_version"], "php_version": cfg["php_version"]}
             (target / "manifest.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")

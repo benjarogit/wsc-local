@@ -1,5 +1,14 @@
 # Änderungen / Changelog
 
+## Unveröffentlicht / Unreleased
+
+- ACP-Direktlogin über normale WoltLab-Anmeldung und kurz gültige Einmal-Übergabe; verständlicher Rückfall auf die manuelle Anmeldung bei geändertem Zugang oder Zwei-Faktor-Prüfung.
+- Geführte Einrichtung fehlender Voraussetzungen im Systemterminal, per Dashboard oder nativem Linux-/macOS-/Windows-Einstieg; abschließende Systemprüfung statt pauschaler Erfolgsmeldung.
+- DE/EN-Schalter mit Globus-Icon und gespeichertem Zustand. Zentrierte README-Galerien und erneuerte Screenshots in beiden Sprachen.
+- Zusätzliche Tests für Anmeldesicherheit, Hintergrundendpunkte, Terminalübergabe, Sprachschalter und Installationsvorschau.
+
+English: direct ACP login using a normal WoltLab session and a one-use handoff; guided prerequisite setup in the system terminal; globe language switch; centered screenshot galleries and additional regression coverage. Native macOS/Windows package installations still require device testing.
+
 ## 1.0.0 – 2026-10-28
 
 Erste versionierte Veröffentlichung der neu konzipierten WoltLab Workbench.

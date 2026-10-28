@@ -134,3 +134,14 @@ Release-Abdeckung: 24 Python-Tests sowie zehn Chromium-Regressionstests. Der neu
 Nach den Aufnahmen wurden beide Testprojekte über die englischen Bestätigungsdialoge vollständig entfernt. Projektliste, Projektdateien, Datenbank, Container, Netzwerke und lokale Projekt-Zugangsdaten sind kontrolliert leer. Gemeinsame Downloads, Basisimages und die lokale CA bleiben erhalten. Die GitHub-CI-Ergebnisse gehören zur Veröffentlichung; native vollständige macOS-/Windows-Docker-Abnahmen bleiben gesondert.
 
 Die erste GitHub-Matrix fand einen zu strengen Testvergleich für aufgelöste Temp-Pfade (macOS `/private/var`, Windows-Langpfad) und einen Überlauf in der schmalen Navigation beim CI-Browser. Der Test erwartet nun den kanonischen Importpfad; die Navigation darf ihre Elemente passend verkleinern und umbrechen. Der Viewport-Test wartet auf das fertige responsive Layout. Die zehn Browserfälle wurden anschließend auch lokal mit genau der von Playwright installierten Chromium-Version ausgeführt.
+
+
+## ACP-Direktlogin und geführte Host-Einrichtung (28.10.2026)
+
+- Echte neue Projekte: WSC 6.2/Nginx/PHP 8.4 und WSC 6.3/Apache/PHP 8.5. „ACP öffnen“ meldete den Browser direkt an; eine geschützte ACP-Einstellungsseite war danach ohne erneute Anmeldung erreichbar. Die verbrauchte Übergabedatei liefert bei erneutem Aufruf HTTP 404.
+- Einmal-Übergaben verwenden POST, einen gehashten Token, ein lokales Ziel und maximal 60 Sekunden Gültigkeit. Normale Admin-Anmeldung statt Passwortänderung oder Datenbank-Umgehung. Die echte Sicherung und der echte Server-Export enthielten keine temporären Anmeldeskripte.
+- Ein weiterer automatischer WSC-6.2-Installationslauf blieb beim Sprachwechsel DE → EN mit Neuladen verbunden und wurde vollständig abgeschlossen. Screenshots entstanden aus echten Projekten; Admin-/Datenbankpasswörter blieben verborgen.
+- Browser-Regressionstests prüfen zusätzlich den Sprachschalter mit Globus-Icon, die Einmal-Übergabe im neuen Tab, den verständlichen Rückfall bei abgelehnten Zugangsdaten und die bestätigungspflichtige Terminaleinrichtung. Die Voraussetzungseinrichtung wird dabei isoliert simuliert; auf dem Entwicklungsrechner werden keine installierten Systempakete entfernt oder neu installiert.
+- GitHubs echtes README-Layout: Galerie und Hero hatten denselben horizontalen Mittelpunkt (564 px bei 1440 px Browserbreite); 12 verlinkte Vorschaubilder in drei Reihen.
+- Automatisierte Gesamtprüfung: 35 Python-Tests und 14 Chromium-Tests. Bash-Syntax lokal; PowerShell-Syntax und portable Tests zusätzlich in der Plattform-CI.
+- Weiterhin offen: native Paketinstallationen mit sudo/UAC, Neustarts, Homebrew-Ersteinrichtung und Docker-Desktop-/WSL-Integration auf echten macOS-/Windows-Geräten. Erfolgreiche Logik-/Syntaxprüfungen sind keine Bestätigung dieser Systemabläufe.
