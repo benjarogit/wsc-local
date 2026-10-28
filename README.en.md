@@ -2,6 +2,8 @@
 
 **[Deutsch (default)](README.md) · [English](README.en.md)**
 
+**Current version: [v1.1.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.1.0)** · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) · [Changes](CHANGELOG.md)
+
 Prepare, automatically install, and manage local WoltLab Suite installations through a clear browser dashboard and the same CLI. Multiple projects run separately, each with its own files, database, ports, and credentials.
 
 **Linux · macOS · Windows through WSL2** · **German by default, English available in the dashboard**
@@ -41,7 +43,7 @@ These screenshots show the current version with real WoltLab test projects; pass
 
 ## Quick start
 
-First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/archive/refs/heads/main.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
+First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
 
 ### Install prerequisites once
 

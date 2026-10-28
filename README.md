@@ -2,6 +2,8 @@
 
 **[Deutsch](README.md) · [English](README.en.md)**
 
+**Aktuelle Version: [v1.1.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.1.0)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) · [Änderungen](CHANGELOG.md)
+
 WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – über ein übersichtliches Browser-Dashboard und dieselbe CLI. Mehrere Projekte laufen getrennt nebeneinander, mit eigenen Dateien, Datenbanken, Ports und Zugangsdaten.
 
 **Linux · macOS · Windows über WSL2** · **Deutsch als Standard, Englisch im Dashboard umschaltbar**
@@ -41,7 +43,7 @@ Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passw
 
 ## Schnellstart
 
-Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/archive/refs/heads/main.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
+Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.1.0/wsc-local-1.1.0.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
 
 ### Voraussetzungen einmalig installieren
 
