@@ -154,3 +154,8 @@ Die erste GitHub-Matrix fand einen zu strengen Testvergleich für aufgelöste Te
 - Die automatische Abschlussprüfung liest die Standardsprache und Adminsprache über WoltLabs Klassen und kontrolliert zusätzlich die ausgelieferten Sprachattribute von Website und ACP. Eine Abweichung verhindert die Freigabe als einsatzbereit.
 - Isolierte Tests prüfen explizite Sprachwahl, System-Locale-Priorität, Deutsch als Rückfall, gespeicherte Auswahl, ungültige Eingaben ohne Projektänderung und die Übergabe vom Dashboard über HTTP bis zur CLI. Ein Wechsel EN → DE mit Neuladen während eines gestarteten EN-Auftrags startet keinen zweiten Auftrag und ändert die ursprüngliche Wahl nicht.
 - Gesamtstand: 42 Python-Tests und 16 Chromium-Tests erfolgreich. Die realen Sprachtestprojekte wurden anschließend mit Dateien, Zugangsdaten, Containern und Netzwerken entfernt.
+
+
+## Aktualisierte Dokumentationsbilder (28.10.2026)
+
+Die README-Galerien wurden auf den Produktstand `0e2fb1d` aktualisiert: großes Startseitenbild plus 16 kleine, anklickbare Vorschauen in vier zentrierten Reihen. Insgesamt liegen 34 aktuelle PNG-Aufnahmen in Deutsch und Englisch vor, einschließlich Sprachübernahme vor der Einrichtung, tatsächlicher Installation, direkt angemeldetem ACP, Dark Mode und mobiler Ansicht. Die Voraussetzungen-Vorschau zeigt einen ausdrücklich gekennzeichneten Beispielfall ohne Installation von Systempaketen. Alle Bildziele und PNG-Dateien sowie GitHubs deutsche und englische Darstellung wurden geprüft. Details und Bildzuordnung: [Screenshot-Verzeichnis](screenshots/README.md).

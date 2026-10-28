@@ -29,9 +29,19 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/migration-en.png" title="Migration dialog"><img src="docs/screenshots/migration-en.png" alt="Migration dialog" width="160"><br><sub>Migration dialog</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/dark-en.png" title="Dark mode"><img src="docs/screenshots/dark-en.png" alt="Dark mode" width="160"><br><sub>Dark mode</sub></a></td>
   </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/setup-language-en.png" title="Installation language"><img src="docs/screenshots/setup-language-en.png" alt="Installation language" width="160"><br><sub>Installation language</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/acp-en.png" title="Signed in to the ACP"><img src="docs/screenshots/acp-en.png" alt="Signed in to the ACP" width="160"><br><sub>Signed in to the ACP</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/prerequisites-en.png" title="Prerequisites (example)"><img src="docs/screenshots/prerequisites-en.png" alt="Prerequisites (example)" width="160"><br><sub>Prerequisites (example)</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/mobile-en.png" title="Mobile view"><img src="docs/screenshots/mobile-en.png" alt="Mobile view" height="110"><br><sub>Mobile view</sub></a></td>
+  </tr>
 </table>
 
+These screenshots show the current version with real WoltLab test projects; passwords stay masked. The prerequisite dialog illustrates a missing HTTPS approval. Only that check result was simulated for the image; no system packages were changed. [Capture details](docs/screenshots/README.md)
+
 ## Quick start
+
+First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/archive/refs/heads/main.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
 
 ### Install prerequisites once
 
@@ -72,8 +82,8 @@ With multiple distributions: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Detail
 ## Your Suite in three steps
 
 1. **Prepare project:** choose a name, Suite version, and source. Nginx/PHP-FPM with MariaDB is recommended. Optional settings include Apache, compatible PHP profiles, MySQL 8, and a custom administrator account.
-2. **Review login details:** inspect the securely generated account and optionally change the name, email, and password.
-3. **Set up:** the Workbench starts the environment, configures HTTPS, and completes WoltLab installation. It verifies the website, assets, and actual administrator login. Open the website or administration directly from the project card afterwards.
+2. **Review language and login details:** select DE or EN in the header; the suite will use that language during setup. Inspect the securely generated account and optionally change the name, email, and password.
+3. **Set up:** the Workbench starts the environment, configures HTTPS, and completes WoltLab installation. It verifies the website, assets, and actual administrator login. Afterwards, open the website or use **Open ACP** to sign in directly to the administration.
 
 You do not need to click through the WoltLab installer. A spinner and installation stages show progress. Reloading reconnects to running tasks, even if the initial start response was lost.
 

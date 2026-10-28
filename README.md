@@ -29,9 +29,19 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/migration-de.png" title="Umzugsdialog"><img src="docs/screenshots/migration-de.png" alt="Umzugsdialog" width="160"><br><sub>Umzugsdialog</sub></a></td>
     <td align="center" valign="top" width="25%"><a href="docs/screenshots/dark-de.png" title="Dark Mode"><img src="docs/screenshots/dark-de.png" alt="Dark Mode" width="160"><br><sub>Dark Mode</sub></a></td>
   </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/setup-language-de.png" title="Installationssprache"><img src="docs/screenshots/setup-language-de.png" alt="Installationssprache" width="160"><br><sub>Installationssprache</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/acp-de.png" title="Direkt im ACP"><img src="docs/screenshots/acp-de.png" alt="Direkt im ACP" width="160"><br><sub>Direkt im ACP</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/prerequisites-de.png" title="Voraussetzungen (Beispiel)"><img src="docs/screenshots/prerequisites-de.png" alt="Voraussetzungen (Beispiel)" width="160"><br><sub>Voraussetzungen (Beispiel)</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/mobile-de.png" title="Mobile Ansicht"><img src="docs/screenshots/mobile-de.png" alt="Mobile Ansicht" height="110"><br><sub>Mobile Ansicht</sub></a></td>
+  </tr>
 </table>
 
+Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Der Voraussetzungen-Dialog zeigt beispielhaft eine fehlende HTTPS-Freigabe. Für diese Aufnahme wurde nur das Prüfergebnis simuliert; Systempakete wurden nicht verändert. [Aufnahmen und Ablauf](docs/screenshots/README.md)
+
 ## Schnellstart
+
+Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/archive/refs/heads/main.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
 
 ### Voraussetzungen einmalig installieren
 
@@ -72,8 +82,8 @@ Bei mehreren Distributionen: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Detail
 ## In drei Schritten zur fertigen Suite
 
 1. **Projekt vorbereiten:** Name, Suite-Version und Quelle wählen. Nginx/PHP-FPM mit MariaDB ist der Standard. Apache, passende PHP-Profile, MySQL 8 und eigene Adminwerte stehen unter den optionalen Einstellungen.
-2. **Login-Daten prüfen:** Den sicher erzeugten Adminzugang ansehen und bei Bedarf Name, E-Mail und Passwort ändern.
-3. **Einrichten:** Die Workbench startet die Umgebung, richtet HTTPS ein und installiert WoltLab vollständig. Website, Ressourcen und tatsächliche Admin-Anmeldung werden geprüft. Danach öffnest du Website oder Administration direkt über die Projektkarte.
+2. **Sprache und Login-Daten prüfen:** Oben DE oder EN wählen; diese Sprache übernimmt die Suite bei der Einrichtung. Den sicher erzeugten Adminzugang ansehen und bei Bedarf Name, E-Mail und Passwort ändern.
+3. **Einrichten:** Die Workbench startet die Umgebung, richtet HTTPS ein und installiert WoltLab vollständig. Website, Ressourcen und tatsächliche Admin-Anmeldung werden geprüft. Danach öffnest du die Website oder meldest dich über **ACP öffnen** direkt in der Administration an.
 
 Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschritte zeigen den Fortschritt. Nach Neuladen verbindet sich die Oberfläche wieder mit laufenden Vorgängen – auch wenn die erste Startantwort verloren gegangen ist.
 
