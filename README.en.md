@@ -6,7 +6,7 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
 
 **Linux · macOS · Windows through WSL2** · **German by default, English available in the dashboard**
 
-<a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local home with local WoltLab projects" width="1100"></a>
+<a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local: first start with no projects and guided onboarding" width="1100"></a>
 
 <p align="center">Click a thumbnail to open the full-size screenshot.</p>
 

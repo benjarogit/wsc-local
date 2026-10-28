@@ -6,7 +6,7 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
 
 **Linux · macOS · Windows über WSL2** · **Deutsch als Standard, Englisch im Dashboard umschaltbar**
 
-<a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: Startseite mit lokalen WoltLab-Projekten" width="1100"></a>
+<a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: erster Start ohne Projekte mit geführtem Einstieg" width="1100"></a>
 
 <p align="center">Vorschau anklicken, um den Screenshot groß zu öffnen.</p>
 

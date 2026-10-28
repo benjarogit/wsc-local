@@ -6,7 +6,7 @@ Alle Aufnahmen gibt es als `*-de.png` und `*-en.png`. Deutsch und Englisch wurde
 
 ## Bildinhalte
 
-- `home`: Startseite mit einsatzbereiten Projekten und „ACP öffnen“.
+- `home`: erster Start ohne Projekte mit dem geführten Einstieg, wie ihn neue Nutzer sehen (1920 × 916, Systemdarstellung bei hellem Gerätemodus). Bereits eingerichtete Projekte und „ACP öffnen“ sind in den Verwaltungsaufnahmen zu sehen.
 - `create`, `advanced`: Projektassistent und optionale Einstellungen.
 - `setup-language`: Zugangsdaten vor der Einrichtung und Hinweis auf die Dashboard-Sprache. Passwörter bleiben verborgen.
 - `installing`: echte laufende automatische Einrichtung mit Spinner und Fortschritt, jeweils in der gewählten Sprache.
