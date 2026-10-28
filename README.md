@@ -8,6 +8,29 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
 
 <a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: Startseite mit lokalen WoltLab-Projekten" width="1100"></a>
 
+Vorschau anklicken, um den Screenshot groß zu öffnen.
+
+<table>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/create-de.png" title="Projekt vorbereiten"><img src="docs/screenshots/create-de.png" alt="Projekt vorbereiten" width="160"><br><sub>Projekt vorbereiten</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/advanced-de.png" title="Erweiterte Einstellungen"><img src="docs/screenshots/advanced-de.png" alt="Erweiterte Einstellungen" width="160"><br><sub>Erweiterte Einstellungen</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/installing-de.png" title="Automatische Einrichtung"><img src="docs/screenshots/installing-de.png" alt="Automatische Einrichtung" width="160"><br><sub>Automatische Einrichtung</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/overview-de.png" title="Projektübersicht"><img src="docs/screenshots/overview-de.png" alt="Projektübersicht" width="160"><br><sub>Projektübersicht</sub></a></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/credentials-de.png" title="Zugangsdaten – verborgen"><img src="docs/screenshots/credentials-de.png" alt="Zugangsdaten – verborgen" width="160"><br><sub>Zugangsdaten – verborgen</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/services-de.png" title="Dienste und Logs"><img src="docs/screenshots/services-de.png" alt="Dienste und Logs" width="160"><br><sub>Dienste und Logs</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/backups-de.png" title="Sicherungen und Export"><img src="docs/screenshots/backups-de.png" alt="Sicherungen und Export" width="160"><br><sub>Sicherungen und Export</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/tools-de.png" title="WoltLab-Werkzeuge"><img src="docs/screenshots/tools-de.png" alt="WoltLab-Werkzeuge" width="160"><br><sub>WoltLab-Werkzeuge</sub></a></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/system-de.png" title="Systemprüfung"><img src="docs/screenshots/system-de.png" alt="Systemprüfung" width="160"><br><sub>Systemprüfung</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/help-de.png" title="Hilfe und Einstieg"><img src="docs/screenshots/help-de.png" alt="Hilfe und Einstieg" width="160"><br><sub>Hilfe und Einstieg</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/migration-de.png" title="Umzugsdialog"><img src="docs/screenshots/migration-de.png" alt="Umzugsdialog" width="160"><br><sub>Umzugsdialog</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/dark-de.png" title="Dark Mode"><img src="docs/screenshots/dark-de.png" alt="Dark Mode" width="160"><br><sub>Dark Mode</sub></a></td>
+  </tr>
+</table>
+
 ## Schnellstart
 
 ### Voraussetzungen einmalig installieren
@@ -66,30 +89,6 @@ Informationssymbole öffnen Erklärungen. Bestätigungen, Eingaben und Vorschaue
 
 Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der aktive Modus ist markiert; System folgt der Geräteeinstellung. Die Darstellung ändert die Workbench, nicht das Design deiner WoltLab-Website.
 
-### Screenshots
-
-Ein Klick auf eine Vorschau öffnet das Bild in voller Größe. Die Aufnahmen zeigen die tatsächliche Oberfläche; Zugangsdaten sind verborgen beziehungsweise für die Dokumentation anonymisiert.
-
-<p>
-  <a href="docs/screenshots/create-de.png" title="Projekt vorbereiten"><img src="docs/screenshots/create-de.png" alt="Projekt vorbereiten" width="280"></a>
-  <a href="docs/screenshots/advanced-de.png" title="Erweiterte Einstellungen"><img src="docs/screenshots/advanced-de.png" alt="Erweiterte Einstellungen" width="280"></a>
-  <a href="docs/screenshots/installing-de.png" title="Automatische Einrichtung"><img src="docs/screenshots/installing-de.png" alt="Automatische Einrichtung" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/overview-de.png" title="Projektübersicht"><img src="docs/screenshots/overview-de.png" alt="Projektübersicht" width="280"></a>
-  <a href="docs/screenshots/credentials-de.png" title="Zugangsdaten – verborgen"><img src="docs/screenshots/credentials-de.png" alt="Zugangsdaten – verborgen" width="280"></a>
-  <a href="docs/screenshots/services-de.png" title="Dienste und Logs"><img src="docs/screenshots/services-de.png" alt="Dienste und Logs" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/backups-de.png" title="Sicherungen und Export"><img src="docs/screenshots/backups-de.png" alt="Sicherungen und Export" width="280"></a>
-  <a href="docs/screenshots/tools-de.png" title="WoltLab-Werkzeuge"><img src="docs/screenshots/tools-de.png" alt="WoltLab-Werkzeuge" width="280"></a>
-  <a href="docs/screenshots/system-de.png" title="Systemprüfung"><img src="docs/screenshots/system-de.png" alt="Systemprüfung" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/help-de.png" title="Hilfe und Einstieg"><img src="docs/screenshots/help-de.png" alt="Hilfe und Einstieg" width="280"></a>
-  <a href="docs/screenshots/migration-de.png" title="Umzugsdialog"><img src="docs/screenshots/migration-de.png" alt="Umzugsdialog" width="280"></a>
-  <a href="docs/screenshots/dark-de.png" title="Dark Mode"><img src="docs/screenshots/dark-de.png" alt="Dark Mode" width="280"></a>
-</p>
 
 ## Suite-Versionen und Installationsarchive
 

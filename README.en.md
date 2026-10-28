@@ -8,6 +8,29 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
 
 <a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local home with local WoltLab projects" width="1100"></a>
 
+Click a thumbnail to open the full-size screenshot.
+
+<table>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/create-en.png" title="Prepare a project"><img src="docs/screenshots/create-en.png" alt="Prepare a project" width="160"><br><sub>Prepare a project</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/advanced-en.png" title="Advanced settings"><img src="docs/screenshots/advanced-en.png" alt="Advanced settings" width="160"><br><sub>Advanced settings</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/installing-en.png" title="Automatic setup"><img src="docs/screenshots/installing-en.png" alt="Automatic setup" width="160"><br><sub>Automatic setup</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/overview-en.png" title="Project details"><img src="docs/screenshots/overview-en.png" alt="Project details" width="160"><br><sub>Project details</sub></a></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/credentials-en.png" title="Credentials – masked"><img src="docs/screenshots/credentials-en.png" alt="Credentials – masked" width="160"><br><sub>Credentials – masked</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/services-en.png" title="Services and logs"><img src="docs/screenshots/services-en.png" alt="Services and logs" width="160"><br><sub>Services and logs</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/backups-en.png" title="Backups and export"><img src="docs/screenshots/backups-en.png" alt="Backups and export" width="160"><br><sub>Backups and export</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/tools-en.png" title="WoltLab tools"><img src="docs/screenshots/tools-en.png" alt="WoltLab tools" width="160"><br><sub>WoltLab tools</sub></a></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/system-en.png" title="System checks"><img src="docs/screenshots/system-en.png" alt="System checks" width="160"><br><sub>System checks</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/help-en.png" title="Help and getting started"><img src="docs/screenshots/help-en.png" alt="Help and getting started" width="160"><br><sub>Help and getting started</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/migration-en.png" title="Migration dialog"><img src="docs/screenshots/migration-en.png" alt="Migration dialog" width="160"><br><sub>Migration dialog</sub></a></td>
+    <td align="center" valign="top" width="25%"><a href="docs/screenshots/dark-en.png" title="Dark mode"><img src="docs/screenshots/dark-en.png" alt="Dark mode" width="160"><br><sub>Dark mode</sub></a></td>
+  </tr>
+</table>
+
 ## Quick start
 
 ### Install prerequisites once
@@ -66,30 +89,6 @@ Information buttons open explanations. Confirmations, inputs, and previews use k
 
 Monitor, sun, and moon icons directly select **System, Light, or Dark**. The active mode is highlighted; System follows your device preference. This changes the Workbench appearance, not your WoltLab website's design.
 
-### Screenshots
-
-Click a thumbnail to open the full image. These show the actual interface; credentials are masked or anonymized for documentation.
-
-<p>
-  <a href="docs/screenshots/create-en.png" title="Prepare a project"><img src="docs/screenshots/create-en.png" alt="Prepare a project" width="280"></a>
-  <a href="docs/screenshots/advanced-en.png" title="Advanced settings"><img src="docs/screenshots/advanced-en.png" alt="Advanced settings" width="280"></a>
-  <a href="docs/screenshots/installing-en.png" title="Automatic setup"><img src="docs/screenshots/installing-en.png" alt="Automatic setup" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/overview-en.png" title="Project details"><img src="docs/screenshots/overview-en.png" alt="Project details" width="280"></a>
-  <a href="docs/screenshots/credentials-en.png" title="Credentials – masked"><img src="docs/screenshots/credentials-en.png" alt="Credentials – masked" width="280"></a>
-  <a href="docs/screenshots/services-en.png" title="Services and logs"><img src="docs/screenshots/services-en.png" alt="Services and logs" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/backups-en.png" title="Backups and export"><img src="docs/screenshots/backups-en.png" alt="Backups and export" width="280"></a>
-  <a href="docs/screenshots/tools-en.png" title="WoltLab tools"><img src="docs/screenshots/tools-en.png" alt="WoltLab tools" width="280"></a>
-  <a href="docs/screenshots/system-en.png" title="System checks"><img src="docs/screenshots/system-en.png" alt="System checks" width="280"></a>
-</p>
-<p>
-  <a href="docs/screenshots/help-en.png" title="Help and getting started"><img src="docs/screenshots/help-en.png" alt="Help and getting started" width="280"></a>
-  <a href="docs/screenshots/migration-en.png" title="Migration dialog"><img src="docs/screenshots/migration-en.png" alt="Migration dialog" width="280"></a>
-  <a href="docs/screenshots/dark-en.png" title="Dark mode"><img src="docs/screenshots/dark-en.png" alt="Dark mode" width="280"></a>
-</p>
 
 ## Suite versions and installation archives
 
