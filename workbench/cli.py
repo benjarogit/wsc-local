@@ -2048,4 +2048,3 @@ def main(argv: list[str] | None = None) -> int:
     except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired, tarfile.TarError) as exc:
         print(f"Fehler: {exc}", file=sys.stderr)
         return 1
-
