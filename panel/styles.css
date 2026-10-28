@@ -31,3 +31,5 @@ dialog{width:min(740px,calc(100vw - 32px));max-height:90vh;margin:auto;padding:0
 @media(max-width:520px){.theme-switch button{width:40px;height:40px}}
 
 .language-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--brand-dark);font-size:12px;font-weight:700;cursor:pointer}.language-toggle:hover{background:var(--hover)}.language-toggle:active{background:var(--selected)}
+
+@media(max-width:800px){.nav-item{min-width:0;overflow-wrap:anywhere}}

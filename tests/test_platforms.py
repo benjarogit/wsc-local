@@ -115,7 +115,7 @@ class ImportProfileTests(unittest.TestCase):
                 config,_,_=cli.read_project('imported')
                 self.assertEqual('6.3',config['suite_version'])
                 self.assertEqual('8.5',config['php_version'])
-                restore.assert_called_once_with('imported',archive,yes=True)
+                restore.assert_called_once_with('imported',archive.resolve(),yes=True)
 
 
 class ExportTests(unittest.TestCase):
