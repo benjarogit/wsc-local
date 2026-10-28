@@ -9,6 +9,7 @@ import http.client
 from html.parser import HTMLParser
 import io
 import json
+import locale
 import os
 import re
 import shutil
@@ -811,10 +812,32 @@ def apply_local_port_compatibility(root: Path, cfg: dict[str, Any]) -> None:
     (root / "wsc-local.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def install_woltlab(name: str) -> str:
-    _, root, _ = read_project(name)
+def resolve_install_language(language: str | None = None, env: dict[str, str] | None = None) -> str:
+    """Dashboard passes an explicit choice; CLI falls back to its host locale."""
+    if language is not None:
+        if language not in {'de', 'en'}:
+            raise ValueError('Installationssprache muss de oder en sein.')
+        return language
+    env = os.environ if env is None else env
+    selected = next((env[key] for key in ('LC_ALL', 'LC_MESSAGES', 'LANG') if env.get(key)), '')
+    if not selected:
+        selected = locale.getlocale()[0] or ''
+    primary = re.split(r'[_\-.@]', selected.lower(), maxsplit=1)[0]
+    return 'en' if primary == 'en' else 'de'
+
+
+def verify_page_language(page: str, language: str) -> None:
+    match = re.search(r"<html\b[^>]*\slang\s*=\s*[\"']([a-zA-Z_-]+)[\"']", page, re.I)
+    if not match or re.split('[-_]', match.group(1).lower())[0] != language:
+        raise RuntimeError('WoltLab wurde nicht in der gewählten Sprache eingerichtet. Die Installation wird nicht als einsatzbereit markiert.')
+
+
+def install_woltlab(name: str, language: str | None = None) -> str:
+    cfg, root, _ = read_project(name)
     if (root / "site/global.php").exists():
         raise ValueError("WoltLab-Dateien sind bereits eingerichtet. Bei einer unterbrochenen Einrichtung zuerst Diagnose und Sicherung verwenden.")
+    cfg['installation_language'] = resolve_install_language(language if language is not None else cfg.get('installation_language'))
+    (root / 'wsc-local.json').write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     write_install_state(root, "running", "Umgebung und HTTPS vorbereiten")
     try:
         result = _install_woltlab(name)
@@ -834,6 +857,7 @@ def _install_woltlab(name: str) -> str:
         raise ValueError("WoltLab scheint bereits installiert zu sein. Öffne die Projektadresse oder nutze Wiederherstellen.")
     if not (root / "site/install.php").is_file():
         raise ValueError("Das WoltLab-Installationsarchiv fehlt. Erstelle das Projekt erneut und lade dabei ein gültiges Suite-Archiv.")
+    language = resolve_install_language(cfg.get("installation_language"))
     values = parse_env(secret)
     if profile_for(cfg["suite_version"]).get("requires_https") and not cfg.get("tls_enabled"):
         write_install_state(root, "running", "Lokales HTTPS-Zertifikat einrichten")
@@ -893,7 +917,7 @@ def _install_woltlab(name: str) -> str:
                 raise RuntimeError("WoltLab-Installer konnte nach der lokalen Browserprüfung nicht freigegeben werden.")
 
         install_url = urllib.parse.urljoin(base, "install.php")
-        initial_url = install_url + "?" + urllib.parse.urlencode({"languageCode": "de"})
+        initial_url = install_url + "?" + urllib.parse.urlencode({"languageCode": language})
         mark_stage("WoltLab-Installer öffnen")
         with opener.open(local_request(initial_url), timeout=90) as response:
             page = response.read().decode("utf-8", "replace")
@@ -983,6 +1007,9 @@ def _install_woltlab(name: str) -> str:
                     '$_SERVER["REQUEST_URI"]="/acp/index.php?first-time-setup/"; '
                     '$_SERVER["REQUEST_METHOD"]="GET"; chdir("/var/www/html"); '
                     'require "/var/www/html/global.php"; '
+                    '$defaultLanguage=\\wcf\\system\\language\\LanguageFactory::getInstance()->getDefaultLanguage()->languageCode; '
+                    '$adminLanguage=(new \\wcf\\data\\language\\Language((new \\wcf\\data\\user\\User(1))->languageID))->languageCode; '
+                    f'if ($defaultLanguage!=="{language}" || $adminLanguage!=="{language}") throw new \\RuntimeException("WoltLab installation language verification failed"); '
                     '$app=new \\wcf\\data\\application\\Application(1); '
                     '$appData=["domainName"=>' + repr(host_header) + ',"domainPath"=>"/","cookieDomain"=>' + repr(expected_host) + ']; '
                     '(new \\wcf\\data\\application\\ApplicationAction([$app], "update", ["data"=>$appData]))->executeAction(); '
@@ -1051,12 +1078,14 @@ def _install_woltlab(name: str) -> str:
                 final_url, admin_page = _post_setup_step(login_opener, urllib.parse.urljoin(login_url, login_form.action), login_fields, login_url)
                 if re.search(r'<input\b[^>]*\btype=[\"\']password[\"\']', admin_page, re.I) or "rescue-mode" in final_url or "Fatal Error" in admin_page or not re.search(r"\bUser\.init\(\s*[1-9]\d*\s*,", admin_page):
                     raise RuntimeError("Die automatische Admin-Anmeldung ist fehlgeschlagen. Die Installation wird nicht als einsatzbereit markiert.")
+                verify_page_language(home_page, language)
+                verify_page_language(admin_page, language)
                 return f"WoltLab Suite wurde automatisch installiert und die Website geprüft. Adresse: {public_base.rstrip('/')}\nAdmin-Anmeldung: {public_base.rstrip('/')}/acp/\n{start_output}"
 
             data = dict(fields)
             step_labels = {"showLicense": "Lizenz bestätigen", "configureDB": "Datenbankverbindung einrichten", "createDB": "Datenbanktabellen erstellen", "createUser": "Adminzugang anlegen"}
             mark_stage("Installationsschritt: " + step_labels.get(step, step))
-            data.setdefault("languageCode", "de")
+            data["languageCode"] = language
             if step == "showLicense":
                 # The user's explicit click on “Einrichten” authorizes the standard installer flow.
                 data["send"] = "1"
@@ -1983,7 +2012,7 @@ def parser() -> argparse.ArgumentParser:
     check.add_argument("--json", action="store_true")
     c = sub.add_parser("create", help="Neues WoltLab-Projekt anlegen")
     c.add_argument("name"); c.add_argument("--suite", default="6.2"); c.add_argument("--php"); c.add_argument("--database", choices=("mariadb", "mysql8"), default=None); c.add_argument("--webserver", choices=("nginx-php-fpm", "apache"), default=None); c.add_argument("--profile"); c.add_argument("--port", type=int); c.add_argument("--zip"); c.add_argument("--download-core", action="store_true"); c.add_argument("--version"); c.add_argument("--sha256"); c.add_argument("--legacy", dest="legacy_ack", action="store_true"); c.add_argument("--experimental", dest="experimental_ack", action="store_true", help="inoffizielles Entwicklungsprofil ausdrücklich bestätigen")
-    x = sub.add_parser("install", help="WoltLab automatisch einrichten"); x.add_argument("name")
+    x = sub.add_parser("install", help="WoltLab automatisch einrichten"); x.add_argument("name"); x.add_argument("--language", choices=("de", "en"), help="Installationssprache; Standard: Systemsprache bzw. gespeicherte Auswahl")
     l = sub.add_parser("list", help="Projekte anzeigen")
     rm = sub.add_parser("remove", help="Projekt und lokale Daten endgültig entfernen")
     rm.add_argument("name"); rm.add_argument("--yes", action="store_true", help="Bestätigung für Automatisierung; löscht Projektdateien und Datenbank")
@@ -2013,7 +2042,7 @@ def main(argv: list[str] | None = None) -> int:
             raise ValueError("Unter Windows die CLI in WSL2 ausführen. Start-wsc-local.cmd öffnet das Dashboard.")
         if args.command == "create":
             print(create_project(args))
-        elif args.command == "install": print(install_woltlab(args.name))
+        elif args.command == "install": print(install_woltlab(args.name, args.language))
         elif args.command == "list":
             if not project_names(): print("Noch keine Projekte. Beispiel: wsc create mein-forum")
             for name in project_names():

@@ -466,4 +466,7 @@ window.WorkbenchEnglish = {
   "Ungültige Browserkennung.": "Invalid browser identifier.",
   "Die WoltLab-Sitzung konnte nicht sicher an den Browser übergeben werden.": "The WoltLab session could not be transferred securely to the browser.",
   "WoltLab hat keine verwendbare Anmeldesitzung erstellt.": "WoltLab did not create a usable login session.",
+  "WoltLab wird vollständig in der Dashboard-Sprache installiert. Du musst keinen Installer bedienen.": "WoltLab is fully installed in the dashboard language. No manual installer steps are needed.",
+  "Installationssprache muss de oder en sein.": "Installation language must be de or en.",
+  "WoltLab wurde nicht in der gewählten Sprache eingerichtet. Die Installation wird nicht als einsatzbereit markiert.": "WoltLab was not installed in the selected language. The installation will not be marked ready.",
 };

@@ -182,6 +182,23 @@ class BackgroundJobTests(unittest.TestCase):
             error.exception.close()
         self.assertFalse(panel.JOBS)
 
+    def test_install_language_reaches_cli_and_invalid_values_create_no_job(self):
+        for language in ('fr', None, ['en']):
+            code,_=self.request('/api/workbench',{'action':'install','name':'project','language':language})
+            self.assertEqual(code,400)
+            self.assertFalse(panel.JOBS)
+        self.release.set()
+        for language in ('de','en'):
+            name='project-'+language
+            code,task=self.request('/api/workbench',{'action':'install','name':name,'language':language})
+            self.assertEqual(code,202)
+            for _ in range(100):
+                _,job=self.request('/api/jobs/'+task['job_id'])
+                if job['state']!='running':break
+                time.sleep(.005)
+            self.assertEqual(job['state'],'done')
+            self.assertIn(('install',name,'--language',language),self.calls)
+
     def test_restore_validates_selection_before_creating_job(self):
         code, _=self.request('/api/workbench', {'action':'restore','name':'project','snapshot':'../other'})
         self.assertEqual(400,code)

@@ -94,6 +94,8 @@ Information buttons open explanations. Confirmations, inputs, and previews use k
 
 **German is the default**, regardless of your browser language. Use the **DE/EN switch with its globe icon** in the header to switch dashboard language. The choice is saved in this browser, and open project sections are restored. CLI output and technical service logs retain their original language.
 
+When you click **Set up**, a new WoltLab installation uses the current dashboard language for the suite default and the first administrator account. Switching dashboard language during setup does not change the selection already submitted. Existing websites stay unchanged. The CLI uses the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`; English → EN, otherwise German), or an explicit choice: `./wsc install my-forum --language en`. Retrying retains the saved choice.
+
 Monitor, sun, and moon icons directly select **System, Light, or Dark**. The active mode is highlighted; System follows your device preference. This changes the Workbench appearance, not your WoltLab website's design.
 
 

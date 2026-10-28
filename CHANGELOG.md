@@ -2,6 +2,8 @@
 
 ## Unveröffentlicht / Unreleased
 
+- Neue WoltLab-Installationen übernehmen die gewählte Dashboard-Sprache für Suite-Standard und Adminbenutzer. CLI: Systemsprache bzw. `--language de|en`; gespeicherte Auswahl bei Wiederaufnahme. Sprachprüfung vor Freigabe. / New installations inherit the dashboard language, with CLI locale fallback, explicit override, and final language verification.
+
 - ACP-Direktlogin über normale WoltLab-Anmeldung und kurz gültige Einmal-Übergabe; verständlicher Rückfall auf die manuelle Anmeldung bei geändertem Zugang oder Zwei-Faktor-Prüfung.
 - Geführte Einrichtung fehlender Voraussetzungen im Systemterminal, per Dashboard oder nativem Linux-/macOS-/Windows-Einstieg; abschließende Systemprüfung statt pauschaler Erfolgsmeldung.
 - DE/EN-Schalter mit Globus-Icon und gespeichertem Zustand. Zentrierte README-Galerien und erneuerte Screenshots in beiden Sprachen.

@@ -94,6 +94,8 @@ Informationssymbole öffnen Erklärungen. Bestätigungen, Eingaben und Vorschaue
 
 **Deutsch ist der Standard**, unabhängig von der Browsersprache. Über den **DE/EN-Schalter mit Globus-Icon** oben wechselst du die Dashboard-Sprache; die Auswahl bleibt in diesem Browser gespeichert. Die aktuellen Projektbereiche werden beim Wechsel wieder geöffnet. CLI-Ausgaben und technische Dienstprotokolle bleiben in ihrer Originalsprache.
 
+Bei **Einrichten** übernimmt eine neue WoltLab-Installation die aktuelle Dashboard-Sprache für die Suite-Standardsprache und den ersten Adminbenutzer. Ein Sprachwechsel während der laufenden Einrichtung ändert diese Auswahl nicht mehr. Bereits installierte Websites bleiben unverändert. Die CLI verwendet die Systemsprache (`LC_ALL`, `LC_MESSAGES`, `LANG`; Englisch → EN, sonst Deutsch) oder eine explizite Wahl: `./wsc install mein-forum --language en`. Bei einer Wiederaufnahme bleibt die gespeicherte Auswahl erhalten.
+
 Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der aktive Modus ist markiert; System folgt der Geräteeinstellung. Die Darstellung ändert die Workbench, nicht das Design deiner WoltLab-Website.
 
 

@@ -620,6 +620,11 @@ class Handler(BaseHTTPRequestHandler):
                     if action in BACKGROUND_ACTIONS:
                         read_project(name)
                         extra_args = ()
+                        if action == "install" and "language" in body:
+                            if body["language"] not in ("de", "en"):
+                                self._json(400, {"error": "Installationssprache muss de oder en sein."})
+                                return
+                            extra_args = ("--language", body["language"])
                         if action == "restore":
                             snap = body.get("snapshot", "")
                             if not isinstance(snap, str) or not re.fullmatch(r"[0-9]{8}_[0-9]{6}", snap):

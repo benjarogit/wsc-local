@@ -145,3 +145,12 @@ Die erste GitHub-Matrix fand einen zu strengen Testvergleich für aufgelöste Te
 - GitHubs echtes README-Layout: Galerie und Hero hatten denselben horizontalen Mittelpunkt (564 px bei 1440 px Browserbreite); 12 verlinkte Vorschaubilder in drei Reihen.
 - Automatisierte Gesamtprüfung: 35 Python-Tests und 14 Chromium-Tests. Bash-Syntax lokal; PowerShell-Syntax und portable Tests zusätzlich in der Plattform-CI.
 - Weiterhin offen: native Paketinstallationen mit sudo/UAC, Neustarts, Homebrew-Ersteinrichtung und Docker-Desktop-/WSL-Integration auf echten macOS-/Windows-Geräten. Erfolgreiche Logik-/Syntaxprüfungen sind keine Bestätigung dieser Systemabläufe.
+
+
+## Installationssprache (28.10.2026)
+
+- Neue reale Installation WSC 6.2/Nginx: englisches Dashboard, absichtlich deutsche Browsersprache. Suite-Standard und erster Adminbenutzer wurden auf Englisch angelegt; der direkte ACP-Login öffnete ein englisches ACP.
+- Neue reale Installation WSC 6.3/Apache: deutsches Dashboard, absichtlich englische Browsersprache. Suite-Standard, Adminbenutzer und tatsächliches ACP waren deutsch.
+- Die automatische Abschlussprüfung liest die Standardsprache und Adminsprache über WoltLabs Klassen und kontrolliert zusätzlich die ausgelieferten Sprachattribute von Website und ACP. Eine Abweichung verhindert die Freigabe als einsatzbereit.
+- Isolierte Tests prüfen explizite Sprachwahl, System-Locale-Priorität, Deutsch als Rückfall, gespeicherte Auswahl, ungültige Eingaben ohne Projektänderung und die Übergabe vom Dashboard über HTTP bis zur CLI. Ein Wechsel EN → DE mit Neuladen während eines gestarteten EN-Auftrags startet keinen zweiten Auftrag und ändert die ursprüngliche Wahl nicht.
+- Gesamtstand: 42 Python-Tests und 16 Chromium-Tests erfolgreich. Die realen Sprachtestprojekte wurden anschließend mit Dateien, Zugangsdaten, Containern und Netzwerken entfernt.
