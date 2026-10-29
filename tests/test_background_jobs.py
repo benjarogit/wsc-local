@@ -248,6 +248,10 @@ class BackgroundJobTests(unittest.TestCase):
             self.assertEqual(self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})[0],409)
             self.release.set();worker.join(2)
             self.assertEqual(responses[0][0],200)
+            # The response can reach the client before the server thread has run its cleanup.
+            for _ in range(200):
+                if panel.ACTIVE_REQUESTS == 0: break
+                time.sleep(.01)
             self.assertEqual(panel.ACTIVE_REQUESTS,0)
 
     def test_restore_validates_selection_before_creating_job(self):
