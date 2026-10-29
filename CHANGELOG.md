@@ -1,5 +1,27 @@
 # Änderungen / Changelog
 
+## 1.2.3 – 2026-10-29
+
+### Deutsch
+
+- Die README zeigt die aktuelle Version automatisch über einen Release-Badge und verlinkt `releases/latest`. Der ZIP-Link nutzt den stabilen Namen `wsc-local.zip`. Eine Veröffentlichung braucht damit keine manuelle Versionspflege in der Dokumentation mehr.
+- Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` als stabile Namen hoch; die versionierten Dateien bleiben erhalten.
+- Neue Repository-Prüfung `python3 scripts/check_repo.py`: keine Laufzeit-, Projekt- oder Zugangsdateien im Repository, keine übergroßen Dateien, saubere Zeilenenden und gültige relative Markdown-Verweise.
+- `python3 scripts/check.py --metadata` prüft nur `VERSION`, den Changelog-Abschnitt und die automatischen README-Verweise; `--release` baut zusätzlich das ZIP probeweise.
+- GitHub: neuer Hygiene- und Lint-Job (ruff, shellcheck), CodeQL für Python und JavaScript, Dependabot für GitHub Actions und npm. Der Release-Workflow verlangt, dass der Tag auf `main` liegt.
+- Drei Shellcheck-Befunde behoben: maskierter Rückgabewert beim PATH-Export, ungenutzte Variable in `scripts/setup-pwa.sh` und ein abgesicherter `rm`-Pfad in `tools.sh`.
+
+### English
+
+- The README shows the current version automatically through a release badge and links `releases/latest`. The ZIP link uses the stable `wsc-local.zip` name, so a release no longer needs a documentation commit.
+- Every release also uploads `wsc-local.zip` and `wsc-local-SHA256SUMS.txt` as stable names; the versioned files remain available.
+- New repository check `python3 scripts/check_repo.py`: no runtime, project or credential files in the repository, no oversized files, clean line endings and valid relative Markdown links.
+- `python3 scripts/check.py --metadata` validates only `VERSION`, the changelog section and the automatic README links; `--release` additionally builds the ZIP as a trial run.
+- GitHub: a new hygiene and lint job (ruff, shellcheck), CodeQL for Python and JavaScript, and Dependabot for GitHub Actions and npm. The release workflow requires the tag to be on `main`.
+- Fixed three shellcheck findings: masked exit status on a PATH export, an unused variable in `scripts/setup-pwa.sh`, and a guarded `rm` path in `tools.sh`.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.2 – 2026-10-29
 
 ### Deutsch

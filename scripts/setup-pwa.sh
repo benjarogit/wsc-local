@@ -5,7 +5,6 @@ set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/lib.sh"
 load_env
 
-PANEL_URL="http://127.0.0.1:${PANEL_PORT:-9099}"
 SITE_URL="https://wsc.local"
 
 ICON="$ROOT/scripts/icons/wsc-local.png"

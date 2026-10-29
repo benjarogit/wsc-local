@@ -188,3 +188,12 @@ Native macOS-/Windows-Paketinstallationen und vollständige WSL2-/Docker-Desktop
 - `python3 scripts/check.py --release` prüft `VERSION`, den Changelog-Abschnitt und die Versionslinks beider README-Dateien, verlangt einen sauberen Commit und baut das Release-ZIP einschließlich Dateikatalog und Prüfsummen probeweise.
 - Weichen die Programmdateien von der beim Start geladenen Version des laufenden Dashboards ab, zeigt der Update-Bereich einen Neustart-Hinweis und blockiert das automatische Update bis zum Neustart. Ein Regressionstest deckt diesen Zustand ab.
 - Neue Tests für die Release-Metadatenprüfung; die vollständige lokale Prüfung umfasst Python-Tests, Syntax, Shell-Einstiegspunkte, Whitespace und optional die Chromium-Tests.
+
+## Automatische Versionsanzeige, Repository-Prüfung und neue Workflows (29.10.2026)
+
+- Die README zeigt die aktuelle Version über einen Release-Badge und verlinkt `releases/latest`; der ZIP-Download heißt stabil `wsc-local.zip`. `python3 scripts/check.py --metadata` lehnt feste Versionsverweise in beiden README-Dateien ab, damit die Anzeige nicht wieder manuell gepflegt wird.
+- Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` hoch; `--release` prüft, dass der stabile Download byte-gleich mit dem versionierten ZIP ist.
+- `scripts/check_repo.py` prüft die verfolgten Dateien: keine Laufzeit-, Projekt- oder Zugangsdateien (`var/`, `snapshots/`, `certs/`, `woltlab/`, `.env`, Schlüssel, Archive), keine Dateien über 2 MB, LF-Zeilenenden, keine Leerzeichen am Zeilenende, Zeilenumbruch am Dateiende, gültiges JSON und erreichbare relative Markdown-Verweise. Der fehlende Zeilenumbruch in `config/000-https.conf` wurde dabei behoben.
+- GitHub: `workbench.yml` prüft Repository-Sauberkeit und Release-Metadaten, lintet Python mit ruff und Bash mit shellcheck und behält die sechs Plattformkombinationen sowie Chromium. `codeql.yml` analysiert Python und JavaScript auf `main` und wöchentlich. Dependabot aktualisiert GitHub Actions und npm wöchentlich. `release.yml` verlangt, dass der Tag auf `main` liegt.
+- Drei Shellcheck-Befunde behoben: maskierter Rückgabewert beim PATH-Export in `scripts/install-host.sh`, ungenutzte Variable in `scripts/setup-pwa.sh`, abgesicherter `rm`-Pfad in `tools.sh`.
+- Stand: 72 Python-Tests und 22 Chromium-Tests erfolgreich, dazu ruff, shellcheck, JavaScript-Syntax, Bash-Syntax und Whitespace.

@@ -2,7 +2,7 @@
 
 **[Deutsch (default)](README.md) · [English](README.en.md)**
 
-**Current version: [v1.2.2](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.2)** · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.2/wsc-local-1.2.2.zip) · [Changes](CHANGELOG.md)
+**Current version:** [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) · [Changes](CHANGELOG.md)
 
 Prepare, automatically install, and manage local WoltLab Suite installations through a clear browser dashboard and the same CLI. Multiple projects run separately, each with its own files, database, ports, and credentials.
 
@@ -49,7 +49,7 @@ These screenshots show the current version with real WoltLab test projects; pass
 
 ## Quick start
 
-First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.2/wsc-local-1.2.2.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
+First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
 
 ### Install prerequisites once
 
@@ -192,7 +192,7 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-For a quick local check, run `python3 scripts/check.py`; add `--ui` to include the Chromium suite and `--release` to validate the release metadata and build the ZIP once. CI remains authoritative and checks portable logic on Linux, macOS, and Windows plus browser flows using isolated API responses. Real WoltLab/Docker installations were tested locally on Linux. Full Docker/browser acceptance on macOS and Windows/WSL2 remains a separate platform check. [Detailed test notes](docs/user-test.md)
+For a quick local check, run `python3 scripts/check.py`; add `--ui` to include the Chromium suite, `--release` to validate the release metadata and build the ZIP once, and `--metadata` to check only the version information. `python3 scripts/check_repo.py` verifies repository hygiene. CI remains authoritative and checks portable logic on Linux, macOS, and Windows plus browser flows using isolated API responses. Real WoltLab/Docker installations were tested locally on Linux. Full Docker/browser acceptance on macOS and Windows/WSL2 remains a separate platform check. [Detailed test notes](docs/user-test.md)
 
 [wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) informs WoltLab-specific profiles; [DDEV](https://github.com/ddev/ddev) project configuration; [Lando](https://docs.lando.dev/plugins/) profiles and optional services; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direct service controls. The Workbench remains WoltLab-specific. Font Awesome Free is bundled locally with [license and sources](panel/vendor/fontawesome/).
 

@@ -7,6 +7,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -35,12 +36,16 @@ def build(root: Path, ref: str, tag: str, destination: Path) -> dict:
         entry=zipfile.ZipInfo('wsc-local-'+wanted+'/'+MANIFEST,(2026,1,1,0,0,0));entry.external_attr=0o100644<<16
         archive.writestr(entry,json.dumps({'version':wanted,'files':hashes},sort_keys=True,indent=2).encode())
     sums=destination/f'wsc-local-{wanted}-SHA256SUMS.txt';sums.write_text(hashlib.sha256(target.read_bytes()).hexdigest()+'  '+target.name+'\n')
+    # Stable names let the README link releases/latest/download/wsc-local.zip
+    # without a version-specific edit for every release.
+    alias=destination/'wsc-local.zip';shutil.copyfile(target,alias)
+    alias_sums=destination/'wsc-local-SHA256SUMS.txt';alias_sums.write_text(hashlib.sha256(alias.read_bytes()).hexdigest()+'  '+alias.name+'\n')
     changelog=subprocess.check_output(['git','-C',str(root),'show',ref+':CHANGELOG.md'],text=True)
     sections=re.split(r'^## ',changelog,flags=re.M)
     notes=next((section for section in sections if section.startswith(wanted+' ')),None)
     if not notes:raise ValueError('Release-Hinweise fehlen im Changelog.')
     note_file=destination/'release-notes.md';note_file.write_text('## '+notes,encoding='utf-8')
-    return {'zip':target,'checksum':sums,'notes':note_file,'version':wanted}
+    return {'zip':target,'checksum':sums,'alias':alias,'alias_checksum':alias_sums,'notes':note_file,'version':wanted}
 
 
 def publish(tag: str, artifacts: dict) -> None:
@@ -51,7 +56,7 @@ def publish(tag: str, artifacts: dict) -> None:
         print('Release bereits veröffentlicht; keine Änderung.');return
     if existing.returncode:
         subprocess.run(['gh','release','create',tag,'--repo',repo,'--verify-tag','--draft','--title','wsc-local Workbench '+artifacts['version'],'--notes-file',str(artifacts['notes'])],check=True)
-    subprocess.run(['gh','release','upload',tag,'--repo',repo,str(artifacts['zip']),str(artifacts['checksum']),'--clobber'],check=True)
+    subprocess.run(['gh','release','upload',tag,'--repo',repo,str(artifacts['zip']),str(artifacts['checksum']),str(artifacts['alias']),str(artifacts['alias_checksum']),'--clobber'],check=True)
     latest=subprocess.run(['gh','api','repos/'+repo+'/releases/latest'],capture_output=True,text=True)
     make_latest=latest.returncode!=0 or version(json.loads(latest.stdout)['tag_name'])<version(tag)
     subprocess.run(['gh','release','edit',tag,'--repo',repo,'--draft=false','--latest='+str(make_latest).lower()],check=True)

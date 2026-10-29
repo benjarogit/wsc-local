@@ -162,7 +162,7 @@ delete_snapshot() {
     local snap_name="${snaps[$((snapshot_num - 1))]}"
     read -rp "$(echo -e "${YELLOW}→ „${snap_name}“ löschen? (ja/nein):${RESET} ")" confirm
     [ "${confirm}" = "ja" ] || { ui_info "Abgebrochen."; return 0; }
-    rm -rf "${SNAPSHOT_DIR}/${snap_name}"
+    rm -rf "${SNAPSHOT_DIR:?}/${snap_name}"
     ui_ok "Gelöscht: ${snap_name}"
 }
 

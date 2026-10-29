@@ -36,7 +36,7 @@ if [[ "$wsc_os" == Darwin ]]; then
             if [[ -x /opt/homebrew/bin/brew ]]; then eval "$(/opt/homebrew/bin/brew shellenv)"; else eval "$(/usr/local/bin/brew shellenv)"; fi
         fi
     fi
-    if ! python3 -c 'import sys; sys.exit(sys.version_info < (3,10))' 2>/dev/null; then brew install python; export PATH="$(brew --prefix)/bin:$PATH"; fi
+    if ! python3 -c 'import sys; sys.exit(sys.version_info < (3,10))' 2>/dev/null; then brew install python; PATH="$(brew --prefix)/bin:${PATH}"; export PATH; fi
     command -v mkcert >/dev/null || brew install mkcert
     brew list nss >/dev/null 2>&1 || brew install nss
     if ! command -v docker >/dev/null && [[ ! -d /Applications/Docker.app ]]; then brew install --cask docker; fi
