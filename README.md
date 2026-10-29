@@ -2,7 +2,7 @@
 
 **[Deutsch](README.md) · [English](README.en.md)**
 
-**Aktuelle Version: [v1.2.0](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.0)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) · [Änderungen](CHANGELOG.md)
+**Aktuelle Version: [v1.2.1](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.1)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.2.1/wsc-local-1.2.1.zip) · [Änderungen](CHANGELOG.md)
 
 WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – über ein übersichtliches Browser-Dashboard und dieselbe CLI. Mehrere Projekte laufen getrennt nebeneinander, mit eigenen Dateien, Datenbanken, Ports und Zugangsdaten.
 
@@ -49,7 +49,7 @@ Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passw
 
 ## Schnellstart
 
-Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.0/wsc-local-1.2.0.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
+Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.1/wsc-local-1.2.1.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
 
 ### Voraussetzungen einmalig installieren
 
@@ -192,7 +192,7 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Die CI prüft portable Logik auf Linux, macOS und Windows sowie Browserabläufe mit isolierten API-Antworten. Echte WoltLab-/Docker-Installationen wurden lokal unter Linux geprüft. Vollständige Docker-/Browser-Abnahmen auf macOS und Windows/WSL2 sind gesonderte Plattformtests. [Ausführliches Testprotokoll](docs/user-test.md)
+Für die lokale Kurzprüfung gibt es `python3 scripts/check.py`; mit `--ui` laufen zusätzlich die Chromium-Tests. Die CI bleibt maßgeblich und prüft portable Logik auf Linux, macOS und Windows sowie Browserabläufe mit isolierten API-Antworten. Echte WoltLab-/Docker-Installationen wurden lokal unter Linux geprüft. Vollständige Docker-/Browser-Abnahmen auf macOS und Windows/WSL2 sind gesonderte Plattformtests. [Ausführliches Testprotokoll](docs/user-test.md)
 
 [wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) liefert WoltLab-spezifische Anregungen; [DDEV](https://github.com/ddev/ddev) projektbezogene Konfiguration; [Lando](https://docs.lando.dev/plugins/) Profile und optionale Dienste; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direkte Dienststeuerung. Die Workbench bleibt ausschließlich auf WoltLab ausgerichtet. Font Awesome Free ist lokal samt [Lizenz und Quellen](panel/vendor/fontawesome/) eingebunden.
 

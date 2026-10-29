@@ -1,5 +1,23 @@
 # Änderungen / Changelog
 
+## 1.2.1 – 2026-10-29
+
+### Deutsch
+
+- Die Update-Sperre `var/update.lock` erkennt jetzt verwaiste Sperren nach einem Absturz oder Neustart, wiederverwendete Prozess-IDs und alte unvollständige Sperren. Eine tatsächlich laufende Sperre blockiert weiterhin.
+- Formulargrenzen und Fokusring im hellen Modus erfüllen jetzt WCAG 1.4.11 (3:1). Der Dark Mode bleibt unverändert.
+- Neue Arbeitsübergabe `AGENTS.md` und lokale Prüf-Harness `python3 scripts/check.py`; mit `--ui` laufen zusätzlich die Chromium-Tests.
+- Zusätzliche Regressionstests für tote, laufende und alte Update-Sperren.
+
+### English
+
+- `var/update.lock` now recovers locks left by crashed or restarted updates, reused process IDs, and old incomplete locks. A genuinely running update still blocks.
+- Light-mode form borders and focus rings now meet WCAG 1.4.11 (3:1); dark mode is unchanged.
+- Added the `AGENTS.md` handoff and the local `python3 scripts/check.py` harness, with `--ui` to include Chromium tests.
+- Added regression tests for dead, live, and old update locks.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.0 – 2026-10-28
 
 ### Deutsch

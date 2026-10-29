@@ -28,6 +28,103 @@ RELEASES = 'https://github.com/' + REPOSITORY + '/releases'
 MANIFEST = '.wsc-local-release.json'
 PROTECTED = {'.git', '.env', 'var', 'snapshots', 'certs', 'woltlab', '.wsc-local', 'node_modules'}
 MAX_DOWNLOAD = 128 * 1024 * 1024
+LOCK_STALE_SECONDS = 24 * 60 * 60
+LOCK_INCOMPLETE_SECONDS = 60
+
+
+def _process_start_time(pid: int) -> str:
+    """Kernel start time of a process, used to detect reused PIDs."""
+    try:
+        stat = Path(f'/proc/{pid}/stat').read_text(encoding='ascii', errors='replace')
+        return stat.rsplit(')', 1)[1].split()[19]
+    except (OSError, IndexError):
+        return ''
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid < 1:
+        return False
+    if os.name == 'nt':
+        import ctypes
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+        if handle:
+            ctypes.windll.kernel32.CloseHandle(handle)
+            return True
+        return ctypes.windll.kernel32.GetLastError() == 5  # Access denied: process exists.
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return True
+    return True
+
+
+def _lock_holder(lock: Path) -> tuple[int, str] | None:
+    try:
+        lines = lock.read_text(encoding='utf-8').splitlines()
+    except (OSError, UnicodeDecodeError):
+        return None
+    try:
+        pid = int(lines[0])
+    except (IndexError, ValueError):
+        return None
+    return pid, (lines[1] if len(lines) > 1 else '')
+
+
+def _lock_is_stale(lock: Path) -> bool:
+    try:
+        age = time.time() - lock.stat().st_mtime
+    except FileNotFoundError:
+        return True
+    holder = _lock_holder(lock)
+    if holder is None:
+        # A process may have created the file but not written its owner yet.
+        return age > LOCK_INCOMPLETE_SECONDS
+    pid, start = holder
+    if start and _process_start_time(pid) not in {'', start}:
+        return True
+    if not _pid_alive(pid):
+        return True
+    return age > LOCK_STALE_SECONDS
+
+
+def _acquire_lock(lock: Path) -> int:
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = None
+    for _ in range(3):
+        try:
+            descriptor = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            break
+        except FileExistsError:
+            if not _lock_is_stale(lock):
+                raise RuntimeError('Ein Update ist bereits gesperrt. Prüfe den letzten Update-Status und die Wiederherstellung.') from None
+            try:
+                lock.unlink()
+            except FileNotFoundError:
+                pass
+    if descriptor is None:
+        raise RuntimeError('Ein Update ist bereits gesperrt. Prüfe den letzten Update-Status und die Wiederherstellung.')
+    inode = os.fstat(descriptor).st_ino
+    with os.fdopen(descriptor, 'w') as stream:
+        stream.write(f'{os.getpid()}\n{_process_start_time(os.getpid())}\n')
+    try:
+        stolen = lock.stat().st_ino != inode
+    except FileNotFoundError:
+        stolen = True
+    if stolen:
+        raise RuntimeError('Ein Update ist bereits gesperrt. Prüfe den letzten Update-Status und die Wiederherstellung.')
+    return inode
+
+
+def _release_lock(lock: Path, inode: int) -> None:
+    try:
+        if lock.stat().st_ino == inode:
+            lock.unlink()
+    except FileNotFoundError:
+        pass
 
 
 def version(value: str) -> tuple[int, int, int]:
@@ -255,10 +352,8 @@ def apply(root: Path, wanted: str, operation_id: str = '') -> dict:
     root=root.resolve();version(wanted)
     if state(root).get('phase') in {'checking','installing','installed','restarting','restoring'}:raise RuntimeError('Ein Update ist noch nicht abgeschlossen. Prüfe den Status und die Wiederherstellung.')
     if len(dashboard_instances(root))>1:raise RuntimeError('Mehrere Dashboards dieses Programmordners laufen. Zusätzliche Instanzen vor dem Update beenden.')
-    lock=root/'var/update.lock';lock.parent.mkdir(parents=True,exist_ok=True)
-    try:descriptor=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
-    except FileExistsError:raise RuntimeError('Ein Update ist bereits gesperrt. Prüfe den letzten Update-Status und die Wiederherstellung.') from None
-    with os.fdopen(descriptor,'w') as stream:stream.write(str(os.getpid()))
+    lock=root/'var/update.lock'
+    inode=_acquire_lock(lock)
     changed=False
     try:
         write_state(root,id=operation_id or uuid.uuid4().hex,phase='checking',target=wanted,mode='',backup='',files=[],created_files=[],old_commit='',error='')
@@ -323,7 +418,7 @@ def apply(root: Path, wanted: str, operation_id: str = '') -> dict:
             except Exception as recovery_error:write_state(root,phase='failed',error=str(error)+' Wiederherstellung: '+str(recovery_error))
         else:write_state(root,phase='failed',error=str(error),target=wanted,id=operation_id or uuid.uuid4().hex)
         raise
-    finally:lock.unlink(missing_ok=True)
+    finally:_release_lock(lock,inode)
 
 
 def rollback(root: Path, phase: str = 'rolled_back') -> None:
@@ -454,12 +549,11 @@ if __name__=='__main__':
         elif arguments.rollback:
             destination=Path(arguments.rollback).resolve()
             lock=destination/'var/update.lock'
-            if lock.is_file():
-                try:os.kill(int(lock.read_text()),0)
-                except (ProcessLookupError,ValueError):pass
-                else:raise RuntimeError('Ein Update läuft noch. Warte auf dessen Abschluss.')
-            rollback(destination)
-            lock.unlink(missing_ok=True)
+            inode=_acquire_lock(lock)
+            try:
+                rollback(destination)
+            finally:
+                _release_lock(lock,inode)
     except Exception as error:
         if arguments.restart:write_state(Path(arguments.restart[0]),phase='failed',error=str(error))
         print(str(error),file=sys.stderr);sys.exit(1)

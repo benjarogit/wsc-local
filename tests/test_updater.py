@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import zipfile
 from pathlib import Path
@@ -114,6 +115,23 @@ class UpdaterTests(unittest.TestCase):
         (self.root/'var/update.lock').unlink()
         with self.assertRaisesRegex(ValueError,'neuer'):u.apply(self.root,'1.0.0')
         self.assertEqual(u.current(self.root),'1.1.0')
+    def test_stale_update_lock_from_a_dead_process_is_recovered(self):
+        lock=self.root/'var/update.lock';lock.parent.mkdir()
+        lock.write_text('99999999\n\n')
+        with self.assertRaisesRegex(ValueError,'neuer'):u.apply(self.root,'1.0.0')
+        self.assertFalse(lock.exists())
+    def test_complete_update_lock_is_kept_while_its_process_is_alive(self):
+        lock=self.root/'var/update.lock';lock.parent.mkdir()
+        lock.write_text(f'{os.getpid()}\n{u._process_start_time(os.getpid())}\n')
+        with self.assertRaisesRegex(RuntimeError,'gesperrt'):u.apply(self.root,'1.2.0')
+        self.assertTrue(lock.exists())
+    def test_old_incomplete_update_lock_is_recovered_after_a_crash(self):
+        lock=self.root/'var/update.lock';lock.parent.mkdir()
+        lock.write_text('running')
+        old=time.time()-u.LOCK_INCOMPLETE_SECONDS-1
+        os.utime(lock,(old,old))
+        with self.assertRaisesRegex(ValueError,'neuer'):u.apply(self.root,'1.0.0')
+        self.assertFalse(lock.exists())
     def test_missing_free_space_does_not_start_file_replacement(self):
         with patch.object(u.shutil,'disk_usage',return_value=shutil._ntuple_diskusage(1,1,0)),self.assertRaisesRegex(ValueError,'Speicherplatz'):u.apply(self.root,'1.2.0')
         self.assertEqual(u.current(self.root),'1.1.0')
