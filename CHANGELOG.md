@@ -1,5 +1,23 @@
 # Änderungen / Changelog
 
+## 1.2.2 – 2026-10-29
+
+### Deutsch
+
+- Dokumentation korrigiert: 1.2.1 ist seit dem 29.10.2026 veröffentlicht. README, Screenshot-Dokumentation und Testprotokoll behaupten das nicht mehr fälschlich.
+- `python3 scripts/check.py --release` prüft `VERSION`, den Changelog-Abschnitt und die Versionslinks beider README-Dateien, verlangt einen sauberen Commit und baut das Release-ZIP samt Dateikatalog und Prüfsummen probeweise.
+- Das Dashboard erkennt, wenn die Programmdateien von der beim Start geladenen Version abweichen, nennt beide Werte und blockiert das automatische Update bis zum Neustart.
+- Neue Regressionstests für die Release-Metadaten und die Laufzeitwarnung.
+
+### English
+
+- Corrected the documentation: 1.2.1 has been public since 29 October 2026. The README, screenshot documentation, and test notes no longer claim otherwise.
+- `python3 scripts/check.py --release` validates `VERSION`, the changelog section, and the version links in both README files, requires a clean commit, and builds the release ZIP including manifest and checksums as a trial run.
+- The dashboard detects when the program files differ from the version loaded at startup, names both values, and blocks automatic updates until it restarts.
+- Added regression tests for the release metadata and the runtime warning.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.1 – 2026-10-29
 
 ### Deutsch

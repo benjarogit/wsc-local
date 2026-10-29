@@ -2,7 +2,7 @@
 
 **[Deutsch](README.md) · [English](README.en.md)**
 
-**Aktuelle Version: [v1.2.1](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.1)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.2.1/wsc-local-1.2.1.zip) · [Änderungen](CHANGELOG.md)
+**Aktuelle Version: [v1.2.2](https://github.com/benjarogit/wsc-local/releases/tag/v1.2.2)** · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/download/v1.2.2/wsc-local-1.2.2.zip) · [Änderungen](CHANGELOG.md)
 
 WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – über ein übersichtliches Browser-Dashboard und dieselbe CLI. Mehrere Projekte laufen getrennt nebeneinander, mit eigenen Dateien, Datenbanken, Ports und Zugangsdaten.
 
@@ -45,11 +45,11 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
   </tr>
 </table>
 
-Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Voraussetzungen- und Update-Dialoge zeigen gekennzeichnete Beispielfälle: eine fehlende HTTPS-Freigabe und ein lokales Test-Update von 1.2.0 auf 1.2.1. Die Update-Aufnahmen stammen aus einem echten Programmaustausch mit Dashboard-Neustart in einem isolierten Testordner; 1.2.1 ist keine öffentliche Veröffentlichung. [Aufnahmen und Ablauf](docs/screenshots/README.md)
+Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Voraussetzungen- und Update-Dialoge zeigen gekennzeichnete Beispielfälle: eine fehlende HTTPS-Freigabe und ein lokales Test-Update von 1.2.0 auf 1.2.1. Die Update-Aufnahmen stammen aus einem echten Programmaustausch mit Dashboard-Neustart in einem isolierten Testordner; die gezeigte Version 1.2.1 ist seit dem 29.10.2026 öffentlich verfügbar. [Aufnahmen und Ablauf](docs/screenshots/README.md)
 
 ## Schnellstart
 
-Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.1/wsc-local-1.2.1.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
+Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/download/v1.2.2/wsc-local-1.2.2.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
 
 ### Voraussetzungen einmalig installieren
 
@@ -192,7 +192,7 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Für die lokale Kurzprüfung gibt es `python3 scripts/check.py`; mit `--ui` laufen zusätzlich die Chromium-Tests. Die CI bleibt maßgeblich und prüft portable Logik auf Linux, macOS und Windows sowie Browserabläufe mit isolierten API-Antworten. Echte WoltLab-/Docker-Installationen wurden lokal unter Linux geprüft. Vollständige Docker-/Browser-Abnahmen auf macOS und Windows/WSL2 sind gesonderte Plattformtests. [Ausführliches Testprotokoll](docs/user-test.md)
+Für die lokale Kurzprüfung gibt es `python3 scripts/check.py`; mit `--ui` laufen zusätzlich die Chromium-Tests, mit `--release` werden Release-Metadaten und das ZIP probeweise geprüft. Die CI bleibt maßgeblich und prüft portable Logik auf Linux, macOS und Windows sowie Browserabläufe mit isolierten API-Antworten. Echte WoltLab-/Docker-Installationen wurden lokal unter Linux geprüft. Vollständige Docker-/Browser-Abnahmen auf macOS und Windows/WSL2 sind gesonderte Plattformtests. [Ausführliches Testprotokoll](docs/user-test.md)
 
 [wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) liefert WoltLab-spezifische Anregungen; [DDEV](https://github.com/ddev/ddev) projektbezogene Konfiguration; [Lando](https://docs.lando.dev/plugins/) Profile und optionale Dienste; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direkte Dienststeuerung. Die Workbench bleibt ausschließlich auf WoltLab ausgerichtet. Font Awesome Free ist lokal samt [Lizenz und Quellen](panel/vendor/fontawesome/) eingebunden.
 

@@ -164,7 +164,7 @@ Die README-Galerien wurden auf den Produktstand `0e2fb1d` aktualisiert: großes 
 ## Workbench-Updates und automatische Releases: 1.2.0 (28.10.2026)
 
 - 61 Python-Tests und 21 Chromium-Tests prüfen den neuen Update-Bereich, Vorschau und Abbrechen, Offline-Anleitung, Sprachwechsel, lokale Änderungen und das Wiederverbinden nach einem Dashboard-Neustart.
-- Echte Programmaustausche in isolierten ZIP-Installationen: verifizierter Download-Dateikatalog, Austausch von 1.2.0 auf ein lokales Testpaket 1.2.1, Neustart des tatsächlichen Dashboard-Prozesses und Wiederverbindung des echten Browsers. Die Testversion 1.2.1 wurde nicht öffentlich veröffentlicht.
+- Echte Programmaustausche in isolierten ZIP-Installationen: verifizierter Download-Dateikatalog, Austausch von 1.2.0 auf ein lokales Testpaket 1.2.1, Neustart des tatsächlichen Dashboard-Prozesses und Wiederverbindung des echten Browsers. Die Testversion 1.2.1 war zum damaligen Zeitpunkt nicht veröffentlicht; seit dem 29.10.2026 ist sie öffentlich.
 - Ein absichtlich ungültiges neues Dashboard löste Wiederherstellung des alten Programms und dessen tatsächlichen Neustart aus. Wiederherstellungserfolg wird erst nach einem erfolgreichen Versionsabruf gemeldet. Ein simulierter Schreibfehler wurde ebenfalls ohne Verlust privater Dateien zurückgesetzt.
 - Eine laufende echte WSC-6.2-Website war vor und nach den Update-/Rückfalltests per HTTPS erreichbar. Ihre drei Docker-Container behielten dieselben IDs; die Updates haben sie nicht neu erstellt.
 - Git wurde in echten lokalen Test-Repositories per Fast-forward aktualisiert und zurückgesetzt. Private Dateien, Codeänderungen, Kollisionen, Prüfsummenfehler, unzulässige ZIP-Pfade, Verknüpfungen und fehlender Speicher werden abgefangen. Das ältere veröffentlichte 1.1.0-ZIP wurde gegen den offiziellen GitHub-Dateikatalog geprüft.
@@ -173,3 +173,18 @@ Die README-Galerien wurden auf den Produktstand `0e2fb1d` aktualisiert: großes 
 - README-Dateien, Hauptbilder, Galerien, Update-Beispiele und ältere Dokumentations-Bildlinks wurden aktualisiert. Die Testprojekte und vorbereiteten Dokumentationsprojekte wurden anschließend vollständig entfernt.
 
 Native macOS-/Windows-Paketinstallationen und vollständige WSL2-/Docker-Desktop-Abnahmen bleiben separate Zielsystemtests. Native Windows-CI überspringt die zwei vollständigen Dashboard-Neustarttests, weil der Produktstart unter Windows über WSL2 erfolgt; portable Update- und Git-Logik wird dort getestet.
+
+
+## Release 1.2.1 und Live-Update aus dem veröffentlichten ZIP (29.10.2026)
+
+- Release 1.2.1 wurde über den Tag-Workflow veröffentlicht: alle sechs Plattformjobs (Linux, macOS, Windows mit Python 3.10 und 3.13), die Chromium-Prüfung und die Paketveröffentlichung waren erfolgreich. ZIP und SHA-256-Datei wurden heruntergeladen und die Prüfsumme bestätigt; der Dateikatalog im ZIP stimmte für alle 138 Einträge.
+- Erstmals wurde der Update-Pfad mit dem echten veröffentlichten 1.2.0-ZIP geprüft: Installation in einem isolierten Programmordner mit eigenem Datenverzeichnis, Dashboard auf einem separaten Port, Update-Prüfung gegen das öffentliche Release, Installation über die Dashboard-API, Austausch durch die 1.2.1-Dateien, Neustart des tatsächlichen Prozesses und Wiederverbindung.
+- Ergebnis: `current=1.2.0`, `latest=1.2.1`, `available=true`, danach `phase=done`, laufende Version 1.2.1, `VERSION` und Dateikatalog 1.2.1, Fußzeile 1.2.1, keine zurückgebliebene Update-Sperre. Das echte Dashboard auf Port 9099 und die vorhandenen Projekte blieben unberührt.
+- Ein zweiter, verwaister Dashboard-Prozess blockierte das Update wie vorgesehen. Nach dem Beenden beider Instanzen und einem Neustart meldeten Fußzeile und Update-Bereich dieselbe Version.
+
+## Release 1.2.2: Dokumentation, Release-Probe und Laufzeitwarnung (29.10.2026)
+
+- Die Dokumentation behauptet nicht mehr, 1.2.1 sei unveröffentlicht; README, Screenshot-Dokumentation und Testprotokoll nennen den Stand vom 29.10.2026.
+- `python3 scripts/check.py --release` prüft `VERSION`, den Changelog-Abschnitt und die Versionslinks beider README-Dateien, verlangt einen sauberen Commit und baut das Release-ZIP einschließlich Dateikatalog und Prüfsummen probeweise.
+- Weichen die Programmdateien von der beim Start geladenen Version des laufenden Dashboards ab, zeigt der Update-Bereich einen Neustart-Hinweis und blockiert das automatische Update bis zum Neustart. Ein Regressionstest deckt diesen Zustand ab.
+- Neue Tests für die Release-Metadatenprüfung; die vollständige lokale Prüfung umfasst Python-Tests, Syntax, Shell-Einstiegspunkte, Whitespace und optional die Chromium-Tests.

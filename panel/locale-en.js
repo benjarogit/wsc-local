@@ -484,6 +484,8 @@ window.WorkbenchEnglish = {
   "Release-Hinweise": "Release notes",
   "Version {0} ist verfügbar": "Version {0} is available",
   "Deine Workbench ist aktuell.": "Your Workbench is up to date.",
+  "Dashboard-Neustart erforderlich": "Dashboard restart required",
+  "Die Programmdateien sind {0}, der laufende Prozess ist {1}. Starte das Dashboard neu, damit Anzeige und Update-Status übereinstimmen.": "The program files are {0}, the running process is {1}. Restart the dashboard so the display and update status agree.",
   "Installiert": "Installed",
   "Veröffentlicht": "Released",
   "Git-Installation": "Git installation",

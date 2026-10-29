@@ -225,6 +225,19 @@ class BackgroundJobTests(unittest.TestCase):
         self.request('/api/workbench',{'action':'snapshot','name':'project'})
         self.assertEqual(self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})[0],409)
 
+    def test_running_version_mismatch_is_reported_and_blocks_automatic_update(self):
+        plan={'current':'1.2.1','latest':'1.2.2','available':True,'can_apply':True,'problems':[],'mode':'git','notes':'','release_url':'https://example.test','guide':{'steps':[]},'state':{}}
+        with patch.object(panel.updater,'plan',return_value=dict(plan)),patch.object(panel,'RELEASE_VERSION','1.2.0'):
+            code,data=self.request('/api/updates')
+        self.assertEqual(code,200)
+        self.assertEqual({'files':'1.2.1','running':'1.2.0'},data['runtime_mismatch'])
+        self.assertFalse(data['can_apply'])
+        with patch.object(panel.updater,'plan',return_value=dict(plan)),patch.object(panel,'RELEASE_VERSION','1.2.1'):
+            code,data=self.request('/api/updates')
+        self.assertEqual(code,200)
+        self.assertNotIn('runtime_mismatch',data)
+        self.assertTrue(data['can_apply'])
+
     def test_update_cannot_race_a_direct_credential_mutation(self):
         responses=[]
         def save(*args):self.started.set();self.release.wait(5)

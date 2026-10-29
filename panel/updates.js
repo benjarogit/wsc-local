@@ -19,6 +19,7 @@
     latest=data;
     const title=data.available?H`Version ${data.latest} ist verfügbar`:t('Deine Workbench ist aktuell.');
     status.innerHTML=H`<div class="system-summary ${data.available?'missing':'ready'}"><strong>${escape(title)}</strong><p>${t('Installiert')}: ${escape(data.current)} · ${t('Veröffentlicht')}: ${escape(data.latest)} · ${data.mode==='git'?t('Git-Installation'):t('ZIP-Installation')}</p>${data.available&&data.problems?.length?H`<ul>${data.problems.map(problem=>H`<li>${escape(t(problem))}</li>`).join('')}</ul>`:''}<p><a href="${escape(data.release_url)}" target="_blank" rel="noopener">Release auf GitHub öffnen ↗</a></p></div>`;
+    if(data.runtime_mismatch)status.insertAdjacentHTML('beforeend',H`<div class="system-summary missing"><strong>${t('Dashboard-Neustart erforderlich')}</strong><p>${H(t('Die Programmdateien sind {0}, der laufende Prozess ist {1}. Starte das Dashboard neu, damit Anzeige und Update-Status übereinstimmen.'),escape(data.runtime_mismatch.files),escape(data.runtime_mismatch.running))}</p></div>`);
     if(['failed','rolled_back'].includes(data.state?.phase))status.insertAdjacentHTML('beforeend',H`<div class="result error"><strong>Letztes Update nicht abgeschlossen</strong><p>${escape(t(data.state.error||'Das Update wurde zurückgenommen. Die bisherige Version bleibt erhalten.'))}</p></div>`);
     document.getElementById('updates-notes').textContent=data.notes||t('Keine Release-Hinweise vorhanden.');
     document.getElementById('update-dot').hidden=!data.available;

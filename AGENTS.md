@@ -1,6 +1,6 @@
 # AGENTS.md – Arbeitsübergabe
 
-Stand: 29.10.2026, Workbench **1.2.1**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
+Stand: 29.10.2026, Workbench **1.2.2**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
 
 ## Zweck
 
@@ -18,6 +18,7 @@ Die Workbench richtet lokale WoltLab-Suite-Installationen in getrennten Docker-P
 ./start.sh --no-open       # ohne Browserstart
 python3 scripts/check.py   # Python, JavaScript, Bash, Whitespace
 python3 scripts/check.py --ui  # zusätzlich Chromium-Tests
+python3 scripts/check.py --release  # Release-Metadaten und ZIP-Probe (nach dem Commit)
 ```
 
 Voraussetzungen für die UI-Prüfung:
@@ -28,6 +29,8 @@ npx playwright install chromium
 ```
 
 `scripts/check.py` ist die lokale Kurzprüfung. Die GitHub-CI ist maßgeblich: Sie prüft Linux, macOS und Windows mit Python 3.10/3.13, die Dashboard-Syntax, Bash/PowerShell-Einstiegspunkte und Chromium. Der Release-Workflow prüft exakt den getaggten Commit.
+
+`--release` braucht einen sauberen Commit: Es gleicht `VERSION`, den Changelog-Abschnitt und die Versionslinks in beiden README-Dateien ab und baut das Release-ZIP samt Dateikatalog und Prüfsummen probeweise.
 
 ## Architektur
 
@@ -61,15 +64,17 @@ Der Server bindet nur an Loopback. Änderungen an der Oberfläche müssen ohne F
 2. `CHANGELOG.md` mit einem Abschnitt `## <Version> – <Datum>` ergänzen; daraus entstehen die Release-Notes.
 3. Aktuelle Versionslinks in `README.md` und `README.en.md` aktualisieren.
 4. `python3 scripts/check.py --ui` ausführen.
-5. Commit auf `main`, dann annotierten Tag `v<Version>` setzen und beides pushen.
-6. Der Tag startet `.github/workflows/release.yml`: Plattformprüfungen, Versions-/Changelog-Abgleich, ZIP, SHA-256 und Veröffentlichung.
+5. Commit auf `main`, dann `python3 scripts/check.py --release` ausführen.
+6. Annotierten Tag `v<Version>` setzen und Commit und Tag pushen.
+7. Der Tag startet `.github/workflows/release.yml`: Plattformprüfungen, Versions-/Changelog-Abgleich, ZIP, SHA-256 und Veröffentlichung.
 
 Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt erst als fertig, wenn der Workflow erfolgreich war und das GitHub-Release mit ZIP und Prüfsumme sichtbar ist.
 
 ## Aktueller Stand und offene Punkte
 
-- Release 1.2.0 ist veröffentlicht; 1.2.1 enthält den Lock-Fix und die Kontrastkorrektur.
+- Release 1.2.1 ist seit 29.10.2026 veröffentlicht; 1.2.2 enthält die korrigierte Dokumentation, die Release-Probe im Harness und die Warnung bei abweichender Laufzeitversion.
 - Der Update-Lock erkennt tote Prozesse, wiederverwendete PIDs und alte unvollständige Sperren. Eine laufende Sperre blockiert weiterhin.
+- Ein laufendes Dashboard liest die Release-Version beim Start. Weicht `VERSION` auf der Platte davon ab, nennt der Update-Bereich beide Werte und blockiert das automatische Update bis zum Neustart.
 - Die hellen Formulargrenzen und Fokusringe erfüllen WCAG 1.4.11 (3:1); Dark Mode bleibt unverändert.
 - Vollständige native macOS-/Windows-Docker-Abnahmen und WSC-6.3-Dauerbetrieb sind weiterhin gesonderte Plattformtests.
 - Das frühere Stil-Labor ist bewusst nicht Teil des Produkts. Nicht ohne neue Anforderung und eigenen Testplan wieder einführen.

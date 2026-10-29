@@ -6,7 +6,7 @@ Alle Aufnahmen gibt es als `*-de.png` und `*-en.png`. Deutsch und Englisch wurde
 
 ## Bildinhalte
 
-- `updates`, `update-confirm`, `update-guide`, `update-progress`: Beispielfluss von 1.2.0 auf 1.2.1. Die Versionsmetadaten stammen aus einem lokalen Testpaket; 1.2.1 wurde nicht öffentlich veröffentlicht. Dateiprüfung, Programmaustausch, Dashboard-Neustart und Browser-Wiederverbindung wurden tatsächlich in einem isolierten Programmordner ausgeführt.
+- `updates`, `update-confirm`, `update-guide`, `update-progress`: Beispielfluss von 1.2.0 auf 1.2.1. Die Versionsmetadaten stammten aus einem lokalen Testpaket; diese Version 1.2.1 ist seit dem 29.10.2026 öffentlich veröffentlicht. Dateiprüfung, Programmaustausch, Dashboard-Neustart und Browser-Wiederverbindung wurden tatsächlich in einem isolierten Programmordner ausgeführt.
 - `home`: erster Start ohne Projekte mit dem geführten Einstieg, wie ihn neue Nutzer sehen (1920 × 916, Systemdarstellung bei hellem Gerätemodus). Bereits eingerichtete Projekte und „ACP öffnen“ sind in den Verwaltungsaufnahmen zu sehen.
 - `create`, `advanced`: Projektassistent und optionale Einstellungen.
 - `setup-language`: Zugangsdaten vor der Einrichtung und Hinweis auf die Dashboard-Sprache. Passwörter bleiben verborgen.
@@ -33,4 +33,4 @@ Die älteren Dateinamen `docs/panel*.png` bleiben als Links für bestehende Doku
 
 Captured on 28 October 2026 against version 1.2.0, including Workbench updates and release automation. Each image has a German and an English version. Real disposable projects are used for setup, progress, management, backups, exports and direct ACP login. Passwords stay masked. Only the prerequisite preview uses an explicitly simulated missing HTTPS-approval result; the installer is cancelled and no host packages are changed. Demo projects are removed after capture. README thumbnails link to full-resolution images, and the mobile thumbnail height is limited to keep the centered gallery compact.
 
-Update screenshots use a local 1.2.0 → 1.2.1 example, not a public 1.2.1 release. File replacement, recovery metadata, dashboard restart and browser reconnection are real; only release metadata and download bytes are supplied by the isolated test fixture.
+Update screenshots use a 1.2.0 → 1.2.1 example captured before release. File replacement, recovery metadata, dashboard restart and browser reconnection are real; only release metadata and download bytes came from the isolated test fixture. Version 1.2.1 has been public since 29 October 2026.

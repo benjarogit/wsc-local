@@ -343,6 +343,11 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
                 result = updater.plan(ROOT, force=query.get("refresh") == ["1"])
+                if result.get("current") != RELEASE_VERSION:
+                    # The running code and the files on disk disagree, typically after a manual
+                    # version edit or an interrupted update. Do not replace files until restart.
+                    result["runtime_mismatch"] = {"files": result.get("current", ""), "running": RELEASE_VERSION}
+                    result["can_apply"] = False
                 self._json(200, result)
             except Exception as exc:
                 self._json(503, {"error": str(exc), "current": RELEASE_VERSION, "guide": updater.manual_guide(ROOT)})
