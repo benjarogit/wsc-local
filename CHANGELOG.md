@@ -1,5 +1,21 @@
 # Änderungen / Changelog
 
+## 1.2.6 – 2026-11-12
+
+### Deutsch
+
+- Die Update-Seite unterscheidet den laufenden Prozess, die Programmdateien und die veröffentlichte Version. Aktuell ist die Workbench nur, wenn Prozess und Dateien übereinstimmen.
+- Liegt die veröffentlichte Version schon in den Dateien und der Prozess ist älter, bietet die Seite **Dashboard neu starten**. Ein Update wird erst installiert, wenn beides wieder übereinstimmt. Eine laufende Einrichtung blockiert den Neustart.
+- Die Browser-Tests nutzen Playwright 1.65.
+
+### English
+
+- The update page distinguishes the running process, the program files and the published version. The Workbench is current only when the process and the files match.
+- When the published version is already in the files and the process is older, the page offers **Restart dashboard**. An update is installed only after the two match again. A running setup blocks the restart.
+- The browser tests use Playwright 1.65.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.5 – 2026-11-12
 
 ### Deutsch

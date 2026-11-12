@@ -1,6 +1,6 @@
 # AGENTS.md – Arbeitsübergabe
 
-Stand: 12.11.2026, Workbench **1.2.5**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
+Stand: 12.11.2026, Workbench **1.2.6**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
 
 ## Zweck
 
@@ -83,11 +83,11 @@ Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt er
 
 ## Aktueller Stand und offene Punkte
 
-- Release 1.2.5 ist der aktuelle Stand: Einsteigerhilfe, wenn Git oder die GitHub-CLI fehlt, und Zugangsdaten nur auf github.com. 1.2.4 bleibt der optionale eigene Code, die Arbeitskopien und das private Repository `wsc-<projekt>`.
+- Release 1.2.6 ist der aktuelle Stand: die Update-Seite trennt laufenden Prozess und Dateien und startet das Dashboard neu, statt einen älteren Prozess als aktuell zu bezeichnen. 1.2.5 bleibt die Einsteigerhilfe für Git und GitHub.
 - GitHub-Sicherheit für das öffentliche Repository: `SECURITY.md`, private Schwachstellenmeldung, Dependabot-Alarme und Sicherheitsupdates, Secret Scanning mit Push-Schutz. Code-Scanning und Security Advisories bleiben an. Die kostenlosen Workflows bleiben `workbench.yml`, `codeql.yml`, `release.yml` und das wöchentliche Dependabot für Actions und npm. Keine zusätzlichen kostenpflichtigen Runner.
 - Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` als stabile Namen hoch; die README verlinkt sie über `releases/latest`.
 - Der Update-Lock erkennt tote Prozesse, wiederverwendete PIDs und alte unvollständige Sperren. Eine laufende Sperre blockiert weiterhin.
-- Ein laufendes Dashboard liest die Release-Version beim Start. Weicht `VERSION` auf der Platte davon ab, nennt der Update-Bereich beide Werte und blockiert das automatische Update bis zum Neustart.
+- Ein laufendes Dashboard liest die Release-Version beim Start. Weicht sie von den Dateien ab, nennt der Update-Bereich beide Werte, bietet den Neustart an und blockiert das automatische Update, bis Prozess und Dateien übereinstimmen.
 - Die hellen Formulargrenzen und Fokusringe erfüllen WCAG 1.4.11 (3:1); Dark Mode bleibt unverändert.
 - Vollständige native macOS-/Windows-Docker-Abnahmen und WSC-6.3-Dauerbetrieb sind weiterhin gesonderte Plattformtests.
 - Das frühere Stil-Labor ist bewusst nicht Teil des Produkts. Nicht ohne neue Anforderung und eigenen Testplan wieder einführen.
