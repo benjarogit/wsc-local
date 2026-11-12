@@ -1,5 +1,23 @@
 # Änderungen / Changelog
 
+## 1.2.4 – 2026-11-12
+
+### Deutsch
+
+- Optionaler eigener Code unter Werkzeuge: lokales Git nur für Pakete und Styles, Arbeitskopien für ein zweites Agenten-Fenster und wahlweise ein privates GitHub-Repository `wsc-<projekt>`. Die laufende Installation, Datenbank und Zugangsdaten bleiben außerhalb.
+- GitHub-Passwort und Token werden nicht in das Dashboard eingetippt. Die Anmeldung öffnet ein Systemterminal und github.com; den Einmalcode bestätigt man dort. Die Sitzung bleibt in der eigenen Workbench-Anmeldung.
+- Das Informationssymbol und die Werkzeug-Anleitung erklären Registrierung, Anmeldung und den getrennten Push. Ein Push braucht eine eigene Bestätigung und kein Force-Push.
+- Arbeitskopien werden erkannt, wenn Git den aufgelösten Pfad ausgibt. Der Vergleich nutzt denselben aufgelösten Pfad auf Linux, macOS und Windows.
+
+### English
+
+- Optional custom code under Tools: local Git for packages and styles only, worktrees for a second agent window, and optionally a private GitHub repository `wsc-<project>`. The running installation, database and credentials stay outside.
+- A GitHub password or token is not typed into the dashboard. Sign-in opens a system terminal and github.com; the one-time code is confirmed there. The session stays in the Workbench sign-in.
+- The information button and the tools guide explain sign-up, sign-in and the separate push. A push needs its own confirmation and never uses a force-push.
+- Worktrees are recognized when Git prints the resolved path. The comparison uses the same resolved path on Linux, macOS and Windows.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.3 – 2026-10-29
 
 ### Deutsch
