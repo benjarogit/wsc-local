@@ -91,6 +91,12 @@ class BackgroundJobTests(unittest.TestCase):
             'guide_migration':lambda n:('guide',n,'migration'),
             'uploads_apply':lambda n:('uploads',n,'--size','256M','--apply','--yes'),
             'restore':lambda n:('restore',n,str(Path(self.temp.name)/n/'snapshots/20261028_120000'),'--yes'),
+            'code_init':lambda n:('code','init',n),
+            'code_commit':lambda n:('code','commit',n,'--message','test commit'),
+            'code_worktree':lambda n:('code','worktree',n,'--branch','agent-1'),
+            'code_github_login':lambda n:('code','github-login'),
+            'code_github_create':lambda n:('code','github-create',n),
+            'code_push':lambda n:('code','push',n,'--yes'),
         }
         self.assertEqual(set(expected),panel.BACKGROUND_ACTIONS)
         for index,(action,command) in enumerate(expected.items()):
@@ -99,7 +105,7 @@ class BackgroundJobTests(unittest.TestCase):
                 snapshot=Path(self.temp.name)/name/'snapshots/20261028_120000'
                 snapshot.mkdir(parents=True);(snapshot/'manifest.json').write_text('{}')
                 self.release.clear()
-                code,task=self.request('/api/workbench',{'action':action,'name':name,'snapshot':snapshot.name,'size':'256M'})
+                code,task=self.request('/api/workbench',{'action':action,'name':name,'snapshot':snapshot.name,'size':'256M','message':'test commit','branch':'agent-1'})
                 self.assertEqual(202,code)
                 code,job=self.request('/api/jobs/'+task['job_id'])
                 self.assertEqual('running',job['state'])

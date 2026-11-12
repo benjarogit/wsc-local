@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from host_system import detect_host, print_report, tls_environment
+import code_repo
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path(os.environ.get("WSC_LOCAL_HOME", Path.home() / ".local/share/wsc-local")).expanduser()
@@ -1168,7 +1169,7 @@ def project_status(name: str) -> dict[str, Any]:
     state_file = root / "installation-state.json"
     installation = json.loads(state_file.read_text()) if state_file.is_file() else {"state": "unverified" if files_available else "prepared", "stage": "", "error": ""}
     site_ready = files_available and installation.get("state") == "ready"
-    return {"recovery_enabled": (root / "recovery-tool.json").is_file() and (root / "site/wsc-recovery.php").is_file(), "name": name, "suite": cfg["suite_version"], "php": cfg["php_version"], "database": cfg.get("database", "mariadb"), "webserver": cfg.get("webserver", "nginx-php-fpm"), "legacy": cfg["profile_status"] == "legacy", "experimental": cfg.get("profile_status") == "development", "core_version": cfg.get("core_version", ""), "url": cfg["url"], "mail_url": f"http://127.0.0.1:{cfg['mail_port']}", "tls_enabled": cfg.get("tls_enabled", False), "running": running, "port_mismatch": port_mismatch, "status_error": status_error, "services": services, "site_ready": site_ready, "installation": installation, "files_available": files_available, "core_available": (root / "site/install.php").exists()}
+    return {"recovery_enabled": (root / "recovery-tool.json").is_file() and (root / "site/wsc-recovery.php").is_file(), "name": name, "suite": cfg["suite_version"], "php": cfg["php_version"], "database": cfg.get("database", "mariadb"), "webserver": cfg.get("webserver", "nginx-php-fpm"), "legacy": cfg["profile_status"] == "legacy", "experimental": cfg.get("profile_status") == "development", "core_version": cfg.get("core_version", ""), "url": cfg["url"], "mail_url": f"http://127.0.0.1:{cfg['mail_port']}", "tls_enabled": cfg.get("tls_enabled", False), "running": running, "port_mismatch": port_mismatch, "status_error": status_error, "services": services, "site_ready": site_ready, "installation": installation, "files_available": files_available, "core_available": (root / "site/install.php").exists(), "code": code_repo.code_status(name, cfg, root)}
 
 
 def action(name: str, command: str, *args: str) -> str:
@@ -1268,7 +1269,9 @@ def remove_project(name: str, confirmed: bool = False) -> str:
     # downloaded Core archive cache stay available to other projects.
     image_service = "web" if cfg.get("webserver") == "apache" else "php"
     subprocess.run(["docker", "image", "rm", f"{cfg['project']}-{image_service}"], capture_output=True, text=True, check=False)
-    return f"Projekt '{name}' vollständig entfernt. Container, Netzwerk, Projektdateien, Datenbankdateien und lokale Zugangsdaten wurden gelöscht. Gemeinsame Download- und Docker-Basis-Caches bleiben erhalten."
+    github = code_repo.configured_github(cfg)
+    remote_note = f" Das GitHub-Repository {github['url']} bleibt bestehen." if github else ""
+    return f"Projekt '{name}' vollständig entfernt. Container, Netzwerk, Projektdateien, Datenbankdateien und lokale Zugangsdaten wurden gelöscht. Gemeinsame Download- und Docker-Basis-Caches bleiben erhalten.{remote_note}"
 
 
 def service_action(name: str, service: str, command: str) -> str:
@@ -2035,6 +2038,15 @@ def parser() -> argparse.ArgumentParser:
     x = sub.add_parser("guide"); x.add_argument("name"); x.add_argument("topic", choices=("domain", "directory", "migration"))
     x = sub.add_parser("restore"); x.add_argument("name"); x.add_argument("snapshot"); x.add_argument("--yes", action="store_true")
     x = sub.add_parser("import"); x.add_argument("source"); x.add_argument("name")
+    code = sub.add_parser("code", help="Optionalen eigenen Code versionieren und mit GitHub verbinden")
+    code_sub = code.add_subparsers(dest="code_action", required=True)
+    for action_name in ("init", "status", "activity"):
+        item = code_sub.add_parser(action_name); item.add_argument("name")
+    commit = code_sub.add_parser("commit"); commit.add_argument("name"); commit.add_argument("--message", required=True)
+    worktree = code_sub.add_parser("worktree"); worktree.add_argument("name"); worktree.add_argument("--branch", required=True)
+    code_sub.add_parser("github-login")
+    create = code_sub.add_parser("github-create"); create.add_argument("name")
+    push = code_sub.add_parser("push"); push.add_argument("name"); push.add_argument("--yes", action="store_true")
     return p
 
 
@@ -2081,6 +2093,25 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "guide": print(guide(args.name, args.topic))
         elif args.command == "restore": print(restore(args.name, Path(args.snapshot).expanduser().resolve(), args.yes))
         elif args.command == "import": print(import_bundle(Path(args.source), args.name))
+        elif args.command == "code":
+            if args.code_action == "github-login":
+                print(code_repo.github_login(ROOT))
+            else:
+                cfg, root, _ = read_project(args.name)
+                if args.code_action == "init":
+                    print(code_repo.init_code(args.name, cfg, root))
+                elif args.code_action == "status":
+                    print(json.dumps(code_repo.code_status(args.name, cfg, root), ensure_ascii=False, indent=2))
+                elif args.code_action == "commit":
+                    print(code_repo.commit_code(args.name, cfg, root, args.message))
+                elif args.code_action == "worktree":
+                    print(code_repo.add_worktree(args.name, cfg, root, args.branch))
+                elif args.code_action == "github-create":
+                    print(code_repo.github_create(args.name, cfg, root))
+                elif args.code_action == "push":
+                    print(code_repo.push_code(args.name, cfg, root, args.yes))
+                elif args.code_action == "activity":
+                    print(code_repo.activity(args.name, cfg, root))
         return 0
     except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired, tarfile.TarError) as exc:
         print(f"Fehler: {exc}", file=sys.stderr)

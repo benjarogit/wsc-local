@@ -78,7 +78,7 @@ MAILHOG_UI_PORT = ENV.get("MAILHOG_UI_PORT", "8025")
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 ACTIVE_COMMANDS = 0
-BACKGROUND_ACTIONS = frozenset({"install", "start", "stop", "doctor", "snapshot", "export", "restore", "remove", "recovery_install", "recovery_remove", "tls_enable", "tls_disable", "mail_start", "mail_stop", "guide_domain", "guide_directory", "guide_migration", "uploads_apply"})
+BACKGROUND_ACTIONS = frozenset({"install", "start", "stop", "doctor", "snapshot", "export", "restore", "remove", "recovery_install", "recovery_remove", "tls_enable", "tls_disable", "mail_start", "mail_stop", "guide_domain", "guide_directory", "guide_migration", "uploads_apply", "code_init", "code_commit", "code_worktree", "code_github_login", "code_github_create", "code_push"})
 
 
 def workbench_command(action: str, name: str, extra_args: tuple[str, ...] = ()) -> tuple[str, ...]:
@@ -96,6 +96,18 @@ def workbench_command(action: str, name: str, extra_args: tuple[str, ...] = ()) 
         return ("remove", name, "--yes")
     if action == "uploads_apply":
         return ("uploads", name, *extra_args, "--apply", "--yes")
+    if action == "code_init":
+        return ("code", "init", name)
+    if action == "code_commit":
+        return ("code", "commit", name, *extra_args)
+    if action == "code_worktree":
+        return ("code", "worktree", name, *extra_args)
+    if action == "code_github_login":
+        return ("code", "github-login")
+    if action == "code_github_create":
+        return ("code", "github-create", name)
+    if action == "code_push":
+        return ("code", "push", name, "--yes")
     return (action, name, *extra_args)
 
 
@@ -189,6 +201,7 @@ def workbench_instances() -> list[dict]:
             except (OSError, ValueError):
                 installation = {"state": "unverified"}
             files_available = (root / "site/global.php").is_file()
+            from code_repo import code_status
             items.append({
                 "name": name, "suite": config.get("suite_version", "?"),
                 "php": config.get("php_version", "?"), "database": config.get("database", "mariadb"),
@@ -200,6 +213,7 @@ def workbench_instances() -> list[dict]:
                 "files_available": files_available, "installation": installation,
                 "core_available": (root / "site/install.php").exists(),
                 "status_error": f"Docker-Status nicht verfügbar: {exc}",
+                "code": code_status(name, config, root),
             })
     return items
 
@@ -709,12 +723,13 @@ class Handler(BaseHTTPRequestHandler):
                         save_setup_credentials(name, body.get("username", ""), body.get("email", ""), body.get("password", ""))
                         self._json(200, {"ok": True, "message": "Login-Daten gespeichert."})
                         return
-                    allowed = {"install", "start", "stop", "doctor", "snapshot", "export", "logs", "restore", "remove", "recovery_install", "recovery_remove", "uploads_preview", "uploads_apply", "tls_enable", "tls_disable", "mail_start", "mail_stop", "guide_domain", "guide_directory", "guide_migration"}
+                    allowed = {"install", "start", "stop", "doctor", "snapshot", "export", "logs", "restore", "remove", "recovery_install", "recovery_remove", "uploads_preview", "uploads_apply", "tls_enable", "tls_disable", "mail_start", "mail_stop", "guide_domain", "guide_directory", "guide_migration", "code_init", "code_commit", "code_worktree", "code_github_login", "code_github_create", "code_push", "code_activity"}
                     if action not in allowed:
                         self._json(400, {"error": "Unbekannte Workbench-Aktion"})
                         return
                     if action in BACKGROUND_ACTIONS:
-                        read_project(name)
+                        if action != "code_github_login":
+                            read_project(name)
                         extra_args = ()
                         if action == "install" and "language" in body:
                             if body["language"] not in ("de", "en"):
@@ -737,7 +752,19 @@ class Handler(BaseHTTPRequestHandler):
                                 self._json(400, {"error": "Uploadgröße ist ungültig. Beispiel: 256M oder 1G."})
                                 return
                             extra_args = ("--size", size)
-                        messages = {"install": "WoltLab wird automatisch eingerichtet …", "snapshot": "Dateien und Datenbank werden gesichert …", "export": "Server-Export wird erstellt …", "restore": "Sicherung wird wiederhergestellt …", "recovery_install": "Sicherung und offizielles Recovery Tool werden vorbereitet …", "recovery_remove": "Recovery Tool wird entfernt …", "guide_domain": "Sicherung und Domain-Anleitung werden vorbereitet …", "guide_directory": "Sicherung und Verzeichnis-Anleitung werden vorbereitet …", "guide_migration": "Umzugspaket und Anleitung werden vorbereitet …"}
+                        if action == "code_commit":
+                            message_text = body.get("message", "")
+                            if not isinstance(message_text, str) or not message_text.strip() or "\n" in message_text or "\r" in message_text or len(message_text.strip()) > 200:
+                                self._json(400, {"error": "Bitte eine einzeilige Commit-Nachricht bis 200 Zeichen angeben."})
+                                return
+                            extra_args = ("--message", message_text.strip())
+                        if action == "code_worktree":
+                            branch = body.get("branch", "")
+                            if not isinstance(branch, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._/-]{0,63}", branch):
+                                self._json(400, {"error": "Branch-Name: Kleinbuchstaben, Zahlen, Punkt, Unterstrich, Slash oder Bindestrich."})
+                                return
+                            extra_args = ("--branch", branch)
+                        messages = {"install": "WoltLab wird automatisch eingerichtet …", "snapshot": "Dateien und Datenbank werden gesichert …", "export": "Server-Export wird erstellt …", "restore": "Sicherung wird wiederhergestellt …", "recovery_install": "Sicherung und offizielles Recovery Tool werden vorbereitet …", "recovery_remove": "Recovery Tool wird entfernt …", "guide_domain": "Sicherung und Domain-Anleitung werden vorbereitet …", "guide_directory": "Sicherung und Verzeichnis-Anleitung werden vorbereitet …", "guide_migration": "Umzugspaket und Anleitung werden vorbereitet …", "code_init": "Eigenes Code-Repository wird angelegt …", "code_commit": "Commit wird erstellt …", "code_worktree": "Arbeitskopie wird vorbereitet …", "code_github_login": "GitHub-Anmeldung im Systemterminal …", "code_github_create": "Privates GitHub-Repository wird angelegt …", "code_push": "Push zu GitHub …"}
                         message = messages.get(action, "Projektvorgang wird ausgeführt …")
                         job_id = uuid.uuid4().hex
                         with JOBS_LOCK:
@@ -766,6 +793,8 @@ class Handler(BaseHTTPRequestHandler):
                             self._json(400, {"error": "Unbekannter Dienst."})
                             return
                         code, out = run_workbench("logs", name, "--service", service)
+                    elif action == "code_activity":
+                        code, out = run_workbench("code", "activity", name)
                     else:
                         code, out = run_workbench(action, name)
                 if code != 0:

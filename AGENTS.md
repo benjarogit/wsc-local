@@ -1,6 +1,6 @@
 # AGENTS.md – Arbeitsübergabe
 
-Stand: 29.10.2026, Workbench **1.2.3**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
+Stand: 12.11.2026, Workbench **1.2.3**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
 
 ## Zweck
 
@@ -43,6 +43,7 @@ Die Workflows: `workbench.yml` prüft Repository-Sauberkeit, Release-Metadaten, 
 | Pfad | Aufgabe |
 |---|---|
 | `workbench/cli.py` | Projekt-Lebenszyklus, Docker Compose, Installation, Sicherungen, TLS, Recovery, Kompatibilitätskorrekturen |
+| `workbench/code_repo.py` | Optionaler eigener Code: lokales Git unter `projects/<name>/code`, Worktrees, GitHub nur für `wsc-<projekt>` |
 | `workbench/launcher.py` | Dashboard-Start, Port-/Prozessprüfung, sauberer Serverwechsel |
 | `workbench/updater.py` | Signierte Release-Prüfung, ZIP-/Git-Austausch, Wiederherstellung, `var/update.lock` |
 | `workbench/profiles.json` | unterstützte WSC-/PHP-/Datenbank-Kombinationen |
@@ -58,7 +59,8 @@ Der Server bindet nur an Loopback. Änderungen an der Oberfläche müssen ohne F
 
 ## Regeln für Änderungen
 
-- **Projekt- und Nutzerdaten schützen.** Keine Zugangsdaten, `.env`, `var/`, `snapshots/`, `certs/`, `woltlab/` oder Projektordner committen.
+- **Projekt- und Nutzerdaten schützen.** Keine Zugangsdaten, `.env`, `var/`, `snapshots/`, `certs/`, `woltlab/` oder Projektordner committen. Foren-Code gehört nicht in dieses Workbench-Repository; optionaler eigener Code liegt unter `~/.local/share/wsc-local/projects/<name>/code`.
+- **Optionalen eigenen Code isolieren.** `site/`, Datenbank, TLS und Geheimnisse bleiben außerhalb von `code/`. GitHub-Anmeldung nur über `GH_CONFIG_DIR` unter `~/.config/wsc-local/gh`. Nur das von der Workbench angelegte private Repository `wsc-<projekt>` verwalten; fremde Remotes und Force-Push sind aus.
 - **WoltLab nicht stillschweigend patchen.** Kompatibilitätskorrekturen nur für exakt erkannte Codeblöcke, mit Original, Prüfsumme und Dokumentation.
 - **Destruktive Aktionen bestätigen.** Projekt entfernen, Wiederherstellen und Update nur nach sichtbarer Bestätigung.
 - **Keine neuen Suite-Versionen freigeben, ohne sie zu testen.** 6.3 bleibt inoffiziell; andere Stacks nicht als getestet darstellen.
@@ -88,3 +90,4 @@ Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt er
 - Die hellen Formulargrenzen und Fokusringe erfüllen WCAG 1.4.11 (3:1); Dark Mode bleibt unverändert.
 - Vollständige native macOS-/Windows-Docker-Abnahmen und WSC-6.3-Dauerbetrieb sind weiterhin gesonderte Plattformtests.
 - Das frühere Stil-Labor ist bewusst nicht Teil des Produkts. Nicht ohne neue Anforderung und eigenen Testplan wieder einführen.
+- Optionaler eigener Code und GitHub-Anbindung sind unter Werkzeuge verfügbar; die Suite bleibt ohne diese Stufen voll nutzbar.

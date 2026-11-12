@@ -17,7 +17,7 @@ async function fixture(options={}){
  page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>{errors.push('Native browser dialog: '+d.type());d.dismiss();});
  await page.route('**/api/**',async route=>{
   const req=route.request(),url=new URL(req.url());let data={};let status=200;
-  if(url.pathname==='/api/instances')data={items:removed?[]:[{name:'e2e-project',suite:'6.3',php:'8.5',webserver:'nginx-php-fpm',database:'mariadb',url:'https://e2e-project.localhost:8081',running:!options.prepared,site_ready:!options.prepared,files_available:!options.prepared,core_available:!!options.prepared,experimental:true,tls_enabled:true,recovery_enabled:recovery,installation:{state:options.prepared?'prepared':'ready'},services:[{name:'web',state:'running'},{name:'php',state:'running'},{name:'database',state:'running'}]}]};
+  if(url.pathname==='/api/instances')data={items:removed?[]:[{name:'e2e-project',suite:'6.3',php:'8.5',webserver:'nginx-php-fpm',database:'mariadb',url:'https://e2e-project.localhost:8081',running:!options.prepared,site_ready:!options.prepared,files_available:!options.prepared,core_available:!!options.prepared,experimental:true,tls_enabled:true,recovery_enabled:recovery,installation:{state:options.prepared?'prepared':'ready'},services:[{name:'web',state:'running'},{name:'php',state:'running'},{name:'database',state:'running'}],code:options.code || {enabled:false,git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',worktrees:[]}}]};
   else if(url.pathname==='/api/system')data={ready:!options.missingHost,host:{label:'Test Linux',architecture:'x64'},checks:[],installation:{supported:true,steps:['Install packages'],command:'bash ./setup.sh --install-deps'}};
   else if(url.pathname==='/api/updates'){
    if(options.updatesOffline)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'GitHub offline',guide:{steps:['Download the release ZIP']}})});
@@ -101,3 +101,31 @@ for(const language of ['de','en'])test(`automatic installation passes the select
  test('runtime version mismatch asks for a dashboard restart and blocks the update',async()=>{const {context,page,calls,errors}=await fixture({updatesAvailable:true,updatesMismatch:true});await page.locator('.app-nav [data-view=updates]').click();await page.locator('#updates-status').waitFor();const text=await page.locator('#updates-status').innerText();assert.match(text,/Neustart erforderlich/);assert.match(text,/1\.2\.1/);assert.match(text,/1\.2\.0/);assert.equal(await page.locator('#updates-install').isDisabled(),true);assert.equal(calls.length,0);await page.locator('#language-toggle').click();await page.waitForFunction(()=>document.documentElement.lang==='en');await page.locator('.app-nav [data-view=updates]').click();await page.waitForFunction(()=>document.querySelector('#updates-status').innerText.includes('Dashboard restart required'));assert.deepEqual(errors,[]);await context.close();});
  test('failed replacement shows the restored version without claiming update success',async()=>{const {context,page,errors}=await fixture({updatesAvailable:true,updatesFail:true});await page.locator('.app-nav [data-view=updates]').click();await page.locator('#updates-install').click();await page.locator('#action-accept').click();await page.waitForFunction(()=>document.querySelector('#operation-result').classList.contains('error'));assert.match(await page.locator('#operation-result').innerText(),/wiederhergestellt/);assert.equal(await page.locator('#operation-status').isVisible(),false);assert.deepEqual(errors,[]);await context.close();});
  test('English update instructions and narrow navigation remain usable',async()=>{const {context,page,errors}=await fixture({updatesAvailable:true,updatesBlocked:true});await page.locator('#language-toggle').click();await page.waitForFunction(()=>document.documentElement.lang==='en');await page.locator('.app-nav [data-view=updates]').click();assert.equal(await page.locator('#updates-heading').innerText(),'Update the Workbench');assert.match(await page.locator('#updates-status').innerText(),/Local code changes/);await page.locator('#updates-guide').click();assert.match(await page.locator('#action-content').innerText(),/Save or commit/);await page.keyboard.press('Escape');await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);assert.deepEqual(errors,[]);await context.close();});
+
+test('custom code tools stay optional and confirm before creating a repository',async()=>{
+ const {context,page,card,calls,errors}=await fixture();
+ assert.match(await card.locator('[data-panel=tools]').innerText(),/Eigener Code/);
+ assert.equal(await card.locator('[data-action=code_init]').count(),1);
+ assert.equal(await card.locator('[data-action=code_push]').count(),0);
+ await card.locator('[data-action=code_init]').click();
+ await page.locator('#action-dialog').waitFor({state:'visible'});
+ await page.locator('#action-cancel').click();
+ assert.equal(calls.filter(call=>call.action==='code_init').length,0);
+ await card.locator('[data-action=code_init]').click();
+ await page.locator('#action-accept').click();
+ await completed(page);
+ assert.equal(calls.filter(call=>call.action==='code_init').length,1);
+ const enabled=await fixture({code:{enabled:true,path:'/isolated/project/code',git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',github:null,worktrees:[],dirty:false}});
+ assert.match(await enabled.card.locator('[data-panel=tools]').innerText(),/packages\/ und styles/);
+ assert.equal(await enabled.card.locator('[data-action=code_commit]').count(),1);
+ assert.equal(await enabled.card.locator('[data-action=code_push]').isDisabled(),true);
+ await enabled.card.locator('[data-action=code_push]').evaluate(button=>button.disabled=false);
+ await enabled.card.locator('[data-action=code_push]').click();
+ await enabled.page.locator('#action-dialog').waitFor({state:'visible'});
+ await enabled.page.locator('#action-cancel').click();
+ assert.equal(enabled.calls.filter(call=>call.action==='code_push').length,0);
+ assert.deepEqual(errors,[]);
+ assert.deepEqual(enabled.errors,[]);
+ await context.close();
+ await enabled.context.close();
+});

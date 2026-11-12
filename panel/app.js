@@ -195,7 +195,7 @@
     window.setTimeout(() => item.remove(), 4500);
   }
 
-  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right'};
+  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right',code_init:'folder-tree',code_commit:'box-archive',code_worktree:'folder-tree',code_github_login:'globe',code_github_create:'globe',code_push:'upload',code_activity:'heart-pulse',code_signup:'globe'};
   const projectViews = new Map();
   function projectCard(project) {
     const phase = project.installation?.state || (project.site_ready ? 'ready' : 'prepared');
@@ -223,6 +223,16 @@
       return H`<tr><th scope="row">${label}</th><td><span class="badge ${running?'ready':''}">${running?t('Läuft'):t('Gestoppt')}</span></td><td>${key==='mail'?action(mailRunning?'mail_stop':'mail_start',mailRunning?t('Stoppen'):t('Starten'))+(mailRunning?H` <a href="${esc(localUrl(project.mail_url))}" class="button" target="_blank" rel="noopener">Postfach ↗</a>`:''):''} ${action('logs','Logs','',H`data-service="${key}"`)}</td></tr>`;
     }).join('');
     const tabs=[['overview',t('Übersicht')],['credentials',t('Zugangsdaten')],['services',t('Dienste')],['backups',t('Sicherungen')],['tools',t('Werkzeuge')]];
+    const codeTools = (current) => {
+      const code = current.code || {};
+      const pathHint = code.path ? H`<p class="hint">${t('Lokaler Ordner:')} <code>${esc(code.path)}</code></p>` : '';
+      const githubHint = code.github ? H`<p class="hint">${t('GitHub:')} <a href="${esc(code.github.url)}" target="_blank" rel="noopener">${esc(code.github.url)} ↗</a></p>` : '';
+      const worktreeHint = (code.worktrees || []).length ? H`<p class="hint">${t('Arbeitskopien:')} ${(code.worktrees || []).map(item => H`<code>${esc(item.path)}</code>`).join(', ')}</p>` : '';
+      if (!code.enabled) {
+        return H`<div class="tool-group"><h4>Eigener Code</h4><p class="hint">${t('Optional: eigenes Git nur für Pakete und Styles. Die laufende Installation bleibt außerhalb.')}</p><div class="actions">${action('code_init',t('Repository anlegen'),'',code.git_available?'':'disabled')}</div>${code.git_available?'':H`<p class="hint">${t('Git fehlt. Installiere Git und starte die Workbench erneut.')}</p>`}</div>`;
+      }
+      return H`<div class="tool-group"><h4>Eigener Code</h4><p class="hint">${t('Nur packages/ und styles/. Geheimnisse und site/ gehören nicht in Git.')}${code.dirty?t(' Es gibt uncommittete Änderungen.'):''}</p>${pathHint}${githubHint}${worktreeHint}<div class="actions">${action('code_commit',t('Commit'))}${action('code_worktree',t('Arbeitskopie'))}<a class="button" href="${esc(code.signup_url || 'https://github.com/signup')}" target="_blank" rel="noopener">${icon('globe')}${t('Bei GitHub registrieren')} ↗</a>${action('code_github_login',code.gh_authenticated?t('GitHub-Anmeldung prüfen'):t('Bei GitHub anmelden'),'',code.gh_available?'':'disabled')}${action('code_github_create',t('Privates Repository erstellen'),'',(code.gh_available && !code.github)?'':'disabled')}${action('code_push',t('Push'),'',code.github?'':'disabled')}${action('code_activity',t('Letzte Aktivität'),'',code.github?'':'disabled')}</div>${code.gh_available?'':H`<p class="hint">${t('GitHub CLI (gh) fehlt. Installationshilfe:')} <a href="https://cli.github.com/" target="_blank" rel="noopener">cli.github.com ↗</a></p>`}</div>`;
+    };
     return H`<article class="project" data-project="${name}" data-url="${esc(localUrl(project.url))}">
       <div class="project-head"><div><h3 class="project-title">${name}</h3><p class="project-subtitle">WoltLab ${esc(project.suite)} · ${project.webserver==='apache'?'Apache':'Nginx'} · PHP ${esc(project.php)}${project.experimental?' · Alpha':project.legacy?' · Legacy':''}</p></div><span class="badge ${badge}">${esc(state)}</span></div>
       <p class="next-step" ${setup?'':'hidden'}>${esc(setup)}</p>
@@ -241,7 +251,7 @@
       </section>
       <section class="tab-panel" role="tabpanel" id="panel-${name}-services" aria-labelledby="tab-${name}-services" data-panel="services" hidden><div class="heading-with-info"><h4>Projekt-Dienste</h4>${infoButton('services',t('Dienste und Mail-Test erklären'))}</div><p>Start und Stopp des gesamten Projekts findest du oben. Den Mail-Test kannst du unabhängig einschalten.</p>${mailRunning?H('<p class="hint">Für den Mail-Test in WoltLab SMTP-Server mail, Port 1025 und keine Anmeldung verwenden.</p>'):''}<div class="table-scroll"><table class="service-table"><thead><tr><th>Dienst</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>${serviceRows}</tbody></table></div></section>
       <section class="tab-panel" role="tabpanel" id="panel-${name}-backups" aria-labelledby="tab-${name}-backups" data-panel="backups" hidden><div class="heading-with-info"><h4>Dateien und Datenbank zusammen sichern</h4>${infoButton('backups',t('Sicherung und Export erklären'))}</div><p>Eine Sicherung hält beide Teile auf demselben Stand. Das Projekt wird dafür kurz pausiert.</p><div class="actions">${action('snapshot',t('Sicherung erstellen'),'',project.files_available?'':'disabled')}${action('export',t('Server-Export erstellen'),'',project.files_available?'':'disabled')}</div><div class="restore-controls"><label for="snapshot-${name}">Vorhandene Sicherung</label><select id="snapshot-${name}" data-snapshot-select><option value="">Sicherungen werden geladen …</option></select>${action('restore',t('Wiederherstellen'))}</div><p class="hint">Ein Export ist ein Paket mit Anleitung für den Serverumzug. Ein direkter SSH-Upload ist nicht enthalten.</p><ul class="export-list" aria-label="Erstellte Exporte"></ul></section>
-      <section class="tab-panel" role="tabpanel" id="panel-${name}-tools" aria-labelledby="tab-${name}-tools" data-panel="tools" hidden><div class="tool-group"><h4>Diagnose und Einstellungen</h4><div class="actions">${action('doctor',t('Projekt prüfen'))}${action('logs',t('Webserver-Logs'))}${action('uploads',t('Uploadlimits'))}${action(project.tls_enabled?'tls_disable':'tls_enable',project.tls_enabled?t('HTTPS deaktivieren'):t('HTTPS einrichten'))}</div></div><div class="tool-group"><h4>WoltLab-Hilfen</h4><p class="hint">Domain und Verzeichnisse: Sicherung plus geführte Anleitung. Serverumzug: Exportpaket plus Schritte für den Zielserver.</p>${project.recovery_enabled?H`<div class="recovery-notice"><strong>${icon('life-ring')}Recovery ist aktiv</strong><p>Nach Gebrauch wieder entfernen.</p><a href="${esc(localUrl(project.url+'/wsc-recovery.php'))}" target="_blank" rel="noopener">Offizielles Recovery Tool öffnen ↗</a></div>`:''}<div class="actions">${action('recovery_install',t('Recovery einrichten'),'',(!project.files_available || project.recovery_enabled)?'disabled':'')}${action('recovery_remove',t('Recovery entfernen'),'',project.recovery_enabled?'':'disabled')}${infoButton('recovery',t('Recovery erklären'))}${action('guide_domain',t('Domain: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_directory',t('Verzeichnisse: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_migration',t('Serverumzug vorbereiten'),'',project.files_available?'':'disabled')}</div></div><div class="danger-zone"><h4>Projekt entfernen</h4><p>Entfernt die Dateien, Datenbank, Container und lokalen Login-Daten dieses Projekts. Bei Bedarf vorher sichern.</p>${action('remove',t('Projekt vollständig entfernen'),'danger')}</div></section>
+      <section class="tab-panel" role="tabpanel" id="panel-${name}-tools" aria-labelledby="tab-${name}-tools" data-panel="tools" hidden><div class="tool-group"><h4>Diagnose und Einstellungen</h4><div class="actions">${action('doctor',t('Projekt prüfen'))}${action('logs',t('Webserver-Logs'))}${action('uploads',t('Uploadlimits'))}${action(project.tls_enabled?'tls_disable':'tls_enable',project.tls_enabled?t('HTTPS deaktivieren'):t('HTTPS einrichten'))}</div></div><div class="tool-group"><h4>WoltLab-Hilfen</h4><p class="hint">Domain und Verzeichnisse: Sicherung plus geführte Anleitung. Serverumzug: Exportpaket plus Schritte für den Zielserver.</p>${project.recovery_enabled?H`<div class="recovery-notice"><strong>${icon('life-ring')}Recovery ist aktiv</strong><p>Nach Gebrauch wieder entfernen.</p><a href="${esc(localUrl(project.url+'/wsc-recovery.php'))}" target="_blank" rel="noopener">Offizielles Recovery Tool öffnen ↗</a></div>`:''}<div class="actions">${action('recovery_install',t('Recovery einrichten'),'',(!project.files_available || project.recovery_enabled)?'disabled':'')}${action('recovery_remove',t('Recovery entfernen'),'',project.recovery_enabled?'':'disabled')}${infoButton('recovery',t('Recovery erklären'))}${action('guide_domain',t('Domain: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_directory',t('Verzeichnisse: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_migration',t('Serverumzug vorbereiten'),'',project.files_available?'':'disabled')}</div></div>${codeTools(project)}<div class="danger-zone"><h4>Projekt entfernen</h4><p>Entfernt die Dateien, Datenbank, Container und lokalen Login-Daten dieses Projekts. Ein verknüpftes GitHub-Repository bleibt bestehen. Bei Bedarf vorher sichern.</p>${action('remove',t('Projekt vollständig entfernen'),'danger')}</div></section>
       </div></article>`;
   }
 
@@ -328,14 +338,70 @@
       recovery_remove: H`Das von wsc-local abgelegte Recovery Tool entfernen?`,
       tls_enable: H`mkcert richtet ein lokales CA-Zertifikat im Benutzerprofil und HTTPS für „${name}.localhost“ ein. Fortfahren?`,
       tls_disable: H`Lokales HTTPS für „${name}“ abschalten und auf HTTP zurückstellen?`,
+      code_init: t('Eigenes Git-Repository nur für Pakete und Styles anlegen? Die laufende Installation bleibt außerhalb.'),
+      code_github_login: t('GitHub-Anmeldung im Systemterminal öffnen? Die Workbench verwendet eine eigene gh-Konfiguration und ändert deine bestehende Anmeldung nicht.'),
+      code_github_create: t('Privates GitHub-Repository wsc-<projekt> anlegen und als origin setzen? Es wird noch nichts gepusht. Fremde Repositorys werden nicht übernommen.'),
+      code_push: t('Geprüfte Commits zu dem von der Workbench verwalteten GitHub-Repository pushen? Force-Push ist aus.'),
       'start-experimental': H`WSC 6.3 benötigt HTTPS. Ich richte ein lokales Zertifikat für „${name}.localhost“ ein und starte danach die Website. Beim ersten Mal kann eine Systemabfrage zur Vertrauensstellung des Zertifikats erscheinen. Fortfahren?`,
     };
     if (action === 'remove') {
-      const confirmation = await ask({title:H`Projekt „${name}“ endgültig entfernen?`,description:t('Dateien, Datenbank, Container und lokale Zugangsdaten werden gelöscht. Erstelle bei Bedarf vorher eine Sicherung oder einen Export.'),body:H('<p>Gemeinsame Downloads und Docker-Basisimages bleiben verfügbar.</p>'),confirm:t('Projekt endgültig entfernen'),danger:true,input:{label:H`Zum Bestätigen ${name} eingeben`,expected:name}});
+      const linked = projectDetails.find(item => item.name === name)?.code?.github?.url;
+      const confirmation = await ask({title:H`Projekt „${name}“ endgültig entfernen?`,description:t('Dateien, Datenbank, Container und lokale Zugangsdaten werden gelöscht. Erstelle bei Bedarf vorher eine Sicherung oder einen Export.'),body:H`<p>Gemeinsame Downloads und Docker-Basisimages bleiben verfügbar.</p>${linked?H`<p>${t('Das verknüpfte GitHub-Repository bleibt bestehen:')} <code>${esc(linked)}</code></p>`:''}`,confirm:t('Projekt endgültig entfernen'),danger:true,input:{label:H`Zum Bestätigen ${name} eingeben`,expected:name}});
       if (!confirmation) {
         toast(t('Abgebrochen. Es wurde nichts gelöscht.'));
         return;
       }
+    }
+    if (action === 'code_commit') {
+      const choice = await ask({title:t('Commit erstellen'),description:t('Nur Dateien unter code/ werden geprüft. Geheimnisse und site/ werden abgelehnt.'),confirm:t('Committen'),input:{label:t('Commit-Nachricht'),value:'',pattern:/^[^\r\n]{1,200}$/,error:t('Bitte eine einzeilige Nachricht bis 200 Zeichen eingeben.')}});
+      if (!choice || !choice.value?.trim()) return;
+      beginOperation(button, H`${name}: ${t('Commit wird erstellt …')}`, t('Wird ausgeführt …'));
+      try {
+        const result = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'code_commit', name, message: choice.value.trim() }) });
+        output.textContent = result.output || t('Commit erstellt.');
+        showResult(t('Commit erstellt.'));
+        await refresh();
+      } catch (error) {
+        output.textContent = error.message;
+        toast(error.message, true);
+      } finally {
+        endOperation();
+        await refresh();
+      }
+      return;
+    }
+    if (action === 'code_worktree') {
+      const choice = await ask({title:t('Arbeitskopie anlegen'),description:t('Legt einen eigenen Branch und einen Worktree außerhalb von code/ an. Für ein zweites Agenten-Fenster.'),confirm:t('Arbeitskopie anlegen'),input:{label:t('Branch-Name'),value:'agent-1',pattern:/^[a-z0-9][a-z0-9._/-]{0,63}$/,error:t('Branch-Name: Kleinbuchstaben, Zahlen, Punkt, Unterstrich, Slash oder Bindestrich.')}});
+      if (!choice || !choice.value?.trim()) return;
+      beginOperation(button, H`${name}: ${t('Arbeitskopie wird vorbereitet …')}`, t('Wird ausgeführt …'));
+      try {
+        const result = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'code_worktree', name, branch: choice.value.trim() }) });
+        output.textContent = result.output || t('Arbeitskopie bereit.');
+        showResult(t('Arbeitskopie bereit.'));
+        await refresh();
+      } catch (error) {
+        output.textContent = error.message;
+        toast(error.message, true);
+      } finally {
+        endOperation();
+        await refresh();
+      }
+      return;
+    }
+    if (action === 'code_activity') {
+      beginOperation(button, H`${name}: ${t('Aktivität wird geladen …')}`, t('Wird geladen …'));
+      try {
+        const result = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'code_activity', name }) });
+        output.textContent = result.output || t('Keine Aktivität.');
+        showResult(t('Aktivität geladen. Das Ergebnis steht im Protokoll.'));
+        document.getElementById('operation-details').open = true;
+      } catch (error) {
+        output.textContent = error.message;
+        toast(error.message, true);
+      } finally {
+        endOperation();
+      }
+      return;
     }
     if (action === 'uploads') {
       const choice = await ask({title:t('Uploadlimits anpassen'),description:t('Die Workbench zeigt zuerst die betroffenen PHP- und Webserver-Einstellungen. Erst danach bestätigst du die Änderung.'),confirm:t('Änderungen prüfen'),input:{label:t('Maximale Uploadgröße'),value:'256M',pattern:/^[1-9][0-9]{0,5}[MG]$/,error:t('Bitte eine Größe wie 256M oder 1G eingeben.')}});
@@ -365,8 +431,8 @@
     }
     if (guides[action]) {
       if (!await ask({title:guides[action].title,description:guides[action].description,body:guideBody(action),confirm:action==='guide_migration'?t('Exportpaket erstellen'):t('Sicherung erstellen & Anleitung öffnen')})) return;
-    } else if (prompts[action] && !await ask({title:({snapshot:t('Sicherung erstellen'),restore:t('Sicherung wiederherstellen'),export:t('Server-Export erstellen'),recovery_install:t('Offizielles Recovery Tool einrichten'),recovery_remove:t('Recovery Tool entfernen'),stop:t('Projekt stoppen'),tls_disable:t('HTTPS abschalten')})[action] || t('Aktion bestätigen'),description:prompts[action],confirm:t('Bestätigen'),danger:action==='restore' || action==='tls_disable'})) return;
-    const busyLabels = { install: t('WoltLab wird automatisch eingerichtet …'), start: t('Container werden gestartet …'), 'start-experimental': t('HTTPS wird eingerichtet …'), stop: t('Container werden gestoppt …'), snapshot: t('Sicherung wird erstellt …'), export: t('Server-Export wird erstellt …'), restore: t('Sicherung wird wiederhergestellt …'), doctor: t('Projekt wird geprüft …'), tls_enable: t('HTTPS wird eingerichtet …'), remove: t('Projekt wird entfernt …') };
+    } else if (prompts[action] && !await ask({title:({snapshot:t('Sicherung erstellen'),restore:t('Sicherung wiederherstellen'),export:t('Server-Export erstellen'),recovery_install:t('Offizielles Recovery Tool einrichten'),recovery_remove:t('Recovery Tool entfernen'),stop:t('Projekt stoppen'),tls_disable:t('HTTPS abschalten'),code_init:t('Repository anlegen'),code_github_login:t('Bei GitHub anmelden'),code_github_create:t('Privates Repository erstellen'),code_push:t('Push zu GitHub')})[action] || t('Aktion bestätigen'),description:prompts[action],confirm:t('Bestätigen'),danger:action==='restore' || action==='tls_disable' || action==='code_push'})) return;
+    const busyLabels = { install: t('WoltLab wird automatisch eingerichtet …'), start: t('Container werden gestartet …'), 'start-experimental': t('HTTPS wird eingerichtet …'), stop: t('Container werden gestoppt …'), snapshot: t('Sicherung wird erstellt …'), export: t('Server-Export wird erstellt …'), restore: t('Sicherung wird wiederhergestellt …'), doctor: t('Projekt wird geprüft …'), tls_enable: t('HTTPS wird eingerichtet …'), remove: t('Projekt wird entfernt …'), code_init: t('Eigenes Code-Repository wird angelegt …'), code_github_login: t('GitHub-Anmeldung im Systemterminal …'), code_github_create: t('Privates GitHub-Repository wird angelegt …'), code_push: t('Push zu GitHub …') };
     beginOperation(button, H`${name}: ${busyLabels[action] || t('Vorgang läuft …')}`, busyLabels[action] || t('Wird ausgeführt …'));
     if (action === 'install') { document.getElementById('create-dialog').close(); showInstallationState(name, t('Umgebung und HTTPS vorbereiten …')); }
     let completedResult = null;
@@ -392,9 +458,9 @@
 
       }
       completedResult = result;
-      const completed = {start: H`Projekt „${name}“ ist gestartet.`, stop: H`Projekt „${name}“ ist gestoppt.`, remove: H`Projekt „${name}“ wurde vollständig entfernt.`, doctor: t('Prüfung abgeschlossen. Das Ergebnis steht im Protokoll.'), logs: t('Logs geladen. Du findest sie im Protokoll.'), snapshot: t('Sicherung erstellt und geprüft.'), restore: t('Sicherung wiederhergestellt. Das Projekt ist wieder verfügbar.'), export: t('Server-Export erstellt.'), tls_enable: t('Lokales HTTPS ist eingerichtet.'), tls_disable: t('Lokales HTTPS ist deaktiviert.')};
+      const completed = {start: H`Projekt „${name}“ ist gestartet.`, stop: H`Projekt „${name}“ ist gestoppt.`, remove: H`Projekt „${name}“ wurde vollständig entfernt.`, doctor: t('Prüfung abgeschlossen. Das Ergebnis steht im Protokoll.'), logs: t('Logs geladen. Du findest sie im Protokoll.'), snapshot: t('Sicherung erstellt und geprüft.'), restore: t('Sicherung wiederhergestellt. Das Projekt ist wieder verfügbar.'), export: t('Server-Export erstellt.'), tls_enable: t('Lokales HTTPS ist eingerichtet.'), tls_disable: t('Lokales HTTPS ist deaktiviert.'), code_init: t('Eigenes Code-Repository ist angelegt.'), code_github_login: t('GitHub-Anmeldung abgeschlossen.'), code_github_create: t('Privates GitHub-Repository ist verknüpft.'), code_push: t('Push abgeschlossen.')};
       showResult(action === 'install' ? result.message : completed[action] || t('Vorgang abgeschlossen. Das Ergebnis steht im Protokoll.'));
-      if (action === 'logs' || action === 'doctor') document.getElementById('operation-details').open = true;
+      if (action === 'logs' || action === 'doctor' || action === 'code_push' || action === 'code_github_create') document.getElementById('operation-details').open = true;
       await refresh();
     } catch (error) {
       output.textContent = error.message;

@@ -27,4 +27,6 @@ Das sind eigenständig umgesetzte Konzepte. Datenbankzugänge oder veraltete Kom
 
 Passwörter liegen außerhalb der teilbaren Profile. Sicherungen halten Dateisystem und Datenbank zusammen. Ein Server-Export enthält Dateien, Dump und Anleitung; das Tool meldet keinen erfolgreichen Remote-Deploy. Legacy- und Alpha-Profile sind entsprechend markiert.
 
+Optionaler eigener Code liegt unter `projects/<name>/code` und ist ein freiwilliges Git nur für Pakete und Styles. Die laufende Installation unter `site/` bleibt lokal. GitHub ist optional, privat und nur für das von der Workbench angelegte Repository `wsc-<projekt>`; Zugangsdaten und Core gehören nicht dorthin.
+
 Die Plattformunterstützung umfasst Starter, Hostprüfung, Docker-Anbindung, Dateipfade und lokales HTTPS. Eine wirkliche Freigabe pro Betriebssystem braucht die dortige Docker-/Browser-Abnahme; der [Teststand](user-test.md) bleibt dafür maßgeblich.

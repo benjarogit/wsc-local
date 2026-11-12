@@ -104,6 +104,7 @@ You do not need to click through the WoltLab installer. A spinner and installati
 - **Backups:** capture files and database together, verify checksums, and restore a matching state. Restore first backs up the current state.
 - **Export and server migration:** download files, SQL dump, project configuration, checksums, and import instructions. **Prepare server migration** adds target-server guidance and uses the same export format. Restoring on the target server is guided; direct SSH deployment is not included.
 - **WoltLab tools:** diagnostics, upload limits with a change preview, and the official Recovery Tool with cleanup. Domain and directory tools create a backup and show instructions; they do not automatically change application paths or database values.
+- **Custom code (optional):** under Tools, create local Git for packages and styles only, worktrees for extra agent windows, and optionally link a private GitHub repository `wsc-<project>`. The running installation and credentials stay outside. Removing the project leaves a linked GitHub repository in place.
 - **Removal:** delete project files, database, containers, networks, and local credentials after typing the project name. Shared images, download caches, and the local CA remain available.
 
 Information buttons open explanations. Confirmations, inputs, and previews use keyboard-accessible dialogs with Cancel. [Tool and migration details](docs/tools.md)
