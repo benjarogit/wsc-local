@@ -14,23 +14,32 @@
     if(!response.ok){const error=new Error(data.error||t('Update-Prüfung fehlgeschlagen.'));error.data=data;throw error;}
     return data;
   }
-  function controls(busy){check.disabled=busy;install.disabled=busy||!latest?.can_apply;}
+  const restartButton=document.getElementById('updates-restart');
+  function fill(template,...values){return template.replace(/\{(\d+)\}/g,(_,index)=>values[Number(index)] ?? '');}
+  function controls(busy){check.disabled=busy;install.disabled=busy||!latest?.can_apply;restartButton.disabled=busy||!latest?.runtime_mismatch;}
   function render(data){
     latest=data;
-    const title=data.available?H`Version ${data.latest} ist verfügbar`:t('Deine Workbench ist aktuell.');
-    status.innerHTML=H`<div class="system-summary ${data.available?'missing':'ready'}"><strong>${escape(title)}</strong><p>${t('Installiert')}: ${escape(data.current)} · ${t('Veröffentlicht')}: ${escape(data.latest)} · ${data.mode==='git'?t('Git-Installation'):t('ZIP-Installation')}</p>${data.available&&data.problems?.length?H`<ul>${data.problems.map(problem=>H`<li>${escape(t(problem))}</li>`).join('')}</ul>`:''}<p><a href="${escape(data.release_url)}" target="_blank" rel="noopener">Release auf GitHub öffnen ↗</a></p></div>`;
+    const mismatch=data.runtime_mismatch;
+    const title=mismatch&&!data.available?fill(t('Die Version {0} liegt bereit. Dieses Dashboard läuft noch mit {1}.'),mismatch.files,mismatch.running):mismatch&&data.available?fill(t('Version {0} ist verfügbar. Dieses Dashboard läuft noch mit {1} und muss zuerst neu starten.'),data.latest,mismatch.running):data.available?H`Version ${data.latest} ist verfügbar`:t('Deine Workbench ist aktuell.');
+    const mode=data.mode==='git'?t('Git-Installation'):t('ZIP-Installation');
+    const summary=mismatch?`${t('Läuft')}: ${mismatch.running} · ${t('Dateien')}: ${mismatch.files} · ${t('Veröffentlicht')}: ${data.latest} · ${mode}`:`${t('Installiert')}: ${data.current} · ${t('Veröffentlicht')}: ${data.latest} · ${mode}`;
+    const tone=data.available||mismatch?'missing':'ready';
+    status.innerHTML=H`<div class="system-summary ${tone}"><strong>${escape(title)}</strong><p>${escape(summary)}</p>${data.available&&data.problems?.length?H`<ul>${data.problems.map(problem=>H`<li>${escape(t(problem))}</li>`).join('')}</ul>`:''}<p><a href="${escape(data.release_url)}" target="_blank" rel="noopener">Release auf GitHub öffnen ↗</a></p></div>`;
+    restartButton.hidden=!mismatch;install.classList.toggle('primary',!mismatch&&!!data.can_apply);restartButton.classList.toggle('primary',!!mismatch);
     if(data.runtime_mismatch)status.insertAdjacentHTML('beforeend',H`<div class="system-summary missing"><strong>${t('Dashboard-Neustart erforderlich')}</strong><p>${H(t('Die Programmdateien sind {0}, der laufende Prozess ist {1}. Starte das Dashboard neu, damit Anzeige und Update-Status übereinstimmen.'),escape(data.runtime_mismatch.files),escape(data.runtime_mismatch.running))}</p></div>`);
     if(['failed','rolled_back'].includes(data.state?.phase))status.insertAdjacentHTML('beforeend',H`<div class="result error"><strong>Letztes Update nicht abgeschlossen</strong><p>${escape(t(data.state.error||'Das Update wurde zurückgenommen. Die bisherige Version bleibt erhalten.'))}</p></div>`);
     document.getElementById('updates-notes').textContent=data.notes||t('Keine Release-Hinweise vorhanden.');
     document.getElementById('update-dot').hidden=!data.available;
     const notice=document.getElementById('update-notice');notice.hidden=!data.available||stored('wsc-update-dismissed')===data.latest||!document.getElementById('view-updates').hidden;
     document.getElementById('update-notice-title').textContent=title;
+    const noticeText=document.querySelector('#update-notice p');
+    if(noticeText)noticeText.textContent=mismatch?t('Starte zuerst das Dashboard neu. Danach kann die neue Version installiert werden.'):t('Die neue Version kann direkt hier installiert werden.');
     controls(watching);
   }
   async function load(force=false){
     check.disabled=true;check.setAttribute('aria-busy','true');
     try{const data=await request('/api/updates'+(force?'?refresh=1':''));render(data);if(['checking','installing','installed','restarting','restoring'].includes(data.state?.phase))watch(data.state.target);}
-    catch(error){latest={guide:error.data?.guide};install.disabled=true;status.innerHTML=H`<div class="system-summary missing"><strong>Update-Status nicht erreichbar</strong><p>${escape(error.message)}</p><p>Die Workbench bleibt nutzbar. Du kannst später erneut prüfen oder die Anleitung öffnen.</p></div>`;}
+    catch(error){latest={guide:error.data?.guide};install.disabled=true;restartButton.hidden=true;status.innerHTML=H`<div class="system-summary missing"><strong>Update-Status nicht erreichbar</strong><p>${escape(error.message)}</p><p>Die Workbench bleibt nutzbar. Du kannst später erneut prüfen oder die Anleitung öffnen.</p></div>`;}
     finally{check.disabled=watching;check.removeAttribute('aria-busy');}
   }
   async function guide(){
@@ -61,6 +70,26 @@
     }catch(error){operations.result(t(error.message),true);}
     finally{watching=false;operations.end();controls(false);}
   }
+  async function restartDashboard(){
+    if(operations.busy()){operations.result(t('Ein Vorgang läuft noch. Bitte warte bis zum Abschluss.'),true);return;}
+    const mismatch=latest?.runtime_mismatch;
+    if(!mismatch)return;
+    const choice=await ask({title:t('Dashboard neu starten'),description:fill(t('Die Version {0} ist bereits in den Programmdateien. Gestartet wird nur das Dashboard neu.'),mismatch.files),body:H`<p>${t('Projekte, Datenbanken und Zugangsdaten bleiben unverändert. Eine laufende Einrichtung blockiert den Neustart.')}</p>`,confirm:t('Dashboard neu starten')});
+    if(!choice)return;
+    controls(true);
+    if(!operations.busy())operations.begin(null,t('Dashboard startet neu …'),'');
+    try{await request('/api/server/restart',{method:'POST',body:'{}'});}
+    catch(error){if(error.data){operations.result(error.message,true);operations.end();controls(false);return;}}
+    for(let attempt=0;attempt<40;attempt++){
+      await new Promise(resolve=>setTimeout(resolve,250));
+      try{
+        const info=await request('/api/version');
+        if(info.release_version===mismatch.files){const url=new URL(location.href);url.searchParams.set('ui',info.version);location.replace(url.href);return;}
+      }catch{document.getElementById('operation-message').textContent=t('Dashboard startet neu. Verbindung wird wiederhergestellt …');}
+    }
+    operations.result(t('Der Neustart ist noch nicht abgeschlossen. Starte die Workbench im Projektordner mit ./start.sh.'),true);
+    operations.end();controls(false);
+  }
   async function apply(){
     if(operations.busy()){operations.result(t('Ein Vorgang läuft noch. Bitte warte bis zum Abschluss.'),true);return;}
     const target=latest.latest;
@@ -72,7 +101,7 @@
     await watch(target);
   }
   document.addEventListener('workbench-view',()=>{if(latest)document.getElementById('update-notice').hidden=!latest.available||stored('wsc-update-dismissed')===latest.latest||!document.getElementById('view-updates').hidden;});
-  check.addEventListener('click',()=>load(true));install.addEventListener('click',apply);document.getElementById('updates-guide').addEventListener('click',guide);
+  check.addEventListener('click',()=>load(true));install.addEventListener('click',apply);restartButton.addEventListener('click',restartDashboard);document.getElementById('updates-guide').addEventListener('click',guide);
   document.getElementById('update-dismiss').addEventListener('click',()=>{save('wsc-update-dismissed',latest?.latest||'');document.getElementById('update-notice').hidden=true;});
   try{const success=sessionStorage.getItem('wsc-update-success');if(success){sessionStorage.removeItem('wsc-update-success');operations.result(H`Update auf ${success} erfolgreich installiert.`)}}catch{}
   const pending=stored('wsc-pending-update');if(pending)watch(pending);

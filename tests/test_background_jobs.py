@@ -231,6 +231,20 @@ class BackgroundJobTests(unittest.TestCase):
         self.request('/api/workbench',{'action':'snapshot','name':'project'})
         self.assertEqual(self.request('/api/updates/apply',{'version':'1.2.1','confirm':True})[0],409)
 
+    def test_dashboard_restart_starts_the_launcher_and_waits_for_work(self):
+        with patch.object(panel.subprocess, 'Popen') as popen:
+            code, data = self.request('/api/server/restart', {})
+        self.assertEqual(202, code)
+        self.assertTrue(data['ok'])
+        command = popen.call_args.args[0]
+        self.assertTrue(str(command[1]).endswith('launcher.py'))
+        self.assertIn('--no-open', command)
+        self.request('/api/workbench', {'action':'snapshot','name':'project'})
+        with patch.object(panel.subprocess, 'Popen') as popen:
+            self.assertEqual(self.request('/api/server/restart', {})[0], 409)
+        popen.assert_not_called()
+        self.release.set()
+
     def test_running_version_mismatch_is_reported_and_blocks_automatic_update(self):
         plan={'current':'1.2.1','latest':'1.2.2','available':True,'can_apply':True,'problems':[],'mode':'git','notes':'','release_url':'https://example.test','guide':{'steps':[]},'state':{}}
         with patch.object(panel.updater,'plan',return_value=dict(plan)),patch.object(panel,'RELEASE_VERSION','1.2.0'):

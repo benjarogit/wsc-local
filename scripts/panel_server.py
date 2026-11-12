@@ -500,7 +500,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json(401, {"error": "Unauthorized"})
             return
         route = urllib.parse.urlparse(self.path).path
-        registered = route not in {"/api/updates/apply", "/api/server/stop"}
+        registered = route not in {"/api/updates/apply", "/api/server/stop", "/api/server/restart"}
         with JOBS_LOCK:
             if STOPPING or ((UPDATING or updater.state(ROOT).get("phase") in {"checking","installing","installed","restarting","restoring"}) and route != "/api/server/stop"):
                 self._json(409, {"error": "Die Workbench wird aktualisiert. Bitte warte bis zum Neustart."})
@@ -539,8 +539,20 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, TypeError):
                 self._json(400, {"error": "Ungültige Serveranfrage."})
             return
-        if (route == "/api/workbench" or route.endswith("/archive") or route.endswith("/acp-login") or route == "/api/system/install" or route == "/api/updates/apply") and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
+        if (route == "/api/workbench" or route.endswith("/archive") or route.endswith("/acp-login") or route == "/api/system/install" or route == "/api/updates/apply" or route == "/api/server/restart") and self.headers.get("X-Workbench-Version") != PANEL_VERSION:
             self._json(409, {"version_mismatch": True, "version": PANEL_VERSION, "error": "Die Dashboard-Oberfläche ist veraltet. Lade die Seite neu, bevor du weiterarbeitest. Dein Projekt wurde durch diesen Klick nicht verändert."})
+            return
+        if route == "/api/server/restart":
+            with JOBS_LOCK:
+                busy = UPDATING or STOPPING or updater.state(ROOT).get("phase") in {"checking", "installing", "installed", "restarting", "restoring"} or ACTIVE_COMMANDS or any(job.get("state") == "running" for job in JOBS.values())
+            if busy:
+                self._json(409, {"error": "Eine Einrichtung läuft noch. Der Neustart wartet, bis sie fertig ist."})
+                return
+            log = ROOT / "var" / "panel.log"
+            log.parent.mkdir(parents=True, exist_ok=True)
+            with log.open("ab") as stream:
+                subprocess.Popen([sys.executable, str(ROOT / "workbench" / "launcher.py"), "--no-open", "--port", str(PORT)], cwd=ROOT, stdin=subprocess.DEVNULL, stdout=stream, stderr=stream, start_new_session=True)
+            self._json(202, {"ok": True})
             return
         if route == "/api/updates/apply":
             try:

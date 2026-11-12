@@ -5,7 +5,7 @@ Ab **1.2.0** prüft die Workbench veröffentlichte stabile GitHub-Releases und k
 ## Im Dashboard
 
 1. Bei einem neuen Release erscheint ein Hinweis. **Updates** in der Navigation zeigt installierte und veröffentlichte Version, Installationsart und Release-Hinweise. Die automatische Prüfung verwendet einen Cache von sechs Stunden; **Erneut prüfen** fragt GitHub direkt ab.
-2. **Update installieren** öffnet die Vorschau. Nach Bestätigung lädt die Workbench das offizielle Release-ZIP, prüft SHA-256 und den enthaltenen Dateikatalog und legt einen Wiederherstellungsstand an.
+2. **Update installieren** öffnet die Vorschau. Nach Bestätigung lädt die Workbench das offizielle Release-ZIP, prüft SHA-256 und den enthaltenen Dateikatalog und legt einen Wiederherstellungsstand an. Liegt die veröffentlichte Version schon in den Programmdateien, der laufende Prozess aber noch auf einer älteren Version, sagt die Seite das so und bietet **Dashboard neu starten**. Sie nennt diesen Stand nicht aktuell. Ein Update wird erst installiert, wenn Prozess und Dateien wieder übereinstimmen.
 3. Die Programmdateien werden aktualisiert. Der eigene Dashboard-Prozess startet neu; die Anzeige verbindet sich wieder und bestätigt die tatsächlich laufende Version. Auch nach Neuladen bleibt der Vorgangsstatus erhalten.
 4. **Manuelle Anleitung** bleibt als Alternative verfügbar, auch wenn GitHub gerade nicht erreichbar ist. Fehlende Host-Voraussetzungen werden weiterhin über die Systemprüfung eingerichtet.
 
@@ -69,7 +69,7 @@ Der Tag muss zur Datei `VERSION` und einem Abschnitt im `CHANGELOG.md` passen. N
 
 ## English
 
-From **1.2.0**, **Updates** checks stable GitHub releases, offers an installation preview and installs the verified release after confirmation. The application creates a recovery point, restarts its own dashboard and verifies the running version. Running WoltLab sites and their data are preserved. This updates the Workbench application, not the WoltLab Suite itself.
+From **1.2.0**, **Updates** checks stable GitHub releases, offers an installation preview and installs the verified release after confirmation. The application creates a recovery point, restarts its own dashboard and verifies the running version. If the published version is already in the program files while the process is still older, the page says so and offers **Restart dashboard**. It does not call that state up to date. An update is installed only after the process and the files match again. Running WoltLab sites and their data are preserved. This updates the Workbench application, not the WoltLab Suite itself.
 
 CLI: `./wsc update --check`, `./wsc update`, `./wsc update --yes`, `./wsc update --guide`, or `./wsc update --json`. Manual instructions remain available offline. Checks are cached for six hours; the refresh button and `--check` bypass the cache.
 
