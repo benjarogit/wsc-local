@@ -1,5 +1,21 @@
 # Änderungen / Changelog
 
+## 1.2.7 – 2026-11-12
+
+### Deutsch
+
+- Die Projektkarte zeigt den Standard- und die aktiven Stile. **Pakete und Styles** öffnet die Liste in einem Dialog. `./wsc installed <projekt>` gibt dieselbe Liste aus. Ein gestopptes Projekt wird dafür nicht gestartet.
+- Der InnoDB-Buffer-Pool bleibt standardmäßig 128 MiB. Optional sind 256 und 512 MiB, beim Anlegen und unter **Verwalten → Übersicht**. `./wsc buffer-pool <projekt> [128|256|512]` setzt dieselbe Größe. Eine laufende Datenbank wird dafür neu erstellt, eine gestoppte nicht gestartet.
+- Die Systemprüfung zeigt 128 MiB als Hinweis und markiert das Gerät dafür nicht als unbereit. Ein Import übernimmt 256 oder 512 MiB aus dem Export; fehlt die Angabe, bleibt es bei 128 MiB.
+
+### English
+
+- The project card shows the default and the active styles. **Packages and styles** opens the list in a dialog. `./wsc installed <project>` prints the same list. A stopped project is not started for that.
+- The InnoDB buffer pool stays at 128 MiB by default. 256 and 512 MiB are optional, when creating a project and under **Manage → Overview**. `./wsc buffer-pool <project> [128|256|512]` sets the same size. A running database is recreated for that, a stopped one is not started.
+- The system check shows 128 MiB as a hint and does not mark the machine unready for it. An import keeps 256 or 512 MiB from the export; when the value is absent, it stays at 128 MiB.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.6 – 2026-11-12
 
 ### Deutsch
