@@ -13,6 +13,7 @@ import locale
 import os
 import re
 import shutil
+import shlex
 import socket
 import ssl
 import subprocess
@@ -25,6 +26,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from xml.etree import ElementTree
 from typing import Any
 from host_system import detect_host, print_report, tls_environment
 import code_repo
@@ -1973,6 +1975,130 @@ def import_legacy_snapshot(source: Path, name: str) -> str:
         shutil.rmtree(work, ignore_errors=True)
 
 
+def _database_client(cfg: dict[str, Any]) -> tuple[str, str, str]:
+    mysql = cfg.get("database") == "mysql8"
+    client = "mysql" if mysql else "mariadb"
+    root_var = "MYSQL_ROOT_PASSWORD" if mysql else "MARIADB_ROOT_PASSWORD"
+    database_var = "MYSQL_DATABASE" if mysql else "MARIADB_DATABASE"
+    return client, root_var, database_var
+
+
+def _query_database_xml(name: str, cfg: dict[str, Any], sql: str) -> str:
+    """Run a read-only query inside the database container. The password stays in the container env."""
+    client, root_var, database_var = _database_client(cfg)
+    script = f'{client} --xml --batch -uroot -p"${root_var}" "${database_var}" -e {shlex.quote(sql)}'
+    result = compose(name, "exec", "-T", "database", "sh", "-lc", script, timeout=60)
+    if result.returncode:
+        detail = re.sub(r"-p\S+", "-p***", (result.stderr or result.stdout or "").strip())
+        raise RuntimeError("Die Paketliste konnte nicht gelesen werden. " + detail[-800:])
+    return result.stdout
+
+
+def _table_prefix(name: str, cfg: dict[str, Any], root: Path) -> str:
+    config = root / "site/config.inc.php"
+    if config.is_file():
+        match = re.search(r"define\(\s*'WCF_N'\s*,\s*(\d+)\s*\)", config.read_text(encoding="utf-8", errors="replace"))
+        if match:
+            return f"wcf{int(match.group(1))}_"
+    xml_text = _query_database_xml(name, cfg, "SHOW TABLES")
+    names = [field.text or "" for field in ElementTree.fromstring(xml_text).iter("field")]
+    prefixes = sorted({item[: -len("package")] for item in names if re.fullmatch(r"wcf\d+_package", item)})
+    if len(prefixes) != 1:
+        raise RuntimeError("Die WoltLab-Paketliste wurde in der Datenbank nicht eindeutig gefunden.")
+    return prefixes[0]
+
+
+def _installed_sql(prefix: str) -> str:
+    if not re.fullmatch(r"wcf\d+_", prefix):
+        raise ValueError("Unbekanntes WoltLab-Tabellenpräfix.")
+    package, language, item, style = (prefix + suffix for suffix in ("package", "language", "language_item", "style"))
+    title = (
+        "COALESCE(NULLIF(IF({alias}.languageUseCustomValue = 1, "
+        "{alias}.languageCustomItemValue, {alias}.languageItemValue), ''), {fallback})"
+    )
+    return f"""
+SELECT 'package' AS kind, p.package AS identifier,
+       {title.format(alias='i', fallback='p.packageName')} AS title,
+       p.packageVersion AS version, p.isApplication AS flag_a, p.author AS extra, 0 AS flag_b
+FROM {package} p
+LEFT JOIN {language} l ON l.isDefault = 1
+LEFT JOIN {item} i ON i.languageID = l.languageID AND i.languageItem = p.packageName
+UNION ALL
+SELECT 'style', s.packageName,
+       {title.format(alias='si', fallback='s.styleName')},
+       s.styleVersion, s.isDefault, s.authorName, s.isDisabled
+FROM {style} s
+LEFT JOIN {language} sl ON sl.isDefault = 1
+LEFT JOIN {item} si ON si.languageID = sl.languageID AND si.languageItem = s.styleName
+ORDER BY kind, flag_a DESC, title
+"""
+
+
+def parse_installed_rows(xml_text: str) -> dict[str, list[dict[str, Any]]]:
+    packages: list[dict[str, Any]] = []
+    styles: list[dict[str, Any]] = []
+    if xml_text.strip():
+        for row in ElementTree.fromstring(xml_text).iter("row"):
+            fields = {field.attrib.get("name", ""): (field.text or "").strip() for field in row.findall("field")}
+            record = {"identifier": fields.get("identifier", ""), "name": fields.get("title", ""), "version": fields.get("version", ""), "author": fields.get("extra", "")}
+            if fields.get("kind") == "package":
+                record["application"] = fields.get("flag_a") == "1"
+                packages.append(record)
+            elif fields.get("kind") == "style":
+                record["default"] = fields.get("flag_a") == "1"
+                record["disabled"] = fields.get("flag_b") == "1"
+                styles.append(record)
+    return {"packages": packages, "styles": styles}
+
+
+def installed_content(name: str) -> dict[str, Any]:
+    """Read installed WoltLab packages and styles. Does not start a stopped project."""
+    cfg, root, _ = read_project(name)
+    if not (root / "site/global.php").is_file():
+        return {"ready": False, "reason": "not_installed", "packages": [], "styles": []}
+    status = project_status(name)
+    if not any(item.get("name") == "database" and item.get("state") == "running" for item in status.get("services", [])):
+        return {"ready": False, "reason": "database_stopped", "packages": [], "styles": []}
+    prefix = _table_prefix(name, cfg, root)
+    rows = parse_installed_rows(_query_database_xml(name, cfg, _installed_sql(prefix)))
+    return {"ready": True, "reason": "", **rows}
+
+
+def format_installed(data: dict[str, Any]) -> str:
+    if data.get("reason") == "not_installed":
+        return "WoltLab ist noch nicht eingerichtet. Die Liste gibt es nach der Einrichtung."
+    if data.get("reason") == "database_stopped":
+        return "Die Datenbank ist gestoppt. Starte das Projekt, dann können Pakete und Styles gelesen werden."
+    lines = ["Pakete"]
+    packages = data.get("packages") or []
+    styles = data.get("styles") or []
+    lines.extend(
+        f"{item['name']}  {item['identifier']}  {item['version']}  {'Anwendung' if item.get('application') else 'Paket'}"
+        + (f"  {item['author']}" if item.get("author") else "")
+        for item in packages
+    )
+    if not packages:
+        lines.append("Keine Pakete in der Datenbank.")
+    lines.append("")
+    lines.append("Styles")
+    defaults = [item["name"] for item in styles if item.get("default") and not item.get("disabled")]
+    active = [item["name"] for item in styles if not item.get("default") and not item.get("disabled")]
+    if defaults:
+        lines.append("Standard: " + ", ".join(defaults))
+    if active:
+        lines.append("Aktiv: " + ", ".join(active))
+    if not defaults and not active:
+        lines.append("Kein aktiver Stil.")
+    for item in styles:
+        state = "Standard" if item.get("default") else "Aktiv"
+        if item.get("disabled"):
+            state = "Deaktiviert"
+        lines.append(f"{item['name']}  {item['identifier']}  {item['version']}  {state}" + (f"  {item['author']}" if item.get("author") else ""))
+    if not styles:
+        lines.append("Keine Styles in der Datenbank.")
+    return "\n".join(lines)
+
+
 def list_snapshots(name: str) -> str:
     _, root, _ = read_project(name)
     directory = root / "snapshots"
@@ -2027,6 +2153,8 @@ def parser() -> argparse.ArgumentParser:
     for cmd in ("start", "stop", "status", "logs", "doctor", "snapshot", "snapshots", "export"):
         x = sub.add_parser(cmd); x.add_argument("name")
         if cmd == "logs": x.add_argument("--service", default="web")
+    x = sub.add_parser("installed", help="Installierte Pakete und Styles anzeigen")
+    x.add_argument("name"); x.add_argument("--json", action="store_true")
     x = sub.add_parser("install-zip"); x.add_argument("name"); x.add_argument("zip")
     x = sub.add_parser("download-core"); x.add_argument("name"); x.add_argument("--version"); x.add_argument("--sha256")
     x = sub.add_parser("uploads"); x.add_argument("name"); x.add_argument("--size", required=True); x.add_argument("--apply", action="store_true"); x.add_argument("--yes", action="store_true")
@@ -2082,6 +2210,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "doctor": print(doctor(args.name))
         elif args.command == "snapshot": print(f"Snapshot erstellt: {snapshot(args.name)}")
         elif args.command == "snapshots": print(list_snapshots(args.name))
+        elif args.command == "installed":
+            data = installed_content(args.name)
+            print(json.dumps(data, ensure_ascii=False, indent=2) if args.json else format_installed(data))
         elif args.command == "export": print(f"Server-Export erstellt: {snapshot(args.name, export=True)}")
         elif args.command == "install-zip":
             _, root, _ = read_project(args.name); install_zip(Path(args.zip).expanduser().resolve(), root / "site"); print("Core-/Paket-ZIP sicher in das Projekt entpackt.")

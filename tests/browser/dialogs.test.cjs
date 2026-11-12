@@ -49,6 +49,7 @@ async function fixture(options={}){
    data={name:'e2e-project',action:job.action,state:done?'done':'running',stage:'Sicherung und Werkzeug werden vorbereitet',output:'Sicherung: /isolated/snapshot\nhttps://manual.woltlab.com/de/',error:'',result:job.action==='acp_login'?{url:'https://e2e-project.localhost:8081/wsc-local-acp-test.php',token:'one-use-token'}:{completed:true}};if(done&&job.action==='host_install')options.missingHost=false;if(options.failAcp&&job.action==='acp_login'){data.state='failed';data.error='Admin password changed';}
   }else if(url.pathname.endsWith('/recovery'))data={url:'https://e2e-project.localhost:8081/wsc-recovery.php',directory:'/isolated/project/site'};
   else if(url.pathname.endsWith('/credentials'))data={admin:{username:options.username||'admin',email:'admin@example.test',password:options.password||'test-password'},database:{host:'database',name:'woltlab',username:'wsc',password:'test-db-password'}};
+  else if(url.pathname.endsWith('/installed'))data={ready:true,reason:'',packages:[{identifier:'com.woltlab.wcf',name:'WoltLab Suite Core',version:'6.2.8',author:'WoltLab GmbH',application:true}],styles:[{identifier:'com.woltlab.wcf.style',name:'Core Stil',version:'6.0.0',author:'',default:true,disabled:false},{identifier:'com.example.meer',name:'Meer',version:'1.0.0',author:'',default:false,disabled:false}]};
   else return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:'Unmocked route '+url.pathname})});
   return route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
  });
@@ -197,4 +198,40 @@ test('custom code explains missing git and gh and where GitHub credentials are e
  await missingGit.context.close();
  await missingGh.context.close();
  await ready.context.close();
+});
+
+test('project card opens installed packages and styles in a dialog', async () => {
+ const {context, page, card, errors} = await fixture();
+ const choice = card.locator('[data-style-choice]');
+ await choice.getByText('Core Stil').waitFor();
+ const glance = await choice.innerText();
+ assert.match(glance, /Standard/);
+ assert.match(glance, /Aktiv/);
+ assert.match(glance, /Meer/);
+ await card.locator('[data-installed-open]').click();
+ const dialog = page.locator('#action-dialog');
+ await dialog.waitFor({state: 'visible'});
+ const german = await dialog.innerText();
+ assert.match(german, /Installierte Pakete und Styles/);
+ assert.match(german, /com\.woltlab\.wcf/);
+ assert.match(german, /Anwendung/);
+ assert.match(german, /Core Stil/);
+ assert.match(german, /Standard/);
+ await page.locator('#action-accept').click();
+ await dialog.waitFor({state: 'hidden'});
+ await page.locator('#language-toggle').click();
+ await page.waitForFunction(() => document.documentElement.lang === 'en');
+ const englishChoice = page.locator('[data-style-choice]');
+ await englishChoice.getByText('Core Stil').waitFor();
+ const englishGlance = await englishChoice.innerText();
+ assert.match(englishGlance, /Default/);
+ assert.match(englishGlance, /Active/);
+ await page.locator('[data-installed-open]').click();
+ const english = page.locator('#action-dialog');
+ await english.waitFor({state: 'visible'});
+ const englishText = await english.innerText();
+ assert.match(englishText, /Installed packages and styles/);
+ assert.match(englishText, /Application/);
+ assert.deepEqual(errors, []);
+ await context.close();
 });

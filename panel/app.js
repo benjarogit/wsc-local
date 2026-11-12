@@ -286,6 +286,7 @@
       <div class="project-head"><div><h3 class="project-title">${name}</h3><p class="project-subtitle">WoltLab ${esc(project.suite)} · ${project.webserver==='apache'?'Apache':'Nginx'} · PHP ${esc(project.php)}${project.experimental?' · Alpha':project.legacy?' · Legacy':''}</p></div><span class="badge ${badge}">${esc(state)}</span></div>
       <p class="next-step" ${setup?'':'hidden'}>${esc(setup)}</p>
       <div class="project-actions"><div class="actions main-actions">${main}</div>${drawer(t('Verwalten'))}</div>
+      ${project.files_available?H`<div class="installed card-installed" data-installed="${name}"><p class="style-choice" data-style-choice><span class="hint">${t('Stil wird gelesen …')}</span></p><button type="button" class="button" data-installed-open="${name}">${t('Pakete und Styles')}</button></div>`:''}
       <div class="project-drawer" hidden><div class="project-tabs" role="tablist" aria-label="${name} verwalten">${tabs.map(([key,label])=>H`<button id="tab-${name}-${key}" class="project-tab" role="tab" aria-selected="${key==='overview'}" aria-controls="panel-${name}-${key}" tabindex="${key==='overview'?0:-1}" data-tab="${key}">${label}</button>`).join('')}</div>
       <section class="tab-panel" role="tabpanel" id="panel-${name}-overview" aria-labelledby="tab-${name}-overview" data-panel="overview">
         ${project.status_error?H`<p class="result error">${esc(project.status_error)}</p>`:''}
@@ -302,6 +303,64 @@
       <section class="tab-panel" role="tabpanel" id="panel-${name}-backups" aria-labelledby="tab-${name}-backups" data-panel="backups" hidden><div class="heading-with-info"><h4>Dateien und Datenbank zusammen sichern</h4>${infoButton('backups',t('Sicherung und Export erklären'))}</div><p>Eine Sicherung hält beide Teile auf demselben Stand. Das Projekt wird dafür kurz pausiert.</p><div class="actions">${action('snapshot',t('Sicherung erstellen'),'',project.files_available?'':'disabled')}${action('export',t('Server-Export erstellen'),'',project.files_available?'':'disabled')}</div><div class="restore-controls"><label for="snapshot-${name}">Vorhandene Sicherung</label><select id="snapshot-${name}" data-snapshot-select><option value="">Sicherungen werden geladen …</option></select>${action('restore',t('Wiederherstellen'))}</div><p class="hint">Ein Export ist ein Paket mit Anleitung für den Serverumzug. Ein direkter SSH-Upload ist nicht enthalten.</p><ul class="export-list" aria-label="Erstellte Exporte"></ul></section>
       <section class="tab-panel" role="tabpanel" id="panel-${name}-tools" aria-labelledby="tab-${name}-tools" data-panel="tools" hidden><div class="tool-group"><h4>Diagnose und Einstellungen</h4><div class="actions">${action('doctor',t('Projekt prüfen'))}${action('logs',t('Webserver-Logs'))}${action('uploads',t('Uploadlimits'))}${action(project.tls_enabled?'tls_disable':'tls_enable',project.tls_enabled?t('HTTPS deaktivieren'):t('HTTPS einrichten'))}</div></div><div class="tool-group"><h4>WoltLab-Hilfen</h4><p class="hint">Domain und Verzeichnisse: Sicherung plus geführte Anleitung. Serverumzug: Exportpaket plus Schritte für den Zielserver.</p>${project.recovery_enabled?H`<div class="recovery-notice"><strong>${icon('life-ring')}Recovery ist aktiv</strong><p>Nach Gebrauch wieder entfernen.</p><a href="${esc(localUrl(project.url+'/wsc-recovery.php'))}" target="_blank" rel="noopener">Offizielles Recovery Tool öffnen ↗</a></div>`:''}<div class="actions">${action('recovery_install',t('Recovery einrichten'),'',(!project.files_available || project.recovery_enabled)?'disabled':'')}${action('recovery_remove',t('Recovery entfernen'),'',project.recovery_enabled?'':'disabled')}${infoButton('recovery',t('Recovery erklären'))}${action('guide_domain',t('Domain: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_directory',t('Verzeichnisse: Anleitung'),'',project.files_available?'':'disabled')}${action('guide_migration',t('Serverumzug vorbereiten'),'',project.files_available?'':'disabled')}</div></div>${codeTools(project)}<div class="danger-zone"><h4>Projekt entfernen</h4><p>Entfernt die Dateien, Datenbank, Container und lokalen Login-Daten dieses Projekts. Ein verknüpftes GitHub-Repository bleibt bestehen. Bei Bedarf vorher sichern.</p>${action('remove',t('Projekt vollständig entfernen'),'danger')}</div></section>
       </div></article>`;
+  }
+
+  function styleChoice(styles) {
+    const enabled = (styles || []).filter(item => !item.disabled);
+    const names = (items) => items.map(item => esc(item.name)).join(', ');
+    const chip = (tone, label, items) => items.length ? H`<span class="style-chip"><span class="badge ${tone}">${label}</span> ${names(items)}</span>` : '';
+    const markup = chip('ready', t('Standard'), enabled.filter(item => item.default)) + chip('', t('Aktiv'), enabled.filter(item => !item.default));
+    return markup || H`<span class="hint">${t('Kein aktiver Stil.')}</span>`;
+  }
+
+  const installedLists = new WeakMap();
+
+  function loadInstalled(card, name) {
+    const box = card.querySelector('[data-installed]');
+    if (!box) return Promise.resolve();
+    if (box._installedLoad) return box._installedLoad;
+    const choice = box.querySelector('[data-style-choice]');
+    const table = (caption, headers, rows) => H`<h4>${caption}</h4><div class="table-scroll"><table class="service-table"><thead><tr>${headers.map(header => H`<th>${header}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    box._installedLoad = (async () => {
+      try {
+        const data = await api(H`/api/instances/${encodeURIComponent(name)}/installed`);
+        if (!data.ready) {
+          const reason = data.reason === 'database_stopped'
+            ? t('Die Datenbank ist gestoppt. Starte das Projekt, dann können Pakete und Styles gelesen werden.')
+            : t('WoltLab ist noch nicht eingerichtet. Die Liste gibt es nach der Einrichtung.');
+          choice.textContent = reason;
+          installedLists.set(box, H`<p>${esc(reason)}</p>`);
+          box._installedLoad = null;
+          return;
+        }
+        choice.innerHTML = styleChoice(data.styles);
+        const packages = (data.packages || []).map(item => H`<tr><th scope="row">${esc(item.name)}</th><td><code>${esc(item.identifier)}</code></td><td>${esc(item.version)}</td><td><span class="badge ${item.application ? 'ready' : ''}">${item.application ? t('Anwendung') : t('Paket')}</span></td><td>${esc(item.author || '')}</td></tr>`).join('')
+          || H`<tr><td colspan="5">${t('Keine Pakete in der Datenbank.')}</td></tr>`;
+        const styles = (data.styles || []).map(item => {
+          const label = item.disabled ? t('Deaktiviert') : item.default ? t('Standard') : t('Aktiv');
+          const tone = item.disabled ? 'failed' : item.default ? 'ready' : '';
+          return H`<tr><th scope="row">${esc(item.name)}</th><td><code>${esc(item.identifier)}</code></td><td>${esc(item.version)}</td><td><span class="badge ${tone}">${label}</span></td><td>${esc(item.author || '')}</td></tr>`;
+        }).join('') || H`<tr><td colspan="5">${t('Keine Styles in der Datenbank.')}</td></tr>`;
+        installedLists.set(box, H`<div class="installed">${table(t('Pakete'), [t('Name'), t('Kennung'), t('Version'), t('Art'), t('Autor')], packages)}${table(t('Styles'), [t('Name'), t('Kennung'), t('Version'), t('Status'), t('Autor')], styles)}</div>`);
+      } catch (error) {
+        choice.textContent = error.message;
+        installedLists.set(box, H`<p>${esc(error.message)}</p>`);
+        box._installedLoad = null;
+      }
+    })();
+    return box._installedLoad;
+  }
+
+  async function openInstalled(card, name) {
+    await loadInstalled(card, name);
+    const box = card.querySelector('[data-installed]');
+    await ask({
+      title: t('Installierte Pakete und Styles'),
+      description: t('Die Liste zeigt, was in diesem WoltLab installiert ist.'),
+      body: installedLists.get(box) || H`<p>${t('Liste wird gelesen …')}</p>`,
+      confirm: t('Schließen'),
+      cancel: ''
+    });
   }
 
   async function activateProject(name, tab='overview', open=true) {
@@ -342,6 +401,7 @@
         ? projects.map(projectCard).join('')
         : H('<div class="empty"><h3>Dein erstes WoltLab-Projekt</h3><p>Wähle eine Suite-Version und erhalte eine fertig eingerichtete lokale Installation.</p><ol class="empty-steps"><li>Projekt vorbereiten</li><li>Login-Daten prüfen</li><li>Automatisch einrichten</li></ol><button class="button primary" data-create-open>Projekt vorbereiten</button></div>');
       for(const [name,view] of projectViews) if(knownProjects.has(name)) activateProject(name,view.tab,view.open);
+      list.querySelectorAll('[data-installed]').forEach(box => loadInstalled(box.closest('[data-project]'), box.dataset.installed));
     } catch (error) {
       count.textContent = t('Status nicht verfügbar');
       list.innerHTML = H`<div class="empty">${esc(error.message)}<br>Starte das Dashboard erneut mit <code>./panel.sh</code>.</div>`;
@@ -647,6 +707,7 @@
 
   document.body.addEventListener('click', (event) => {
     const navigation=event.target.closest('[data-view]');if(navigation)showView(navigation.dataset.view);
+    const installed=event.target.closest('[data-installed-open]');if(installed)openInstalled(installed.closest('[data-project]'), installed.dataset.installedOpen).catch(error=>{const choice=installed.closest('[data-installed]')?.querySelector('[data-style-choice]');if(choice)choice.textContent=error.message;});
     const create=event.target.closest('[data-create-open]');if(create)openCreate(create);
     if(event.target.closest('[data-create-close]')&&!operationInProgress)document.getElementById('create-dialog').close();
     const open=event.target.closest('[data-project-open]');if(open){const view=projectViews.get(open.dataset.projectOpen);activateProject(open.dataset.projectOpen,open.dataset.projectTab,!(view?.open&&open.textContent.trim()===t('Schließen')));}

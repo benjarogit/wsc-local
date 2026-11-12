@@ -168,7 +168,7 @@ The pictures show the Workbench with real local WoltLab test projects. Passwords
 
 | Area | What it is for |
 |---|---|
-| Project card | Status, open the website, administration, start and stop |
+| Project card | Status, open the website, administration, start and stop, and the list of installed packages and styles |
 | Manage | Overview, credentials, services, backups, tools |
 | System check | If Python, Docker, or local HTTPS trust is missing, the next step is here |
 | Updates | Check and install a new Workbench version. This does not update the forum itself |

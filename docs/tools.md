@@ -2,6 +2,19 @@
 
 Alle Projektwerkzeuge liegen unter **Verwalten → Werkzeuge**. Bestätigungen und Eingaben öffnen einen Dialog mit Wirkung, nächsten Schritten und gegebenenfalls einer Änderungsvorschau. Das Informationssymbol erklärt Begriffe, ohne einen Vorgang zu starten. Escape oder Abbrechen schließen einen Dialog; bereits gestartete Hintergrundvorgänge laufen weiter und verbinden sich nach Neuladen wieder mit der Oberfläche.
 
+## Installierte Pakete und Styles
+
+Direkt an der Projektkarte steht, welcher Stil Standard ist und welche Stile aktiv sind. **Pakete und Styles** öffnet die vollständige Liste in einem Dialog. Die Workbench liest sie aus der laufenden Datenbank: Name, Kennung, Version, Autor, bei Paketen die Art (Anwendung oder Paket) und bei Styles, ob der Stil Standard, aktiv oder deaktiviert ist. Die Liste ändert nichts. Ein gestopptes Projekt wird dafür nicht gestartet.
+
+Dieselbe Liste gibt die Kommandozeile aus:
+
+```bash
+./wsc installed mein-forum
+./wsc installed mein-forum --json
+```
+
+Eigene Dateien unter **Werkzeuge → Eigener Code** sind davon getrennt. Sie erscheinen in der Liste erst, wenn sie in WoltLab installiert sind.
+
 ## Recovery
 
 **Recovery einrichten** lädt das offizielle WoltLab-Hilfsskript, prüft die Antwort, erstellt eine Sicherung und legt die Datei vorübergehend im installierten Projekt ab. Nach Abschluss öffnet sich ein Dialog mit dem Recovery-Link und der offiziellen Anleitung. Solange die Datei vorhanden ist, zeigt die Workbench „Recovery ist aktiv“ und bietet das Entfernen an. Ein zweites Einrichten wird verhindert.

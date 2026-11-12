@@ -83,6 +83,7 @@ Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt er
 
 ## Aktueller Stand und offene Punkte
 
+- Die Projektkarte zeigt den Standard- und die aktiven Stile. **Pakete und Styles** öffnet die Liste in einem Dialog. Die Liste kommt aus der laufenden Datenbank. `./wsc installed <projekt>` gibt dieselbe Liste aus. Ein gestopptes Projekt wird dafür nicht gestartet.
 - Die Update-Seite trennt laufenden Prozess, Programmdateien und veröffentlichte Version. Sie nennt die Workbench nur aktuell, wenn Prozess und Dateien übereinstimmen, und bietet sonst den Dashboard-Neustart an. Optionaler eigener Code und die GitHub-Anmeldung ohne Passwort im Dashboard gehören zum Produkt; fehlt Git oder die GitHub-CLI, erklärt die Oberfläche den Befehl.
 - GitHub-Sicherheit für das öffentliche Repository: `SECURITY.md`, private Schwachstellenmeldung, Dependabot-Alarme und Sicherheitsupdates, Secret Scanning mit Push-Schutz. Code-Scanning und Security Advisories bleiben an. Die kostenlosen Workflows bleiben `workbench.yml`, `codeql.yml`, `release.yml` und das wöchentliche Dependabot für Actions und npm. Keine zusätzlichen kostenpflichtigen Runner.
 - Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` als stabile Namen hoch; die README verlinkt sie über `releases/latest`.

@@ -21,7 +21,7 @@ from panel_version import panel_version
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "workbench"))
-from cli import PROJECTS as WORKBENCH_PROJECTS, PROFILES, project_names, project_status, read_project, parse_env, save_setup_credentials  # noqa: E402
+from cli import PROJECTS as WORKBENCH_PROJECTS, PROFILES, project_names, project_status, read_project, parse_env, save_setup_credentials, installed_content  # noqa: E402
 from host_system import system_report
 from acp_login import prepare as prepare_acp_login
 from host_install import installation_plan, launch_installation
@@ -444,6 +444,15 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, {"url": config.get("url", ""), "admin": {"username": values.get("WSC_ADMIN_USERNAME", "admin"), "email": values.get("WSC_ADMIN_EMAIL", ""), "password": values.get("WSC_ADMIN_PASSWORD", "")}, "database": {"host": "database", "name": values.get("MYSQL_DATABASE", "woltlab"), "username": values.get("MYSQL_USER", "wsc"), "password": values.get("MYSQL_PASSWORD", "")}})
             except Exception as exc:
                 self._json(404, {"error": str(exc)})
+            return
+        installed_match = re.fullmatch(r"/api/instances/([a-z0-9][a-z0-9-]{0,39})/installed", path)
+        if installed_match:
+            try:
+                self._json(200, installed_content(installed_match.group(1)))
+            except ValueError as exc:
+                self._json(404, {"error": str(exc)})
+            except Exception as exc:
+                self._json(503, {"error": str(exc)})
             return
         match = re.fullmatch(r"/api/instances/([a-z0-9][a-z0-9-]{0,39})/snapshots", path)
         if match:
