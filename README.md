@@ -4,26 +4,121 @@
 
 Eine lokale Werkbank für die WoltLab Suite. Du installierst Foren auf deinem Rechner, startest und stoppst sie, sicherst sie und bereitest den Umzug auf einen Server vor. Das Dashboard im Browser und der Befehl `./wsc` steuern dieselben Projekte. Jedes Projekt hat eigene Dateien, eine eigene Datenbank, eigene Ports und eigene Zugangsdaten.
 
-Linux, macOS und Windows über WSL2. Die Oberfläche ist auf Deutsch. Englisch schaltest du im Dashboard um.
+Die Oberfläche ist auf Deutsch. Englisch schaltest du im Dashboard um. Die Zahl im Versions-Badge ist die letzte Veröffentlichung.
 
-| | |
+[![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver&label=Version)](https://github.com/benjarogit/wsc-local/releases/latest)
+[![ZIP herunterladen](https://img.shields.io/badge/Download-ZIP-0969da)](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip)
+![Linux](https://img.shields.io/badge/Linux-6e7781?logo=linux&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-6e7781?logo=apple&logoColor=white)
+![Windows über WSL2](https://img.shields.io/badge/Windows%20WSL2-6e7781?logo=windows&logoColor=white)
+
+[Änderungen](CHANGELOG.md) · [Sicherheitsmeldungen](SECURITY.md)
+
+## Starten
+
+Zwei Wege: den Befehlsblock klonen oder das ZIP über den Download-Badge laden und entpacken. Danach in diesem Ordner arbeiten. Dort liegen auch die Windows-Starter. Jeder Befehlsblock hat auf GitHub einen eigenen Kopierknopf.
+
+### Linux und macOS
+
+```bash
+git clone https://github.com/benjarogit/wsc-local.git
+cd wsc-local
+./setup.sh
+```
+
+`./setup.sh` prüft die Voraussetzungen, begleitet die einmalige HTTPS-Vertrauensstellung im Terminal und öffnet das Dashboard. Was noch fehlt, steht unter **Systemprüfung**.
+
+Beim nächsten Mal nur noch starten. `./panel.sh` macht dasselbe.
+
+```bash
+./start.sh
+```
+
+Ohne Browserfenster:
+
+```bash
+./start.sh --no-open
+```
+
+Anderer Dashboard-Port:
+
+```bash
+./start.sh --port 9199
+```
+
+Adresse im Browser:
+
+```text
+http://127.0.0.1:9099/
+```
+
+### Windows
+
+1. [WSL2](https://learn.microsoft.com/windows/wsl/install) mit einer Linux-Distribution einrichten.
+2. Docker Desktop starten, **Linux-Container** verwenden und die WSL-Integration für diese Distribution aktivieren.
+3. Python und mkcert in WSL installieren. mkcert zusätzlich unter Windows installieren, damit der Windows-Browser derselben lokalen Zertifizierungsstelle vertraut.
+4. Repository klonen und **`Start-wsc-local.cmd` doppelklicken**, oder im WSL-Terminal `./setup.sh` ausführen.
+
+Bei mehreren Distributionen:
+
+```powershell
+Start-wsc-local.ps1 -Distribution Ubuntu
+```
+
+[Details und Befehle](docs/platforms.md#windows-mit-wsl2)
+
+<details>
+<summary><strong>Welche Programme einmalig gebraucht werden</strong></summary>
+
+Linux und macOS:
+
+```bash
+bash ./setup.sh --install-deps
+```
+
+Windows, in PowerShell:
+
+```powershell
+Start-wsc-local.ps1 -InstallDependencies
+```
+
+Oder `Install-wsc-local.cmd` doppelklicken. Danach den normalen Starter öffnen. Läuft das Dashboard schon, bietet **Systemprüfung → Fehlendes einrichten** denselben Ablauf mit Vorschau an.
+
+Die Einrichtung installiert fehlende Pakete und richtet lokales HTTPS im Systemterminal ein. Linux verwendet apt, dnf oder pacman, macOS Homebrew, Windows winget und WSL2. Systempasswörter gibst du nur im Terminal oder im Dialog des Betriebssystems ein. WSL-Ersteinrichtung, Docker-Desktop-Freigabe, Neustart oder erneutes Anmelden können nötig bleiben. Eine vorhandene Docker-Installation wird nicht ersetzt. Bei einem Konflikt nennt die Systemprüfung den nächsten Schritt. [Plattformen und Grenzen](docs/platforms.md)
+
+Selbst installieren geht auch:
+
+| Programm | Wofür |
 |---|---|
-| Version | [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) |
-| Herunterladen | [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) |
-| Änderungen | [CHANGELOG.md](CHANGELOG.md) |
-| Sicherheitsmeldungen | [SECURITY.md](SECURITY.md) |
+| Python 3.10 oder neuer | Dashboard und Kommando `./wsc` |
+| Docker mit Docker Compose, Linux-Container, vom aktuellen Benutzer erreichbar | Webserver, PHP und Datenbank |
+| mkcert, unter Linux gegebenenfalls NSS für den Browser | vertrauenswürdiges lokales HTTPS |
+| Internet | Container-Images und der Core-Download. Ein eigenes Installations-ZIP geht ebenfalls |
 
-Die Versionsnummer im Badge kommt von der letzten Veröffentlichung. Sie wird in dieser Anleitung nicht festgeschrieben.
+Die [Plattform-Anleitung](docs/platforms.md) beschreibt Linux, macOS und Windows/WSL2 einschließlich der Zertifikatsfreigabe. Node.js brauchst du nur für die Entwicklungstests.
 
-## In drei Schritten
+</details>
+
+## Drei Schritte im Dashboard
 
 | Schritt | Was du tust | Was du danach hast |
 |---|---|---|
-| 1. Starten | Repository holen und `./setup.sh` ausführen. Unter Windows `Start-wsc-local.cmd` doppelklicken. | Das Dashboard unter `http://127.0.0.1:9099/` |
-| 2. Vorbereiten | **Neues Projekt:** Name und Suite-Version wählen, dann die erzeugten Zugangsdaten ansehen. | Eine vorbereitete Installation, noch ohne fertige Website |
-| 3. Einrichten | **Einrichten** klicken und warten. | Eine lokale Website. **ACP öffnen** meldet dich in der Administration an |
+| 1. Vorbereiten | **Neues Projekt:** Name und Suite-Version wählen, dann die erzeugten Zugangsdaten ansehen. | Eine vorbereitete Installation, noch ohne fertige Website |
+| 2. Einrichten | **Einrichten** klicken und warten. | Eine lokale Website |
+| 3. Anmelden | **ACP öffnen** klicken. | Du bist in der Administration |
 
 Du klickst den WoltLab-Installer nicht selbst durch. Ein Spinner zeigt den Fortschritt. Lädst du die Seite neu, verbindet sie sich wieder mit dem laufenden Vorgang.
+
+<details>
+<summary><strong>Was beim Einrichten genau passiert</strong></summary>
+
+1. **Projekt vorbereiten:** Name, Suite-Version und Quelle wählen. Nginx/PHP-FPM mit MariaDB ist der Standard. Apache, passende PHP-Profile, MySQL 8 und eigene Adminwerte stehen unter den optionalen Einstellungen.
+2. **Sprache und Login-Daten prüfen:** Oben DE oder EN wählen; diese Sprache übernimmt die Suite bei der Einrichtung. Den sicher erzeugten Adminzugang ansehen und bei Bedarf Name, E-Mail und Passwort ändern.
+3. **Einrichten:** Die Workbench startet die Umgebung, richtet HTTPS ein und installiert WoltLab vollständig. Website, Ressourcen und tatsächliche Admin-Anmeldung werden geprüft. Danach öffnest du die Website oder meldest dich über **ACP öffnen** direkt in der Administration an.
+
+Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschritte zeigen den Fortschritt. Nach Neuladen verbindet sich die Oberfläche wieder mit laufenden Vorgängen – auch wenn die erste Startantwort verloren gegangen ist.
+
+</details>
 
 <a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: erster Start ohne Projekte mit geführtem Einstieg" width="1100"></a>
 
@@ -69,60 +164,6 @@ Die Bilder zeigen die Workbench mit echten lokalen WoltLab-Testprojekten. Passw�
 
 </details>
 
-## Starten
-
-Lade das Repository als [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) oder per Git und öffne diesen Ordner. Dort liegen auch die Windows-Starter.
-
-<details>
-<summary><strong>Welche Programme einmalig gebraucht werden</strong></summary>
-
-**Geführte Einrichtung:** Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **`Install-wsc-local.cmd` doppelklicken** (oder `Start-wsc-local.ps1 -InstallDependencies`). Danach den normalen Starter öffnen. Wenn das Dashboard bereits läuft, bietet **Systemprüfung → Fehlendes einrichten** denselben Ablauf mit Vorschau an.
-
-Die Einrichtung installiert fehlende Pakete und richtet lokales HTTPS im Systemterminal ein. Linux verwendet apt/dnf/pacman, macOS Homebrew, Windows winget und WSL2. Systempasswörter werden ausschließlich im Terminal bzw. im Betriebssystemdialog eingegeben. WSL-Ersteinrichtung, Docker-Desktop-Freigabe, Neustarts oder erneutes Anmelden können erforderlich bleiben. Vorhandene Docker-Installationen werden nicht ersetzt; bei Konflikten nennt die Systemprüfung die nächsten Schritte. [Plattformen und Grenzen](docs/platforms.md)
-
-Alternativ kannst du die Voraussetzungen selbst installieren:
-
-- **Python 3.10 oder neuer.**
-- **Docker mit Docker Compose**, gestartet und vom aktuellen Benutzer erreichbar. Die Workbench benötigt Linux-Container.
-- **mkcert** für vertrauenswürdiges lokales HTTPS; unter Linux gegebenenfalls NSS für deinen Browser.
-- Internet für Container-Images und den Core-Download. Ein eigenes Installations-ZIP ist ebenfalls möglich.
-
-Die [Plattform-Anleitung](docs/platforms.md) beschreibt Linux, macOS und Windows/WSL2 einschließlich der Zertifikatsfreigabe. Node.js wird nur für die Entwicklungstests benötigt.
-
-</details>
-
-### Linux und macOS
-
-```bash
-git clone https://github.com/benjarogit/wsc-local.git
-cd wsc-local
-./setup.sh
-```
-
-`setup.sh` prüft die Voraussetzungen, begleitet die einmalige HTTPS-Vertrauensstellung im Terminal und öffnet das Dashboard. Fehlende Voraussetzungen und passende Hilfen findest du unter **Systemprüfung**.
-
-Später reicht `./start.sh` oder `./panel.sh`. Ohne Browserstart: `./start.sh --no-open`. Anderer Dashboard-Port: `./start.sh --port 9199`. Die Standardadresse ist `http://127.0.0.1:9099/`.
-
-### Windows
-
-1. [WSL2](https://learn.microsoft.com/windows/wsl/install) mit einer Linux-Distribution einrichten.
-2. Docker Desktop starten, **Linux-Container** verwenden und die WSL-Integration für diese Distribution aktivieren.
-3. Python und mkcert in WSL installieren; mkcert zusätzlich unter Windows installieren, damit der Windows-Browser derselben lokalen Zertifizierungsstelle vertraut.
-4. Repository klonen und **`Start-wsc-local.cmd` doppelklicken**, oder im WSL-Terminal `./setup.sh` ausführen.
-
-Bei mehreren Distributionen: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Details und Befehle](docs/platforms.md#windows-mit-wsl2)
-
-<details>
-<summary><strong>Was beim Einrichten genau passiert</strong></summary>
-
-1. **Projekt vorbereiten:** Name, Suite-Version und Quelle wählen. Nginx/PHP-FPM mit MariaDB ist der Standard. Apache, passende PHP-Profile, MySQL 8 und eigene Adminwerte stehen unter den optionalen Einstellungen.
-2. **Sprache und Login-Daten prüfen:** Oben DE oder EN wählen; diese Sprache übernimmt die Suite bei der Einrichtung. Den sicher erzeugten Adminzugang ansehen und bei Bedarf Name, E-Mail und Passwort ändern.
-3. **Einrichten:** Die Workbench startet die Umgebung, richtet HTTPS ein und installiert WoltLab vollständig. Website, Ressourcen und tatsächliche Admin-Anmeldung werden geprüft. Danach öffnest du die Website oder meldest dich über **ACP öffnen** direkt in der Administration an.
-
-Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschritte zeigen den Fortschritt. Nach Neuladen verbindet sich die Oberfläche wieder mit laufenden Vorgängen – auch wenn die erste Startantwort verloren gegangen ist.
-
-</details>
-
 ## Bereiche im Dashboard
 
 | Bereich | Wofür |
@@ -140,7 +181,12 @@ Informationssymbole öffnen Erklärungen. Bestätigungen erscheinen in Dialogen 
 
 - **ACP öffnen:** Meldet dich mit dem gespeicherten Adminzugang direkt in der Administration an. Die Sitzung wird über eine kurz gültige Einmal-Übergabe übertragen; Passwörter stehen nicht in URLs. Bei geändertem Passwort oder Zwei-Faktor-Anmeldung bietet der Dialog die normale ACP-Anmeldung an.
 - **Zugangsdaten:** Anzeigen und Kopieren von Admin- und getrennten Datenbankdaten. Passwörter bleiben zunächst verborgen. Nach der Installation änderst du den Adminzugang in WoltLab.
-- **Dienste:** Status und Logs von Webserver, PHP und Datenbank. Den optionalen Mailpit-Testdienst schaltest du separat ein. Für Test-E-Mails in WoltLab: SMTP `mail:1025`, ohne Anmeldung.
+- **Dienste:** Status und Logs von Webserver, PHP und Datenbank. Den optionalen Mailpit-Testdienst schaltest du separat ein. Für Test-E-Mails in WoltLab, ohne Anmeldung:
+
+```text
+mail:1025
+```
+
 - **Sicherungen:** Dateisystem und Datenbank gemeinsam sichern, Prüfsummen kontrollieren und einen Stand wiederherstellen. Vor dem Restore wird der aktuelle Stand gesichert.
 - **Export und Serverumzug:** Ein Paket mit Dateien, SQL-Dump, Projektkonfiguration, Prüfsummen und Importanleitung erstellen und herunterladen. **Serverumzug vorbereiten** ergänzt die Erklärung für den Zielserver und verwendet dasselbe Exportformat. Das Einspielen auf dem Server ist geführt; SSH-Deployments sind nicht enthalten.
 - **WoltLab-Werkzeuge:** Diagnose, Uploadlimits mit Änderungsvorschau, offizielles Recovery Tool und dessen Entfernung. Domain- und Verzeichniswerkzeuge erstellen eine Sicherung und öffnen die Anleitung; sie ändern App-Pfade oder Datenbankwerte nicht automatisch.
@@ -154,7 +200,11 @@ Informationssymbole öffnen Erklärungen. Bestätigungen erscheinen in Dialogen 
 
 **Deutsch ist der Standard**, unabhängig von der Browsersprache. Über den **DE/EN-Schalter mit Globus-Icon** oben wechselst du die Dashboard-Sprache; die Auswahl bleibt in diesem Browser gespeichert. Die aktuellen Projektbereiche werden beim Wechsel wieder geöffnet. CLI-Ausgaben und technische Dienstprotokolle bleiben in ihrer Originalsprache.
 
-Bei **Einrichten** übernimmt eine neue WoltLab-Installation die aktuelle Dashboard-Sprache für die Suite-Standardsprache und den ersten Adminbenutzer. Ein Sprachwechsel während der laufenden Einrichtung ändert diese Auswahl nicht mehr. Bereits installierte Websites bleiben unverändert. Die CLI verwendet die Systemsprache (`LC_ALL`, `LC_MESSAGES`, `LANG`; Englisch → EN, sonst Deutsch) oder eine explizite Wahl: `./wsc install mein-forum --language en`. Bei einer Wiederaufnahme bleibt die gespeicherte Auswahl erhalten.
+Bei **Einrichten** übernimmt eine neue WoltLab-Installation die aktuelle Dashboard-Sprache für die Suite-Standardsprache und den ersten Adminbenutzer. Ein Sprachwechsel während der laufenden Einrichtung ändert diese Auswahl nicht mehr. Bereits installierte Websites bleiben unverändert. Die CLI verwendet die Systemsprache (`LC_ALL`, `LC_MESSAGES`, `LANG`; Englisch → EN, sonst Deutsch) oder eine explizite Wahl. Bei einer Wiederaufnahme bleibt die gespeicherte Auswahl erhalten.
+
+```bash
+./wsc install mein-forum --language en
+```
 
 Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der aktive Modus ist markiert; System folgt der Geräteeinstellung. Die Darstellung ändert die Workbench, nicht das Design deiner WoltLab-Website.
 
@@ -165,9 +215,11 @@ Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der akt
 
 Die Profile orientieren sich am [offiziellen WoltLab-Handbuch](https://manual.woltlab.com/de/php-compatibility/). Alpha und Legacy erfordern eine bewusste Bestätigung.
 
-- **WSC 6.2:** automatischer Download von Core 6.2.8 mit SHA-256-Prüfung oder eigenes ZIP. Das Standardprofil verwendet PHP 8.4 und lokales HTTPS.
-- **WSC 6.3:** inoffizieller Entwicklungsbuild aus [YoureCom/wsc-63-testbuilds](https://github.com/YoureCom/wsc-63-testbuilds), gebaut aus WoltLab/WCF. Profil mit PHP 8.5 und HTTPS; für lokale Tests.
-- **WSC 5.5, 6.0 und 6.1:** eigenes passendes Installations-ZIP erforderlich. Legacy-Profile sind entsprechend gekennzeichnet.
+| Profil | Badge | Was du bekommst |
+|---|---|---|
+| WSC 6.2 | ![Standard](https://img.shields.io/badge/Standard-2da44e) | Core 6.2.8 automatisch, mit SHA-256-Prüfung, oder eigenes ZIP. PHP 8.4 und lokales HTTPS |
+| WSC 6.3 | ![inoffiziell](https://img.shields.io/badge/inoffiziell-bf8700) | Entwicklungsbuild aus [YoureCom/wsc-63-testbuilds](https://github.com/YoureCom/wsc-63-testbuilds), gebaut aus WoltLab/WCF. PHP 8.5 und HTTPS, für lokale Tests |
+| WSC 5.5, 6.0, 6.1 | ![eigenes ZIP](https://img.shields.io/badge/eigenes_ZIP-6e7781) | Ein passendes Installations-ZIP von dir. Die Profile sind als Legacy gekennzeichnet |
 
 Eigene ZIPs wählst du direkt im Dashboard aus, maximal 256 MiB und mit `install.php`. Lizenzpflichtige Anwendungen benötigen dein eigenes geeignetes Archiv und eine passende WoltLab-Lizenz. Der freie Core benötigt beim lokalen Setup keine Lizenzzugangsdaten.
 
@@ -178,21 +230,53 @@ Die geprüften WSC-6.2/6.3-Dateien benötigen eine gezielte Korrektur für lokal
 <details>
 <summary><strong>Dieselben Aufgaben in der Kommandozeile</strong></summary>
 
+Version und Systemprüfung:
+
 ```bash
 ./wsc --version
 ./wsc check
+```
+
+Projekt anlegen und installieren. `mein-forum` ist der Beispielname:
+
+```bash
 ./wsc create mein-forum --download-core
 ./wsc install mein-forum
+```
+
+Alltag:
+
+```bash
 ./wsc list
 ./wsc start mein-forum
 ./wsc stop mein-forum
 ./wsc status mein-forum
+```
+
+Logs und Diagnose:
+
+```bash
 ./wsc logs mein-forum --service database
 ./wsc doctor mein-forum
+```
+
+Sicherung und Export:
+
+```bash
 ./wsc snapshot mein-forum
 ./wsc snapshots mein-forum
-./wsc restore mein-forum PFAD_ZUR_SICHERUNG
 ./wsc export mein-forum
+```
+
+Wiederherstellen. `PFAD_ZUR_SICHERUNG` durch den echten Pfad ersetzen:
+
+```bash
+./wsc restore mein-forum PFAD_ZUR_SICHERUNG
+```
+
+Entfernen fragt den Projektnamen ab und löscht dieses Projekt:
+
+```bash
 ./wsc remove mein-forum
 ```
 
@@ -209,13 +293,22 @@ Das neue Projekt bekommt eigene Zugangsdaten und Ports. Das Profil enthält kein
 <details>
 <summary><strong>Wo Dateien, Passwörter und HTTPS liegen</strong></summary>
 
-Projekte liegen standardmäßig unter `~/.local/share/wsc-local/projects/`, Geheimnisse getrennt unter `~/.config/wsc-local/secrets/`. `WSC_LOCAL_HOME` und `XDG_CONFIG_HOME` ändern diese Pfade. Unter Windows gelten die Pfade innerhalb von WSL.
+Projekte und Geheimnisse liegen getrennt. Unter Windows gelten die Pfade innerhalb von WSL. `WSC_LOCAL_HOME` und `XDG_CONFIG_HOME` ändern sie.
+
+```text
+~/.local/share/wsc-local/projects/
+~/.config/wsc-local/secrets/
+```
 
 Das Dashboard und veröffentlichte Containerports binden an Loopback. Lokales HTTPS nutzt mkcert. Let's Encrypt ist für öffentliche Domains am Zielserver vorgesehen, nicht für `localhost`.
 
 Exporte entfernen Workbench-eigene lokale Datenbankzugangsdaten aus `config.inc.php` und enthalten keine lokale `.env` oder TLS-Schlüssel. WoltLab-Inhalte und dessen Datenbank bleiben Bestandteil des Pakets; behandle es wie eine vollständige Datensicherung. Temporäre Recovery- und Authentifizierungsdateien sind ausgeschlossen.
 
-`./wsc import QUELLE projektname` erkennt ältere wsc-local-Dateien, alte Snapshots und Workbench-Exportpakete. Alte rohe Datenbankordner werden nicht zwischen Datenbankprofilen kopiert; ein vollständiger Stand benötigt einen passenden Dump bzw. Export. [Teststand und Grenzen](docs/user-test.md)
+```bash
+./wsc import QUELLE projektname
+```
+
+Der Befehl erkennt ältere wsc-local-Dateien, alte Snapshots und Workbench-Exportpakete. Alte rohe Datenbankordner werden nicht zwischen Datenbankprofilen kopiert; ein vollständiger Stand benötigt einen passenden Dump bzw. Export. [Teststand und Grenzen](docs/user-test.md)
 
 </details>
 
@@ -224,13 +317,32 @@ Exporte entfernen Workbench-eigene lokale Datenbankzugangsdaten aus `config.inc.
 
 Ab **1.2.0** meldet die Workbench neue stabile Releases direkt im Dashboard. Unter **Updates** kannst du nach Vorschau automatisch aktualisieren oder die manuelle Anleitung öffnen. Git- und ZIP-Installationen werden erkannt. Prüfsummen, Schutz lokaler Änderungen, Wiederherstellungsstand und automatischer Dashboard-Neustart gehören zum Ablauf; WoltLab-Projekte und Zugangsdaten bleiben erhalten.
 
+Neue Version suchen:
+
 ```bash
-./wsc update --check   # Neue Version suchen
-./wsc update           # Mit Vorschau und Bestätigung installieren
-./wsc update --guide   # Wahlweise selbst aktualisieren
+./wsc update --check
 ```
 
-**Von 1.1.0 oder älter:** einmal `git pull --ff-only` und `./start.sh` ausführen. Bei einer ZIP-Installation die Programmdateien nach Anleitung in den bestehenden Ordner übernehmen und persönliche Daten erhalten. Danach steht die Updatefunktion für kommende Releases bereit. [Update, Konflikte und Wiederherstellung im Detail](docs/updating.md)
+Nach Vorschau und Bestätigung installieren:
+
+```bash
+./wsc update
+```
+
+Wahlweise selbst aktualisieren:
+
+```bash
+./wsc update --guide
+```
+
+**Von 1.1.0 oder älter**, einmalig:
+
+```bash
+git pull --ff-only
+./start.sh
+```
+
+Bei einer ZIP-Installation die Programmdateien nach Anleitung in den bestehenden Ordner übernehmen und persönliche Daten erhalten. Danach steht die Updatefunktion für kommende Releases bereit. [Update, Konflikte und Wiederherstellung im Detail](docs/updating.md)
 
 **Releases entstehen automatisch:** Ein neuer Versions-Tag startet die GitHub-Prüfungen; nach deren Erfolg veröffentlicht der Workflow ZIP und SHA-256-Prüfsumme. Die Version steht oben in dieser README und im Dashboard-Fußbereich.
 
@@ -240,6 +352,8 @@ Der frühere Einzel-Stack ist ausdrücklich über `./setup.sh --legacy` und `./s
 
 <details>
 <summary><strong>Prüfungen und Herkunft</strong></summary>
+
+Der Reihe nach, nur wenn du die Workbench selbst prüfst:
 
 ```bash
 python3 -m unittest discover -s tests -v
