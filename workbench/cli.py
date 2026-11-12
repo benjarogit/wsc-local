@@ -285,7 +285,7 @@ def create_project(args: argparse.Namespace) -> str:
         "profile_source": profile.get("source", PROFILES and "https://manual.woltlab.com/de/php-compatibility/"),
         "webserver": webserver_profile,
         "database": "mariadb",
-        "buffer_pool_mib": args.buffer_pool,
+        "buffer_pool_mib": buffer_pool_mib({"buffer_pool_mib": getattr(args, "buffer_pool", 128)}),
         "host": "127.0.0.1",
         "http_port": port,
         "url": f"http://127.0.0.1:{port}",
@@ -1998,7 +1998,10 @@ def import_bundle(source: Path, name: str) -> str:
         raise ValueError("Das Exportprofil enthält kein unterstütztes WoltLab-Profil.")
     if instance_paths(name)[0].exists():
         raise ValueError(f"Projekt '{name}' existiert bereits.")
-    create_args = argparse.Namespace(name=name, suite=cfg["suite_version"], php=cfg.get("php_version"), legacy_ack=True, experimental_ack=True, port=None, zip=None, download_core=False, version="6.2.8", sha256=None, database=cfg.get("database", "mariadb"), webserver=cfg.get("webserver", "nginx-php-fpm"))
+    pool = cfg.get("buffer_pool_mib", 128)
+    if pool not in BUFFER_POOL_SIZES:
+        pool = 128
+    create_args = argparse.Namespace(name=name, suite=cfg["suite_version"], php=cfg.get("php_version"), legacy_ack=True, experimental_ack=True, port=None, zip=None, download_core=False, version="6.2.8", sha256=None, database=cfg.get("database", "mariadb"), webserver=cfg.get("webserver", "nginx-php-fpm"), buffer_pool=pool)
     create_project(create_args)
     return restore(name, source, yes=True)
 
