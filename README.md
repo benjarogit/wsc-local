@@ -168,7 +168,7 @@ Die Bilder zeigen die Workbench mit echten lokalen WoltLab-Testprojekten. Passw�
 
 | Bereich | Wofür |
 |---|---|
-| Projektkarte | Zustand, Website öffnen, Administration, Start und Stopp, und die Liste der installierten Pakete und Styles |
+| Projektkarte | Zustand, Website öffnen, Administration, Start und Stopp, die Liste der installierten Pakete und Styles, und der optionale Buffer Pool |
 | Verwalten | Übersicht, Zugangsdaten, Dienste, Sicherungen, Werkzeuge |
 | Systemprüfung | Fehlt Python, Docker oder die lokale HTTPS-Freigabe, steht hier der nächste Schritt |
 | Updates | Neue Workbench-Version prüfen und installieren. Das Forum selbst wird dabei nicht aktualisiert |

@@ -241,7 +241,7 @@
     window.setTimeout(() => item.remove(), 4500);
   }
 
-  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right',code_init:'folder-tree',code_commit:'box-archive',code_worktree:'folder-tree',code_git_help:'circle-info',code_gh_help:'circle-info',code_github_login:'globe',code_github_create:'globe',code_push:'upload',code_activity:'heart-pulse',code_signup:'globe'};
+  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',buffer_pool:'server',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right',code_init:'folder-tree',code_commit:'box-archive',code_worktree:'folder-tree',code_git_help:'circle-info',code_gh_help:'circle-info',code_github_login:'globe',code_github_create:'globe',code_push:'upload',code_activity:'heart-pulse',code_signup:'globe'};
   const projectViews = new Map();
   function projectCard(project) {
     const phase = project.installation?.state || (project.site_ready ? 'ready' : 'prepared');
@@ -282,6 +282,9 @@
       const ghMissing = code.gh_available ? '' : H`<p class="hint">${t('Die GitHub-CLI (gh) fehlt. Sie öffnet die Anmeldung im Browser. „GitHub-CLI einrichten“ zeigt den Befehl und die offizielle Quelle. Danach startest du die Workbench neu.')}</p>`;
       return H`<div class="tool-group">${heading}<p class="hint">${t('Nur packages/ und styles/. Die laufende Installation bleibt außerhalb. Im Browser gibst du deine GitHub-Zugangsdaten ein. Dieses Dashboard speichert kein Passwort und kein Token.')}${code.dirty?t(' Es gibt uncommittete Änderungen.'):''}</p><p class="hint">${t('„Bei GitHub registrieren“ öffnet github.com/signup. Konto und Passwort legst du dort an.')}</p>${pathHint}${githubHint}${worktreeHint}<div class="actions">${code.git_available?'':action('code_git_help',t('Git installieren'))}${action('code_commit',t('Commit'))}${action('code_worktree',t('Arbeitskopie'))}<a class="button" href="${esc(code.signup_url || 'https://github.com/signup')}" target="_blank" rel="noopener">${icon('globe')}${t('Bei GitHub registrieren')} ↗</a>${code.gh_available?'':action('code_gh_help',t('GitHub-CLI einrichten'))}${action('code_github_login',code.gh_authenticated?t('GitHub-Anmeldung prüfen'):t('Bei GitHub anmelden'),'',code.gh_available?'':'disabled')}${action('code_github_create',t('Privates Repository erstellen'),'',(code.gh_available && !code.github)?'':'disabled')}${action('code_push',t('Push'),'',code.github?'':'disabled')}${action('code_activity',t('Letzte Aktivität'),'',code.github?'':'disabled')}</div>${gitMissing}${ghMissing}</div>`;
     };
+    const pool = [128, 256, 512].includes(Number(project.buffer_pool_mib)) ? Number(project.buffer_pool_mib) : 128;
+    const poolChoices = [128, 256, 512].map((size) => H`<button type="button" role="radio" aria-checked="${size === pool}" data-action="buffer_pool" data-name="${name}" data-size="${size}">${size} MiB</button>`).join('');
+    const poolSetting = H`<div class="buffer-setting"><div><p id="buffer-label-${name}">Buffer Pool</p><p class="hint">256 oder 512 MiB entfernen den Hinweis in WoltLab.</p></div><div class="size-switch" role="radiogroup" aria-labelledby="buffer-label-${name}" data-buffer-pool data-current="${pool}">${poolChoices}</div></div>`;
     return H`<article class="project" data-project="${name}" data-url="${esc(localUrl(project.url))}">
       <div class="project-head"><div><h3 class="project-title">${name}</h3><p class="project-subtitle">WoltLab ${esc(project.suite)} · ${project.webserver==='apache'?'Apache':'Nginx'} · PHP ${esc(project.php)}${project.experimental?' · Alpha':project.legacy?' · Legacy':''}</p></div><span class="badge ${badge}">${esc(state)}</span></div>
       <p class="next-step" ${setup?'':'hidden'}>${esc(setup)}</p>
@@ -292,6 +295,7 @@
         ${project.status_error?H`<p class="result error">${esc(project.status_error)}</p>`:''}
         ${needsArchive?H`<form class="archive-upload" data-archive-for="${name}"><label>WoltLab-Installations-ZIP<input type="file" accept=".zip,application/zip" required></label><p class="hint">Maximal 256 MiB, mit install.php.</p><button class="button primary" type="submit">Archiv einspielen</button></form>`:''}
         <dl class="meta"><dt>Projektadresse</dt><dd>${esc(project.url)}</dd><dt>Suite-Profil</dt><dd>WoltLab ${esc(project.suite)}${project.experimental?t(' · inoffizieller Entwicklungsbuild'):''}</dd><dt>Webserver</dt><dd>${project.webserver==='apache'?t('Apache mit PHP'):t('Nginx mit PHP-FPM')}</dd><dt>Datenbank</dt><dd>${project.database==='mysql8'?'MySQL 8':'MariaDB 10.11'}</dd><dt>HTTPS</dt><dd>${project.tls_enabled?t('Lokales Zertifikat eingerichtet'):t('Wird bei Bedarf automatisch eingerichtet')}</dd></dl>
+        ${poolSetting}
         <a class="button" href="/api/instances/${name}/profile" download="${name}.wsc-local.json">${icon('upload')}Projektprofil herunterladen</a>${infoButton('profile',t('Teilbares Projektprofil erklären'))}<p class="hint">Teilbar ohne Login-Daten. Neue Projekte erhalten eigene Passwörter und freie Ports.</p>
       </section>
       <section class="tab-panel" role="tabpanel" id="panel-${name}-credentials" aria-labelledby="tab-${name}-credentials" data-panel="credentials" hidden>
@@ -515,6 +519,27 @@
       }
       return;
     }
+    if (action === 'buffer_pool') {
+      const size = Number(button.dataset.size);
+      const group = button.closest('[data-buffer-pool]');
+      if (![128, 256, 512].includes(size)) { toast(t('Der Buffer Pool muss 128, 256 oder 512 MiB sein.'), true); return; }
+      if (size === Number(group?.dataset.current)) return;
+      if (!await ask({title:t('Buffer Pool ändern'), description:t('Eine laufende Datenbank wird kurz neu gestartet. Ein gestopptes Projekt wird nicht gestartet. Die gespeicherten Daten bleiben erhalten.'), confirm:t('Buffer Pool übernehmen')})) return;
+      beginOperation(button, H`${name}: ${t('Der Buffer Pool wird angepasst …')}`, `${size} MiB`);
+      try {
+        const applied = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'buffer_pool', name, size }) });
+        output.textContent = applied.output || t('Buffer Pool wurde angepasst.');
+        toast(t('Buffer Pool wurde angepasst.'));
+        await refresh();
+      } catch (error) {
+        output.textContent = error.message;
+        toast(error.message, true);
+      } finally {
+        endOperation();
+        await refresh();
+      }
+      return;
+    }
     if (action === 'uploads') {
       const choice = await ask({title:t('Uploadlimits anpassen'),description:t('Die Workbench zeigt zuerst die betroffenen PHP- und Webserver-Einstellungen. Erst danach bestätigst du die Änderung.'),confirm:t('Änderungen prüfen'),input:{label:t('Maximale Uploadgröße'),value:'256M',pattern:/^[1-9][0-9]{0,5}[MG]$/,error:t('Bitte eine Größe wie 256M oder 1G eingeben.')}});
       if (!choice) return;
@@ -613,7 +638,7 @@
     submit.innerHTML=spinnerMarkup;submit.append(document.createTextNode(t('Projekt wird vorbereitet …')));
     output.textContent = H`Projekt ${project} wird vorbereitet …`;
     try {
-      const result = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'create', project, suite, webserver, source, php, database, experimental_ack:document.getElementById('version-ack').checked, admin_username: form.get('admin_username'), admin_email: form.get('admin_email'), admin_password: form.get('admin_password') }) });
+      const result = await api('/api/workbench', { method: 'POST', body: JSON.stringify({ action: 'create', project, suite, webserver, source, php, database, buffer_pool: Number(form.get('buffer_pool') || 128), experimental_ack:document.getElementById('version-ack').checked, admin_username: form.get('admin_username'), admin_email: form.get('admin_email'), admin_password: form.get('admin_password') }) });
       projectCreated=true;
       if (source === 'zip') await uploadArchive(project, archive);
       output.textContent = H`Projekt „${project}“ ist vorbereitet. Sieh dir in der Projektkarte die Zugangsdaten an oder passe sie vorab an. Danach klickst du einmal auf „Einrichten“; wsc-local übernimmt die WoltLab-Installation vollständig.`;
@@ -682,7 +707,7 @@
         const data=await api('/api/system');systemReady=data.ready;hostInstallation=data.installation;hostPlatform=data.host || null;
         document.getElementById('host-summary').textContent=H`${data.host.label} · ${data.ready?t('Bereit für WoltLab'):t('Vorbereitung erforderlich')}`;
         document.getElementById('system-dot').classList.toggle('ready',data.ready);document.getElementById('system-dot').classList.toggle('missing',!data.ready);
-        document.getElementById('system-report').innerHTML=H`<div class="system-summary ${data.ready?'ready':'missing'}"><strong>${data.ready?t('Dein Gerät ist bereit.'):t('Diese Voraussetzungen fehlen noch.')}</strong><p>${esc(data.host.label)} · ${esc(data.host.architecture)}</p>${!data.ready&&data.installation?.supported?H`<button class="button primary" data-action="host_install">${icon('gear')}Fehlendes einrichten</button>`:''}</div><div class="system-checks">${data.checks.map(check=>H`<article class="system-check"><span class="check-symbol ${check.status}" aria-hidden="true">${check.status==='ready'?'✓':'!'}</span><div><h2>${esc(check.label)}</h2><p>${esc(check.detail)}</p>${check.help?H`<p class="check-help">${esc(check.help)}</p>`:''}${check.status!=='ready'&&check.url?H`<a href="${esc(check.url)}" target="_blank" rel="noopener">Installationsanleitung ↗</a>`:''}</div><span class="badge ${check.status==='ready'?'ready':'failed'}">${check.status==='ready'?t('Bereit'):t('Erforderlich')}</span></article>`).join('')}</div>`;
+        document.getElementById('system-report').innerHTML=H`<div class="system-summary ${data.ready?'ready':'missing'}"><strong>${data.ready?t('Dein Gerät ist bereit.'):t('Diese Voraussetzungen fehlen noch.')}</strong><p>${esc(data.host.label)} · ${esc(data.host.architecture)}</p>${!data.ready&&data.installation?.supported?H`<button class="button primary" data-action="host_install">${icon('gear')}Fehlendes einrichten</button>`:''}</div><div class="system-checks">${data.checks.map(check=>H`<article class="system-check"><span class="check-symbol ${check.status}" aria-hidden="true">${check.status==='ready'?'✓':'!'}</span><div><h2>${esc(check.label)}</h2><p>${esc(check.detail)}</p>${check.help?H`<p class="check-help">${esc(check.help)}</p>`:''}${check.status==='missing'&&check.url?H`<a href="${esc(check.url)}" target="_blank" rel="noopener">Installationsanleitung ↗</a>`:''}</div><span class="badge ${check.status==='ready'?'ready':check.status==='hint'?'hint':'failed'}">${check.status==='ready'?t('Bereit'):check.status==='hint'?t('Hinweis'):t('Erforderlich')}</span></article>`).join('')}</div>`;
       } catch(error) {systemReady=false;document.getElementById('host-summary').textContent=t('Systemprüfung nicht erreichbar');document.getElementById('system-report').textContent=error.message;}
       finally {button.disabled=false;button.classList.remove('is-busy');button.textContent=t('Erneut prüfen');systemCheck=null;}
     })();return systemCheck;

@@ -15,6 +15,17 @@ Dieselbe Liste gibt die Kommandozeile aus:
 
 Eigene Dateien unter **Werkzeuge → Eigener Code** sind davon getrennt. Sie erscheinen in der Liste erst, wenn sie in WoltLab installiert sind.
 
+## Buffer Pool
+
+WoltLab bewertet einen InnoDB-Buffer-Pool von genau 128 MiB als Hinweis und alles darüber als empfohlen. Weniger als 128 MiB gilt dort als Fehler. Die Workbench lässt 128 MiB als Standard und bietet optional 256 oder 512 MiB an: beim Anlegen unter **Technik und Adminzugang** und danach unter **Verwalten → Übersicht**. Die Systemprüfung der Workbench zeigt 128 MiB als Hinweis. Das Gerät bleibt dabei bereit.
+
+Eine laufende Datenbank wird für die neue Größe neu erstellt. Die Datenbankdateien bleiben im Projektordner. Ein gestopptes Projekt wird dafür nicht gestartet; die Größe gilt beim nächsten Start.
+
+```bash
+./wsc buffer-pool mein-forum
+./wsc buffer-pool mein-forum 256
+```
+
 ## Recovery
 
 **Recovery einrichten** lädt das offizielle WoltLab-Hilfsskript, prüft die Antwort, erstellt eine Sicherung und legt die Datei vorübergehend im installierten Projekt ab. Nach Abschluss öffnet sich ein Dialog mit dem Recovery-Link und der offiziellen Anleitung. Solange die Datei vorhanden ist, zeigt die Workbench „Recovery ist aktiv“ und bietet das Entfernen an. Ein zweites Einrichten wird verhindert.

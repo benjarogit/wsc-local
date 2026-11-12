@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree
 from typing import Any
+import host_system as _host_system
 from host_system import detect_host, print_report, tls_environment
 import code_repo
 
@@ -87,12 +88,29 @@ def profile_for(suite: str) -> dict[str, Any]:
     raise ValueError("Unterstützte Profile sind WSC 5.5 bis 6.2 sowie das experimentelle Entwicklungsprofil 6.3.")
 
 
+BUFFER_POOL_SIZES = (128, 256, 512)
+
+
+def buffer_pool_mib(cfg: dict[str, Any]) -> int:
+    """Return the configured InnoDB buffer pool. Missing means the image default."""
+    raw = cfg.get("buffer_pool_mib", 128)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = 0
+    if value not in BUFFER_POOL_SIZES:
+        raise ValueError("Der Buffer Pool muss 128, 256 oder 512 MiB sein.")
+    return value
+
+
 def compose_text(root: Path, cfg: dict[str, Any]) -> str:
     # All bind paths are absolute to keep Compose independent of the caller's working directory.
     site = root / "site"
     db = root / "data/database"
     mysql = cfg.get("database", "mariadb") == "mysql8"
     db_image = "mysql:8.0" if mysql else "mariadb:10.11"
+    pool = buffer_pool_mib(cfg)
+    db_command = f'    command: ["--innodb-buffer-pool-size={pool}M"]\n' if pool != 128 else ""
     db_health = 'test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]' if mysql else 'test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]'
     db_environment = """      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -169,7 +187,7 @@ def compose_text(root: Path, cfg: dict[str, Any]) -> str:
 services:
 {web_services}  database:
     image: {db_image}
-    environment:
+{db_command}    environment:
 {db_environment}
     volumes:
       - {db.as_posix()}:/var/lib/mysql
@@ -267,6 +285,7 @@ def create_project(args: argparse.Namespace) -> str:
         "profile_source": profile.get("source", PROFILES and "https://manual.woltlab.com/de/php-compatibility/"),
         "webserver": webserver_profile,
         "database": "mariadb",
+        "buffer_pool_mib": args.buffer_pool,
         "host": "127.0.0.1",
         "http_port": port,
         "url": f"http://127.0.0.1:{port}",
@@ -1171,7 +1190,69 @@ def project_status(name: str) -> dict[str, Any]:
     state_file = root / "installation-state.json"
     installation = json.loads(state_file.read_text()) if state_file.is_file() else {"state": "unverified" if files_available else "prepared", "stage": "", "error": ""}
     site_ready = files_available and installation.get("state") == "ready"
-    return {"recovery_enabled": (root / "recovery-tool.json").is_file() and (root / "site/wsc-recovery.php").is_file(), "name": name, "suite": cfg["suite_version"], "php": cfg["php_version"], "database": cfg.get("database", "mariadb"), "webserver": cfg.get("webserver", "nginx-php-fpm"), "legacy": cfg["profile_status"] == "legacy", "experimental": cfg.get("profile_status") == "development", "core_version": cfg.get("core_version", ""), "url": cfg["url"], "mail_url": f"http://127.0.0.1:{cfg['mail_port']}", "tls_enabled": cfg.get("tls_enabled", False), "running": running, "port_mismatch": port_mismatch, "status_error": status_error, "services": services, "site_ready": site_ready, "installation": installation, "files_available": files_available, "core_available": (root / "site/install.php").exists(), "code": code_repo.code_status(name, cfg, root)}
+    return {"recovery_enabled": (root / "recovery-tool.json").is_file() and (root / "site/wsc-recovery.php").is_file(), "name": name, "suite": cfg["suite_version"], "php": cfg["php_version"], "database": cfg.get("database", "mariadb"), "buffer_pool_mib": buffer_pool_mib(cfg), "webserver": cfg.get("webserver", "nginx-php-fpm"), "legacy": cfg["profile_status"] == "legacy", "experimental": cfg.get("profile_status") == "development", "core_version": cfg.get("core_version", ""), "url": cfg["url"], "mail_url": f"http://127.0.0.1:{cfg['mail_port']}", "tls_enabled": cfg.get("tls_enabled", False), "running": running, "port_mismatch": port_mismatch, "status_error": status_error, "services": services, "site_ready": site_ready, "installation": installation, "files_available": files_available, "core_available": (root / "site/install.php").exists(), "code": code_repo.code_status(name, cfg, root)}
+
+
+def _write_project_config(root: Path, cfg: dict[str, Any]) -> None:
+    (root / "wsc-local.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def set_buffer_pool(name: str, mib: int) -> str:
+    """Store the buffer pool and recreate a running database without starting a stopped one."""
+    mib = buffer_pool_mib({"buffer_pool_mib": mib})
+    cfg, root, _ = read_project(name)
+    current = buffer_pool_mib(cfg)
+    if current == mib:
+        return f"Der Buffer Pool bleibt bei {mib} MiB."
+    previous = cfg.get("buffer_pool_mib")
+    cfg["buffer_pool_mib"] = mib
+    compose_file = root / "compose.yaml"
+    previous_compose = compose_file.read_text(encoding="utf-8") if compose_file.is_file() else None
+    _write_project_config(root, cfg)
+    compose_file.write_text(compose_text(root, cfg), encoding="utf-8")
+    status = project_status(name)
+    database = next((service for service in status["services"] if service["name"] == "database"), None)
+    if not database or database.get("state") != "running":
+        return f"Der Buffer Pool ist auf {mib} MiB eingestellt. Die Datenbank ist gestoppt und wird nicht gestartet. Die Größe gilt beim nächsten Start."
+    result = compose(name, "up", "-d", "--no-deps", "--force-recreate", "database", timeout=180)
+    if result.returncode:
+        if previous is None:
+            cfg.pop("buffer_pool_mib", None)
+        else:
+            cfg["buffer_pool_mib"] = previous
+        _write_project_config(root, cfg)
+        if previous_compose is None:
+            compose_file.unlink(missing_ok=True)
+        else:
+            compose_file.write_text(previous_compose, encoding="utf-8")
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(detail or "Die Datenbank konnte nicht mit der neuen Buffer-Pool-Größe starten. Die bisherige Einstellung bleibt erhalten.")
+    return f"Der Buffer Pool ist jetzt {mib} MiB. Die Datenbank wurde neu gestartet. Die gespeicherten Daten bleiben erhalten."
+
+
+def buffer_pool_system_check() -> dict[str, str]:
+    """Report WoltLab's 128 MiB warning without reading a stopped database."""
+    label = "Datenbank-Buffer-Pool"
+    help_text = "Die Größe stellst du in der Projektübersicht ein. Eine laufende Datenbank wird dafür kurz neu gestartet. Die Daten bleiben erhalten."
+    try:
+        names = project_names()
+    except OSError:
+        names = []
+    if not names:
+        return {"id": "buffer-pool", "label": label, "status": "ready", "detail": "Noch kein Projekt. Beim Anlegen kannst du 128, 256 oder 512 MiB wählen.", "help": ""}
+    minimum = False
+    for project_name in names:
+        try:
+            cfg, _, _ = read_project(project_name)
+            size = buffer_pool_mib(cfg)
+        except (OSError, ValueError, json.JSONDecodeError, KeyError):
+            continue
+        if size <= 128:
+            minimum = True
+            break
+    if minimum:
+        return {"id": "buffer-pool", "label": label, "status": "hint", "detail": "Mindestens ein Projekt nutzt 128 MiB. WoltLab zeigt dafür einen Hinweis. 256 oder 512 MiB entfernen ihn.", "help": help_text}
+    return {"id": "buffer-pool", "label": label, "status": "ready", "detail": "Alle Projekte nutzen mehr als 128 MiB. WoltLab bewertet das als empfohlen.", "help": ""}
 
 
 def action(name: str, command: str, *args: str) -> str:
@@ -2145,7 +2226,7 @@ def parser() -> argparse.ArgumentParser:
     update.add_argument("--yes", action="store_true", help="Angezeigtes Update ohne Rückfrage installieren")
     update.add_argument("--json", action="store_true", help="Update-Plan als JSON ausgeben")
     c = sub.add_parser("create", help="Neues WoltLab-Projekt anlegen")
-    c.add_argument("name"); c.add_argument("--suite", default="6.2"); c.add_argument("--php"); c.add_argument("--database", choices=("mariadb", "mysql8"), default=None); c.add_argument("--webserver", choices=("nginx-php-fpm", "apache"), default=None); c.add_argument("--profile"); c.add_argument("--port", type=int); c.add_argument("--zip"); c.add_argument("--download-core", action="store_true"); c.add_argument("--version"); c.add_argument("--sha256"); c.add_argument("--legacy", dest="legacy_ack", action="store_true"); c.add_argument("--experimental", dest="experimental_ack", action="store_true", help="inoffizielles Entwicklungsprofil ausdrücklich bestätigen")
+    c.add_argument("name"); c.add_argument("--suite", default="6.2"); c.add_argument("--php"); c.add_argument("--database", choices=("mariadb", "mysql8"), default=None); c.add_argument("--webserver", choices=("nginx-php-fpm", "apache"), default=None); c.add_argument("--buffer-pool", dest="buffer_pool", type=int, choices=BUFFER_POOL_SIZES, default=128); c.add_argument("--profile"); c.add_argument("--port", type=int); c.add_argument("--zip"); c.add_argument("--download-core", action="store_true"); c.add_argument("--version"); c.add_argument("--sha256"); c.add_argument("--legacy", dest="legacy_ack", action="store_true"); c.add_argument("--experimental", dest="experimental_ack", action="store_true", help="inoffizielles Entwicklungsprofil ausdrücklich bestätigen")
     x = sub.add_parser("install", help="WoltLab automatisch einrichten"); x.add_argument("name"); x.add_argument("--language", choices=("de", "en"), help="Installationssprache; Standard: Systemsprache bzw. gespeicherte Auswahl")
     l = sub.add_parser("list", help="Projekte anzeigen")
     rm = sub.add_parser("remove", help="Projekt und lokale Daten endgültig entfernen")
@@ -2155,6 +2236,8 @@ def parser() -> argparse.ArgumentParser:
         if cmd == "logs": x.add_argument("--service", default="web")
     x = sub.add_parser("installed", help="Installierte Pakete und Styles anzeigen")
     x.add_argument("name"); x.add_argument("--json", action="store_true")
+    x = sub.add_parser("buffer-pool", help="InnoDB-Buffer-Pool anzeigen oder auf 128, 256 oder 512 MiB setzen")
+    x.add_argument("name"); x.add_argument("size", nargs="?", type=int, choices=BUFFER_POOL_SIZES)
     x = sub.add_parser("install-zip"); x.add_argument("name"); x.add_argument("zip")
     x = sub.add_parser("download-core"); x.add_argument("name"); x.add_argument("--version"); x.add_argument("--sha256")
     x = sub.add_parser("uploads"); x.add_argument("name"); x.add_argument("--size", required=True); x.add_argument("--apply", action="store_true"); x.add_argument("--yes", action="store_true")
@@ -2213,6 +2296,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "installed":
             data = installed_content(args.name)
             print(json.dumps(data, ensure_ascii=False, indent=2) if args.json else format_installed(data))
+        elif args.command == "buffer-pool":
+            if args.size is None:
+                cfg, _, _ = read_project(args.name)
+                print(f"{buffer_pool_mib(cfg)} MiB")
+            else:
+                print(set_buffer_pool(args.name, args.size))
         elif args.command == "export": print(f"Server-Export erstellt: {snapshot(args.name, export=True)}")
         elif args.command == "install-zip":
             _, root, _ = read_project(args.name); install_zip(Path(args.zip).expanduser().resolve(), root / "site"); print("Core-/Paket-ZIP sicher in das Projekt entpackt.")
@@ -2247,3 +2336,11 @@ def main(argv: list[str] | None = None) -> int:
     except (ValueError, RuntimeError, OSError, subprocess.TimeoutExpired, tarfile.TarError) as exc:
         print(f"Fehler: {exc}", file=sys.stderr)
         return 1
+
+
+def _buffer_pool_checks() -> list[dict[str, Any]]:
+    return [buffer_pool_system_check()]
+
+
+if not any(getattr(extender, "__name__", "") == "_buffer_pool_checks" for extender in _host_system.EXTRA_CHECKS):
+    _host_system.EXTRA_CHECKS.append(_buffer_pool_checks)

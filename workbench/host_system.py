@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 TRUST_FILE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "wsc-local/host-trust.json"
+EXTRA_CHECKS: list[Any] = []
 
 
 def refresh_host_path() -> None:
@@ -90,7 +91,10 @@ def system_report() -> dict[str, Any]:
     if host["kind"] in {"wsl1", "wsl2"}:
         windows_mkcert = bool(shutil.which("mkcert.exe"))
         add("windows_tls", "HTTPS im Windows-Browser", windows_mkcert, "Windows-mkcert verfügbar" if windows_mkcert else "Gemeinsame Zertifizierungsstelle noch nicht verfügbar", "Zusätzlich mkcert in Windows installieren und WSL danach neu öffnen. Die Workbench verwendet dann dieselbe Zertifizierungsstelle für Windows und WSL.", "https://github.com/FiloSottile/mkcert#windows")
-    return {"host": host, "ready": all(check["status"] == "ready" for check in checks), "checks": checks}
+    for extender in EXTRA_CHECKS:
+        checks.extend(extender())
+    # A hint recommends a change. It does not mark the computer as unready.
+    return {"host": host, "ready": all(check["status"] in {"ready", "hint"} for check in checks), "checks": checks}
 
 
 def tls_environment() -> dict[str, str]:
