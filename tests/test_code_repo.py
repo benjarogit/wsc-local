@@ -112,6 +112,18 @@ class CodeRepoTests(unittest.TestCase):
         self.assertEqual(status["worktrees"][0]["branch"], "agent-1")
         self.assertEqual(status["worktrees"][0]["path"], str(worktree))
 
+    def test_worktree_list_accepts_resolved_symlink_paths(self):
+        real = self.home / "real"
+        linked = real / "worktrees" / "agent-1"
+        linked.mkdir(parents=True)
+        alias = self.home / "alias"
+        try:
+            alias.symlink_to(real, target_is_directory=True)
+        except OSError:
+            self.skipTest("Symlinks sind auf diesem System nicht verfügbar.")
+        self.assertTrue(code_repo._inside(linked, alias / "worktrees"))
+        self.assertFalse(code_repo._inside(self.home / "elsewhere", alias / "worktrees"))
+
     def test_github_create_refuses_existing_foreign_repo_name(self):
         code_repo.init_code(self.name, self.cfg, self.root)
 

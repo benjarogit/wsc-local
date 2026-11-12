@@ -215,44 +215,40 @@ def assert_managed_origin(repo: Path, cfg: dict[str, Any]) -> dict[str, str]:
     return github
 
 
+def _inside(path: Path, base: Path) -> bool:
+    try:
+        path.resolve().relative_to(base.resolve())
+    except (OSError, ValueError):
+        return False
+    return True
+
+
 def list_worktrees(root: Path, repo: Path) -> list[dict[str, str]]:
     base = worktrees_dir(root)
-    if not base.is_dir() or not (repo / ".git").exists():
+    if not base.is_dir() or not ((repo / ".git").exists() or (repo / ".git").is_file()):
         return []
-    items = []
+    items: list[dict[str, str]] = []
     raw = git(repo, "worktree", "list", "--porcelain", check=False).stdout
     current_path = ""
     current_branch = ""
+
+    def remember() -> None:
+        nonlocal current_path, current_branch
+        if current_path and current_branch:
+            path = Path(current_path)
+            if _inside(path, base):
+                items.append({"branch": current_branch, "path": str(path)})
+        current_path, current_branch = "", ""
+
     for line in raw.splitlines():
         if line.startswith("worktree "):
-            if current_path and current_branch:
-                path = Path(current_path)
-                try:
-                    path.relative_to(base)
-                except ValueError:
-                    current_path, current_branch = "", ""
-                    continue
-                items.append({"branch": current_branch, "path": str(path)})
+            remember()
             current_path = line[len("worktree ") :].strip()
-            current_branch = ""
         elif line.startswith("branch refs/heads/"):
             current_branch = line[len("branch refs/heads/") :].strip()
         elif line == "":
-            if current_path and current_branch:
-                path = Path(current_path)
-                try:
-                    path.relative_to(base)
-                    items.append({"branch": current_branch, "path": str(path)})
-                except ValueError:
-                    pass
-            current_path, current_branch = "", ""
-    if current_path and current_branch:
-        path = Path(current_path)
-        try:
-            path.relative_to(base)
-            items.append({"branch": current_branch, "path": str(path)})
-        except ValueError:
-            pass
+            remember()
+    remember()
     return items
 
 
