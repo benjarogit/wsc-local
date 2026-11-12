@@ -25,6 +25,8 @@ LATEST_URL = RELEASE_URL + '/latest'
 ZIP_URL = LATEST_URL + '/download/wsc-local.zip'
 PINNED_RELEASE = re.compile(r'/releases/(?:tag|download)/v\d+\.\d+\.\d+')
 PINNED_ARCHIVE = re.compile(r'wsc-local-\d+\.\d+\.\d+\.zip')
+SCREENSHOT_DOC = 'docs/screenshots/README.md'
+WORKBENCH_VERSION = re.compile(r'\b\d+\.\d+\.\d+\b')
 
 
 def run(label: str, command: list[str]) -> None:
@@ -57,6 +59,12 @@ def release_problems(root: Path) -> list[str]:
         pinned = sorted(set(PINNED_RELEASE.findall(text)) | set(PINNED_ARCHIVE.findall(text)))
         if pinned:
             problems.append(f'{name} enthält feste Versionsverweise ({", ".join(pinned)}); die Version wird automatisch angezeigt.')
+    screenshot_doc = root / SCREENSHOT_DOC
+    if screenshot_doc.is_file():
+        text = screenshot_doc.read_text(encoding='utf-8')
+        pinned = sorted(set(PINNED_RELEASE.findall(text)) | set(PINNED_ARCHIVE.findall(text)) | set(WORKBENCH_VERSION.findall(text)))
+        if pinned:
+            problems.append(f'{SCREENSHOT_DOC} nennt feste Versionen ({", ".join(pinned)}). Die aktuelle Version zeigt der Release-Badge.')
     return problems
 
 

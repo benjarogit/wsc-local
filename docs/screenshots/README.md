@@ -1,12 +1,14 @@
 # Screenshots der WoltLab Workbench
 
-Stand: 28.10.2026, Produktstand **1.2.0** (Workbench-Updates und Release-Automation). Die README-Dateien verwenden einen großen Startseiten-Screenshot und eine mittig angeordnete Galerie mit 20 anklickbaren Vorschaubildern. Die Originale liegen in voller Auflösung vor; die mobile Vorschau wird über ihre Höhe begrenzt, damit sie die Galerie nicht auseinanderzieht.
+Die veröffentlichte Version zeigt der [Release-Badge in der README](../../README.md). Diese Seite beschreibt nur die Bilder und nennt keine Workbench-Version.
+
+Die README verwendet ein großes Startbild und eine mittige Galerie anklickbarer Vorschaubilder. Die Originale liegen in voller Auflösung vor; die mobile Vorschau wird über ihre Höhe begrenzt, damit sie die Galerie nicht auseinanderzieht.
 
 Alle Aufnahmen gibt es als `*-de.png` und `*-en.png`. Deutsch und Englisch wurden in getrennten Browserkontexten gewählt. Die Projektdateien stammen aus echten lokalen WoltLab-Installationen: WSC 6.2 mit Nginx/PHP-FPM auf Deutsch und WSC 6.3 mit Apache auf Englisch. WSC 6.3 ist weiterhin ein inoffizieller Entwicklungsbuild.
 
 ## Bildinhalte
 
-- `updates`, `update-confirm`, `update-guide`, `update-progress`: Beispielfluss von 1.2.0 auf 1.2.1. Die Versionsmetadaten stammten aus einem lokalen Testpaket; diese Version 1.2.1 ist seit dem 29.10.2026 öffentlich veröffentlicht. Dateiprüfung, Programmaustausch, Dashboard-Neustart und Browser-Wiederverbindung wurden tatsächlich in einem isolierten Programmordner ausgeführt.
+- `updates`, `update-confirm`, `update-guide`, `update-progress`: Beispiel eines Workbench-Updates. Die angezeigte Versionsnummer ist ein Beispiel, nicht die installierte oder veröffentlichte Version. Dateiprüfung, Programmaustausch, Dashboard-Neustart und die Wiederverbindung des Browsers wurden in einem isolierten Programmordner ausgeführt.
 - `home`: erster Start ohne Projekte mit dem geführten Einstieg, wie ihn neue Nutzer sehen (1920 × 916, Systemdarstellung bei hellem Gerätemodus). Bereits eingerichtete Projekte und „ACP öffnen“ sind in den Verwaltungsaufnahmen zu sehen.
 - `create`, `advanced`: Projektassistent und optionale Einstellungen.
 - `setup-language`: Zugangsdaten vor der Einrichtung und Hinweis auf die Dashboard-Sprache. Passwörter bleiben verborgen.
@@ -31,6 +33,8 @@ Die älteren Dateinamen `docs/panel*.png` bleiben als Links für bestehende Doku
 
 ## English
 
-Captured on 28 October 2026 against version 1.2.0, including Workbench updates and release automation. Each image has a German and an English version. Real disposable projects are used for setup, progress, management, backups, exports and direct ACP login. Passwords stay masked. Only the prerequisite preview uses an explicitly simulated missing HTTPS-approval result; the installer is cancelled and no host packages are changed. Demo projects are removed after capture. README thumbnails link to full-resolution images, and the mobile thumbnail height is limited to keep the centered gallery compact.
+The published version is the release badge in the README. This page describes the pictures and does not name a Workbench version.
 
-Update screenshots use a 1.2.0 → 1.2.1 example captured before release. File replacement, recovery metadata, dashboard restart and browser reconnection are real; only release metadata and download bytes came from the isolated test fixture. Version 1.2.1 has been public since 29 October 2026.
+Each image has a German and an English version. Real disposable projects are used for setup, progress, management, backups, exports and direct ACP login. Passwords stay masked. The prerequisite preview is an example: only the HTTPS-approval result is shown as missing, the dialog is cancelled, and no host packages are changed. Demo projects are removed after capture. README thumbnails link to full-resolution images, and the mobile thumbnail height is limited to keep the centered gallery compact.
+
+The update pictures are an example. The version number visible there is not the installed or published version. File replacement, dashboard restart and browser reconnection were performed in an isolated program directory.

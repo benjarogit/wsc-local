@@ -1,6 +1,6 @@
 # AGENTS.md – Arbeitsübergabe
 
-Stand: 12.11.2026, Workbench **1.2.6**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
+Die veröffentlichte Versionsnummer steht in `VERSION` und im Release-Badge der README. Diese Datei wiederholt sie nicht. Sie ist der Einstieg für die nächste Person oder den nächsten Agenten und beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
 
 ## Zweck
 
@@ -77,13 +77,13 @@ Der Server bindet nur an Loopback. Änderungen an der Oberfläche müssen ohne F
 5. Annotierten Tag `v<Version>` setzen und Commit und Tag pushen.
 6. Der Tag startet `.github/workflows/release.yml`: Plattformprüfungen, Versions-/Changelog-Abgleich, ZIP, SHA-256 und Veröffentlichung.
 
-Die README bleibt beim Release unverändert: Badge und `releases/latest` zeigen die neue Version von selbst.
+Die README bleibt beim Release unverändert: Badge und `releases/latest` zeigen die neue Version von selbst. `AGENTS.md` und `docs/screenshots/README.md` nennen keine Release-Nummer.
 
 Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt erst als fertig, wenn der Workflow erfolgreich war und das GitHub-Release mit ZIP und Prüfsumme sichtbar ist.
 
 ## Aktueller Stand und offene Punkte
 
-- Release 1.2.6 ist der aktuelle Stand: die Update-Seite trennt laufenden Prozess und Dateien und startet das Dashboard neu, statt einen älteren Prozess als aktuell zu bezeichnen. 1.2.5 bleibt die Einsteigerhilfe für Git und GitHub.
+- Die Update-Seite trennt laufenden Prozess, Programmdateien und veröffentlichte Version. Sie nennt die Workbench nur aktuell, wenn Prozess und Dateien übereinstimmen, und bietet sonst den Dashboard-Neustart an. Optionaler eigener Code und die GitHub-Anmeldung ohne Passwort im Dashboard gehören zum Produkt; fehlt Git oder die GitHub-CLI, erklärt die Oberfläche den Befehl.
 - GitHub-Sicherheit für das öffentliche Repository: `SECURITY.md`, private Schwachstellenmeldung, Dependabot-Alarme und Sicherheitsupdates, Secret Scanning mit Push-Schutz. Code-Scanning und Security Advisories bleiben an. Die kostenlosen Workflows bleiben `workbench.yml`, `codeql.yml`, `release.yml` und das wöchentliche Dependabot für Actions und npm. Keine zusätzlichen kostenpflichtigen Runner.
 - Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` als stabile Namen hoch; die README verlinkt sie über `releases/latest`.
 - Der Update-Lock erkennt tote Prozesse, wiederverwendete PIDs und alte unvollständige Sperren. Eine laufende Sperre blockiert weiterhin.

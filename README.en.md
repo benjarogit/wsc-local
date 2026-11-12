@@ -2,15 +2,35 @@
 
 **[Deutsch (default)](README.md) · [English](README.en.md)**
 
-**Current version:** [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) · [Download ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) · [Changes](CHANGELOG.md)
+A local workbench for WoltLab Suite. You install forums on your own computer, start and stop them, back them up, and prepare a move to a server. The browser dashboard and the `./wsc` command control the same projects. Each project has its own files, database, ports, and credentials.
 
-Prepare, automatically install, and manage local WoltLab Suite installations through a clear browser dashboard and the same CLI. Multiple projects run separately, each with its own files, database, ports, and credentials.
+Linux, macOS, and Windows through WSL2. The interface is German. You switch to English in the dashboard.
 
-**Linux · macOS · Windows through WSL2** · **German by default, English available in the dashboard**
+| | |
+|---|---|
+| Version | [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) |
+| Download | [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) |
+| Changes | [CHANGELOG.md](CHANGELOG.md) |
+| Security reports | [SECURITY.md](SECURITY.md) |
+
+The version number in the badge comes from the latest release. This guide does not pin it.
+
+## Three steps
+
+| Step | What you do | What you have afterwards |
+|---|---|---|
+| 1. Start | Get the repository and run `./setup.sh`. On Windows, double-click `Start-wsc-local.cmd`. | The dashboard at `http://127.0.0.1:9099/` |
+| 2. Prepare | **New project:** choose a name and Suite version, then look at the generated credentials. | A prepared installation, not a finished website yet |
+| 3. Set up | Click **Set up** and wait. | A local website. **Open ACP** signs you in to the administration |
+
+You do not click through the WoltLab installer yourself. A spinner shows progress. Reloading the page reconnects to the running task.
 
 <a href="docs/screenshots/home-en.png"><img src="docs/screenshots/home-en.png" alt="wsc-local: first start with no projects and guided onboarding" width="1100"></a>
 
-<p align="center">Click a thumbnail to open the full-size screenshot.</p>
+<p align="center">Click a preview to open the screenshot at full size.</p>
+
+<details>
+<summary><strong>All screens</strong></summary>
 
 <table align="center">
   <tr>
@@ -45,26 +65,31 @@ Prepare, automatically install, and manage local WoltLab Suite installations thr
   </tr>
 </table>
 
-These screenshots show the current version with real WoltLab test projects; passwords stay masked. Prerequisite and update dialogs illustrate labeled examples: missing HTTPS approval and a local test update from 1.2.0 to 1.2.1. Update screenshots come from an actual application replacement and dashboard restart in an isolated test directory; the 1.2.1 shown there has been publicly available since 29 October 2026. [Capture details](docs/screenshots/README.md)
+The pictures show the Workbench with real local WoltLab test projects. Passwords stay masked. The published version is the badge above, not a number inside a picture. Two pictures are examples: the system check with missing HTTPS approval, and an update dialog. The version number in that dialog is an example, not the installed version. [Capture details](docs/screenshots/README.md)
 
-## Quick start
+</details>
 
-First download the repository ([ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) or Git) and extract it. Run the following commands from the project directory, which also contains the Windows launchers.
+## Start
 
-### Install prerequisites once
+Download the repository as a [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) or with Git, then open that folder. The Windows launchers are in the same folder.
+
+<details>
+<summary><strong>Programs you need once</strong></summary>
 
 **Guided setup:** Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **double-click `Install-wsc-local.cmd`** (or `Start-wsc-local.ps1 -InstallDependencies`). Then open the normal launcher. If the dashboard is already running, **System check → Set up missing prerequisites** starts the same flow after a preview.
 
-Setup installs missing packages and configures local HTTPS in your system terminal. Linux uses apt/dnf/pacman, macOS uses Homebrew, and Windows uses winget and WSL2. Enter system passwords only in the terminal or operating system prompt. WSL initialization, first-time Docker Desktop approval, restarting or signing in again may still be required. Existing Docker installations are not replaced; the system check explains remaining conflicts. [Platform details and limitations](docs/platforms.md)
+Setup installs missing packages and configures local HTTPS in your system terminal. Linux uses apt/dnf/pacman, macOS uses Homebrew, and Windows uses winget and WSL2. Enter system passwords only in the terminal or operating system prompt. WSL initialization, first-time Docker Desktop approval, restarting, or signing in again may still be required. Existing Docker installations are not replaced; the system check explains remaining conflicts. [Platform details and limitations](docs/platforms.md)
 
-You can also install prerequisites yourself:
+You can also install the prerequisites yourself:
 
 - **Python 3.10 or newer.**
 - **Docker with Docker Compose**, running and accessible to your user. Linux containers are required.
 - **mkcert** for trusted local HTTPS; Linux browsers may also require NSS.
-- Internet access for container images and Core downloads. Your own installation ZIP is also supported.
+- Internet access for container images and the Core download. Your own installation ZIP is also supported.
 
 [Platform instructions](docs/platforms.md) cover Linux, macOS, and Windows/WSL2, including certificate trust. Node.js is needed only for development tests.
+
+</details>
 
 ### Linux and macOS
 
@@ -74,63 +99,84 @@ cd wsc-local
 ./setup.sh
 ```
 
-Setup checks prerequisites, guides the one-time HTTPS trust step in your terminal, and opens the dashboard. **System check** explains missing prerequisites and the next steps.
+`setup.sh` checks the prerequisites, guides the one-time HTTPS trust step in your terminal, and opens the dashboard. **System check** explains anything still missing.
 
-Later, use `./start.sh` or `./panel.sh`. To skip opening a browser: `./start.sh --no-open`. To choose another dashboard port: `./start.sh --port 9199`. The default address is `http://127.0.0.1:9099/`.
+Later, `./start.sh` or `./panel.sh` is enough. Skip the browser with `./start.sh --no-open`. Another dashboard port: `./start.sh --port 9199`. The default address is `http://127.0.0.1:9099/`.
 
 ### Windows
 
 1. Install [WSL2](https://learn.microsoft.com/windows/wsl/install) with a Linux distribution.
 2. Start Docker Desktop, use **Linux containers**, and enable WSL integration for that distribution.
-3. Install Python and mkcert in WSL. Also install mkcert on Windows so your Windows browser trusts the same local CA.
-4. Clone the repository and **double-click `Start-wsc-local.cmd`**, or run `./setup.sh` inside WSL.
+3. Install Python and mkcert in WSL. Also install mkcert on Windows so the Windows browser trusts the same local certificate authority.
+4. Clone the repository and **double-click `Start-wsc-local.cmd`**, or run `./setup.sh` in the WSL terminal.
 
-With multiple distributions: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Detailed commands and setup](docs/platforms.md#windows-mit-wsl2)
+With several distributions: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Commands and details](docs/platforms.md#windows-mit-wsl2)
 
-## Your Suite in three steps
+<details>
+<summary><strong>What setup actually does</strong></summary>
 
-1. **Prepare project:** choose a name, Suite version, and source. Nginx/PHP-FPM with MariaDB is recommended. Optional settings include Apache, compatible PHP profiles, MySQL 8, and a custom administrator account.
-2. **Review language and login details:** select DE or EN in the header; the suite will use that language during setup. Inspect the securely generated account and optionally change the name, email, and password.
-3. **Set up:** the Workbench starts the environment, configures HTTPS, and completes WoltLab installation. It verifies the website, assets, and actual administrator login. Afterwards, open the website or use **Open ACP** to sign in directly to the administration.
+1. **Prepare the project:** choose a name, Suite version, and source. Nginx/PHP-FPM with MariaDB is the default. Apache, matching PHP profiles, MySQL 8, and your own admin values are under the optional settings.
+2. **Check language and login:** choose DE or EN at the top. The suite uses that language during setup. Look at the generated admin account and change the name, email, or password if you want.
+3. **Set up:** the Workbench starts the environment, configures HTTPS, and finishes the WoltLab installation. It checks the website, assets, and a real administrator login. Then open the website, or sign in to the administration with **Open ACP**.
 
-You do not need to click through the WoltLab installer. A spinner and installation stages show progress. Reloading reconnects to running tasks, even if the initial start response was lost.
+There is no manual WoltLab installer click-through. A spinner and the work steps show progress. Reloading reconnects to a running task, even if the first start response was lost.
 
-## Interface and features
+</details>
 
-- **Projects:** status, website, administration, and start/stop directly on the card. **Manage** opens Overview, Credentials, Services, Backups, and Tools.
-- **Open ACP:** signs in to the administration using the saved administrator credentials. A short-lived, one-use handoff transfers the session; passwords never appear in URLs. If the password changed or two-factor authentication is enabled, a dialog offers the normal ACP login.
-- **Credentials:** view and copy administrator and separately grouped database credentials. Passwords start masked. Change administrator credentials in WoltLab after installation.
-- **Services:** web server, PHP, and database status and logs. Enable the optional Mailpit mailbox separately. For WoltLab test mail, use SMTP `mail:1025` without authentication.
-- **Backups:** capture files and database together, verify checksums, and restore a matching state. Restore first backs up the current state.
-- **Export and server migration:** download files, SQL dump, project configuration, checksums, and import instructions. **Prepare server migration** adds target-server guidance and uses the same export format. Restoring on the target server is guided; direct SSH deployment is not included.
-- **WoltLab tools:** diagnostics, upload limits with a change preview, and the official Recovery Tool with cleanup. Domain and directory tools create a backup and show instructions; they do not automatically change application paths or database values.
-- **Custom code (optional):** under Tools, create local Git for packages and styles only, worktrees for extra agent windows, and optionally link a private GitHub repository `wsc-<project>`. The running installation and credentials stay outside. If Git or the GitHub CLI is missing, a dialog shows the command for the system. The Workbench does not install them itself. Sign-in on github.com asks for your credentials. The dashboard does not store a password or a token. The information button explains the steps. Removing the project leaves a linked GitHub repository in place.
-- **Removal:** delete project files, database, containers, networks, and local credentials after typing the project name. Shared images, download caches, and the local CA remain available.
+## Areas in the dashboard
 
-Information buttons open explanations. Confirmations, inputs, and previews use keyboard-accessible dialogs with Cancel. [Tool and migration details](docs/tools.md)
+| Area | What it is for |
+|---|---|
+| Project card | Status, open the website, administration, start and stop |
+| Manage | Overview, credentials, services, backups, tools |
+| System check | If Python, Docker, or local HTTPS trust is missing, the next step is here |
+| Updates | Check and install a new Workbench version. This does not update the forum itself |
+| Help | A short introduction in the same interface |
 
-### Language and appearance
+Information icons open explanations. Confirmations appear in dialogs with Cancel and keyboard use. [Tools and migration in detail](docs/tools.md)
 
-**German is the default**, regardless of your browser language. Use the **DE/EN switch with its globe icon** in the header to switch dashboard language. The choice is saved in this browser, and open project sections are restored. CLI output and technical service logs retain their original language.
+<details>
+<summary><strong>Projects, credentials, services</strong></summary>
 
-When you click **Set up**, a new WoltLab installation uses the current dashboard language for the suite default and the first administrator account. Switching dashboard language during setup does not change the selection already submitted. Existing websites stay unchanged. The CLI uses the system locale (`LC_ALL`, `LC_MESSAGES`, `LANG`; English → EN, otherwise German), or an explicit choice: `./wsc install my-forum --language en`. Retrying retains the saved choice.
+- **Open ACP:** signs you in to the administration with the saved admin account. A short-lived one-time handoff carries the session. Passwords are not put in URLs. If the password changed or two-factor sign-in is on, the dialog offers the normal ACP login.
+- **Credentials:** view and copy the admin account and the separate database account. Passwords start hidden. After installation you change the admin account inside WoltLab.
+- **Services:** status and logs of the web server, PHP, and the database. Turn the optional Mailpit test mailbox on separately. For test mail in WoltLab use SMTP `mail:1025`, with no login.
+- **Backups:** save files and database together, check checksums, and restore a state. Before a restore, the current state is saved.
+- **Export and server move:** download a package with files, SQL dump, project configuration, checksums, and import instructions. **Prepare server migration** adds the explanation for the target server and uses the same export format. Import on the server is guided. SSH deployment is not included.
+- **WoltLab tools:** diagnostics, upload limits with a preview of the change, the official Recovery Tool, and removing it again. Domain and directory tools create a backup and open the instructions. They do not change application paths or database values by themselves.
+- **Custom code (optional):** under Tools, create local Git for packages and styles only, work copies for extra agent windows, and optionally a private GitHub repository named `wsc-<project>`. The running installation and credentials stay outside that repository. If Git or the GitHub CLI is missing, a dialog shows the command for your system. The Workbench does not install them itself. Sign-in on github.com asks for your credentials. The dashboard stores no password and no token. The information icon explains the steps. Deleting the project leaves a linked GitHub repository in place.
+- **Remove:** after you type the project name, project files, database, containers, networks, and local credentials are removed. Shared base images, download caches, and the local certificate authority stay.
 
-Monitor, sun, and moon icons directly select **System, Light, or Dark**. The active mode is highlighted; System follows your device preference. This changes the Workbench appearance, not your WoltLab website's design.
+</details>
 
+<details>
+<summary><strong>Language and light or dark</strong></summary>
 
-## Suite versions and installation archives
+**German is the default**, regardless of the browser language. The **DE/EN switch with the globe icon** at the top changes the dashboard language. The choice stays in this browser. Open project sections are restored. Command output and technical service logs stay in their original language.
 
-Profiles follow the [official WoltLab documentation](https://manual.woltlab.com/en/php-compatibility/). Alpha and legacy versions require explicit acknowledgement.
+When you click **Set up**, a new WoltLab installation uses the current dashboard language for the suite default and the first admin user. Switching language while setup is already running does not change that choice. Existing websites stay as they are. The CLI uses the system language (`LC_ALL`, `LC_MESSAGES`, `LANG`; English maps to EN, otherwise German) or an explicit choice: `./wsc install my-forum --language en`. Resuming keeps the saved choice.
 
-- **WSC 6.2:** automatic Core 6.2.8 download with SHA-256 verification, or your own ZIP. The default profile uses PHP 8.4 and local HTTPS.
-- **WSC 6.3:** an unofficial development archive from [YoureCom/wsc-63-testbuilds](https://github.com/YoureCom/wsc-63-testbuilds), built from WoltLab/WCF. The profile uses PHP 8.5 and HTTPS for local tests.
-- **WSC 5.5, 6.0, and 6.1:** a matching installation ZIP is required. Legacy profiles are marked accordingly.
+The monitor, sun, and moon icons choose **System, Light, or Dark**. The active mode is marked. System follows the device setting. This changes the Workbench, not the design of your WoltLab website.
 
-Select custom ZIPs directly in the dashboard: up to 256 MiB and containing `install.php`. Licensed applications require your own suitable archive and valid WoltLab license. Local installation of the free Core does not require license credentials.
+</details>
 
-The inspected WSC 6.2/6.3 code needs a targeted correction for local ports. Only an exactly recognized code block is changed; originals and checksums are documented under `config/compatibility/`. Compatibility must be rechecked after WoltLab updates.
+<details>
+<summary><strong>Which WoltLab version</strong></summary>
 
-## CLI and shareable project profiles
+The profiles follow the [official WoltLab manual](https://manual.woltlab.com/en/php-compatibility/). Alpha and legacy need an explicit confirmation.
+
+- **WSC 6.2:** automatic download of Core 6.2.8 with a SHA-256 check, or your own ZIP. The default profile uses PHP 8.4 and local HTTPS.
+- **WSC 6.3:** an unofficial development build from [YoureCom/wsc-63-testbuilds](https://github.com/YoureCom/wsc-63-testbuilds), built from WoltLab/WCF. The profile uses PHP 8.5 and HTTPS, for local tests.
+- **WSC 5.5, 6.0, and 6.1:** you need your own matching installation ZIP. Legacy profiles are marked as such.
+
+You pick your own ZIP in the dashboard, at most 256 MiB, and it must contain `install.php`. Licensed applications need your own suitable archive and a matching WoltLab license. The free Core does not ask for license credentials during local setup.
+
+The inspected WSC 6.2/6.3 files need a targeted correction for local ports. The Workbench replaces only the exactly recognized code block and records the original file and checksums under `config/compatibility/`. After a WoltLab update this compatibility has to be checked again.
+
+</details>
+
+<details>
+<summary><strong>The same tasks on the command line</strong></summary>
 
 ```bash
 ./wsc --version
@@ -145,46 +191,55 @@ The inspected WSC 6.2/6.3 code needs a targeted correction for local ports. Only
 ./wsc doctor my-forum
 ./wsc snapshot my-forum
 ./wsc snapshots my-forum
-./wsc restore my-forum SNAPSHOT_PATH
+./wsc restore my-forum PATH_TO_BACKUP
 ./wsc export my-forum
 ./wsc remove my-forum
 ```
 
-Download a project profile under **Overview**. It contains Suite, PHP, web server, and database selections, without passwords or local ports:
+A project profile downloaded under **Overview** contains only the Suite, PHP, web server, and database choices. It has no passwords and no local ports:
 
 ```bash
 ./wsc create second-project --profile my-forum.wsc-local.json --download-core
 ```
 
-The new project gets independent credentials and ports. Profiles exclude website files and database content; use a backup or export for complete data.
+The new project gets its own credentials and ports. The profile does not contain website files or database contents. Use a backup or an export for that.
 
-## Data, HTTPS, and migration
+</details>
 
-Projects default to `~/.local/share/wsc-local/projects/`; secrets stay separately in `~/.config/wsc-local/secrets/`. Override these with `WSC_LOCAL_HOME` and `XDG_CONFIG_HOME`. On Windows, these paths are inside WSL.
+<details>
+<summary><strong>Where files, passwords, and HTTPS live</strong></summary>
 
-The dashboard and published container ports bind to loopback. Local HTTPS uses mkcert. Let's Encrypt belongs to public target-server domains, not `localhost`.
+Projects default to `~/.local/share/wsc-local/projects/`. Secrets stay separate under `~/.config/wsc-local/secrets/`. `WSC_LOCAL_HOME` and `XDG_CONFIG_HOME` change these paths. On Windows the paths are inside WSL.
 
-Exports remove Workbench-managed local database credentials from `config.inc.php` and exclude local `.env` and TLS keys. They still contain WoltLab content and its database; handle them as complete backups. Temporary recovery and authentication files are excluded.
+The dashboard and published container ports bind to loopback. Local HTTPS uses mkcert. Let's Encrypt is for a public domain on the target server, not for `localhost`.
 
-`./wsc import SOURCE project-name` detects older wsc-local files, legacy snapshots, and Workbench export packages. Raw database directories are not copied between database profiles; a complete migration requires a matching dump or export. [Test coverage and limitations](docs/user-test.md)
+Exports remove the Workbench's local database credentials from `config.inc.php` and do not contain the local `.env` or TLS keys. WoltLab content and its database stay in the package. Treat it as a full backup. Temporary recovery and authentication files are left out.
 
-## Updates and older installations
+`./wsc import SOURCE project-name` recognizes older wsc-local files, old snapshots, and Workbench export packages. Old raw database folders are not copied between database profiles. A complete state needs a matching dump or export. [Test coverage and limits](docs/user-test.md)
 
-From **1.2.0**, the Workbench announces new stable releases in the dashboard. **Updates** offers an installation preview and automatic update, or manual instructions. Git and ZIP installations are detected. Checksums, local-change protection, a recovery point and automatic dashboard restart are part of the flow; WoltLab projects and credentials are preserved.
+</details>
+
+<details>
+<summary><strong>Update the Workbench itself</strong></summary>
+
+From **1.2.0** onward, the Workbench reports new stable releases in the dashboard. Under **Updates** you can install after a preview, or open the manual instructions. Git and ZIP installations are recognized. Checksums, protection of local changes, a recovery point, and an automatic dashboard restart are part of the flow. WoltLab projects and credentials stay in place.
 
 ```bash
-./wsc update --check   # Find a newer release
+./wsc update --check   # Look for a newer version
 ./wsc update           # Install after preview and confirmation
-./wsc update --guide   # Follow manual instructions instead
+./wsc update --guide   # Update it yourself instead
 ```
 
-**From 1.1.0 or earlier:** perform the first upgrade with `git pull --ff-only` and `./start.sh`. For ZIP installations, merge the new application files into the existing directory while preserving personal data. The new updater is then available for future releases. [Updates, conflicts and recovery](docs/updating.md#english)
+**From 1.1.0 or older:** run `git pull --ff-only` and `./start.sh` once. For a ZIP installation, copy the program files into the existing folder as the guide describes and keep personal data. After that, later releases can use the update function. [Updates, conflicts, and recovery](docs/updating.md#english)
 
-**Releases are automated:** a new version tag triggers GitHub checks; after they pass, the workflow publishes the ZIP and SHA-256 checksum. The current version is visible at the top of this README and in the dashboard footer.
+**Releases are created automatically.** A new version tag starts the GitHub checks. After they succeed, the workflow publishes the ZIP and the SHA-256 checksum. The version is the badge at the top of this README and the footer of the dashboard.
 
-The previous single-instance stack is explicitly available through `./setup.sh --legacy` and `./start.sh --legacy`. `tools.sh` and `reset.sh` belong to that older stack. Use the dashboard or `./wsc` for Workbench projects.
+The older single stack is still available with `./setup.sh --legacy` and `./start.sh --legacy`. `tools.sh` and `reset.sh` belong to that old stack. For Workbench projects use the dashboard or `./wsc`.
 
-## Tests, inspiration, and release
+</details>
+
+<details>
+<summary><strong>Checks and origins</strong></summary>
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -193,8 +248,10 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-For a quick local check, run `python3 scripts/check.py`; add `--ui` to include the Chromium suite, `--release` to validate the release metadata and build the ZIP once, and `--metadata` to check only the version information. `python3 scripts/check_repo.py` verifies repository hygiene. CI remains authoritative and checks portable logic on Linux, macOS, and Windows plus browser flows using isolated API responses. Real WoltLab/Docker installations were tested locally on Linux. Full Docker/browser acceptance on macOS and Windows/WSL2 remains a separate platform check. [Detailed test notes](docs/user-test.md)
+The short local check is `python3 scripts/check.py`. `--ui` also runs the Chromium tests, `--release` checks release metadata and builds the ZIP once, and `--metadata` checks only the version notes. `python3 scripts/check_repo.py` checks that the repository stays clean. CI is the authority: it checks portable logic on Linux, macOS, and Windows, and browser flows with isolated API responses. Real WoltLab and Docker installations were tested locally on Linux. Full Docker and browser acceptance on macOS and Windows/WSL2 are separate platform tests. [Detailed test notes](docs/user-test.md)
 
-[wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) informs WoltLab-specific profiles; [DDEV](https://github.com/ddev/ddev) project configuration; [Lando](https://docs.lando.dev/plugins/) profiles and optional services; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direct service controls. The Workbench remains WoltLab-specific. Font Awesome Free is bundled locally with [license and sources](panel/vendor/fontawesome/).
+[wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) supplies WoltLab-specific ideas; [DDEV](https://github.com/ddev/ddev) project configuration; [Lando](https://docs.lando.dev/plugins/) profiles and optional services; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direct service controls. The Workbench stays focused on WoltLab. Font Awesome Free is bundled locally, with [license and sources](panel/vendor/fontawesome/).
 
 [Product principles](docs/product.md) · [Changes and release notes](CHANGELOG.md) · [Security reports](SECURITY.md) · [GitHub releases](https://github.com/benjarogit/wsc-local/releases)
+
+</details>

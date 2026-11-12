@@ -2,15 +2,35 @@
 
 **[Deutsch](README.md) · [English](README.en.md)**
 
-**Aktuelle Version:** [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) · [ZIP herunterladen](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) · [Änderungen](CHANGELOG.md)
+Eine lokale Werkbank für die WoltLab Suite. Du installierst Foren auf deinem Rechner, startest und stoppst sie, sicherst sie und bereitest den Umzug auf einen Server vor. Das Dashboard im Browser und der Befehl `./wsc` steuern dieselben Projekte. Jedes Projekt hat eigene Dateien, eine eigene Datenbank, eigene Ports und eigene Zugangsdaten.
 
-WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – über ein übersichtliches Browser-Dashboard und dieselbe CLI. Mehrere Projekte laufen getrennt nebeneinander, mit eigenen Dateien, Datenbanken, Ports und Zugangsdaten.
+Linux, macOS und Windows über WSL2. Die Oberfläche ist auf Deutsch. Englisch schaltest du im Dashboard um.
 
-**Linux · macOS · Windows über WSL2** · **Deutsch als Standard, Englisch im Dashboard umschaltbar**
+| | |
+|---|---|
+| Version | [![Version](https://img.shields.io/github/v/release/benjarogit/wsc-local?sort=semver)](https://github.com/benjarogit/wsc-local/releases/latest) |
+| Herunterladen | [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) |
+| Änderungen | [CHANGELOG.md](CHANGELOG.md) |
+| Sicherheitsmeldungen | [SECURITY.md](SECURITY.md) |
+
+Die Versionsnummer im Badge kommt von der letzten Veröffentlichung. Sie wird in dieser Anleitung nicht festgeschrieben.
+
+## In drei Schritten
+
+| Schritt | Was du tust | Was du danach hast |
+|---|---|---|
+| 1. Starten | Repository holen und `./setup.sh` ausführen. Unter Windows `Start-wsc-local.cmd` doppelklicken. | Das Dashboard unter `http://127.0.0.1:9099/` |
+| 2. Vorbereiten | **Neues Projekt:** Name und Suite-Version wählen, dann die erzeugten Zugangsdaten ansehen. | Eine vorbereitete Installation, noch ohne fertige Website |
+| 3. Einrichten | **Einrichten** klicken und warten. | Eine lokale Website. **ACP öffnen** meldet dich in der Administration an |
+
+Du klickst den WoltLab-Installer nicht selbst durch. Ein Spinner zeigt den Fortschritt. Lädst du die Seite neu, verbindet sie sich wieder mit dem laufenden Vorgang.
 
 <a href="docs/screenshots/home-de.png"><img src="docs/screenshots/home-de.png" alt="wsc-local: erster Start ohne Projekte mit geführtem Einstieg" width="1100"></a>
 
 <p align="center">Vorschau anklicken, um den Screenshot groß zu öffnen.</p>
+
+<details>
+<summary><strong>Alle Bildschirme</strong></summary>
 
 <table align="center">
   <tr>
@@ -45,13 +65,16 @@ WoltLab Suite lokal vorbereiten, automatisch installieren und verwalten – übe
   </tr>
 </table>
 
-Die Aufnahmen zeigen den aktuellen Stand mit echten WoltLab-Testprojekten; Passwörter bleiben verborgen. Voraussetzungen- und Update-Dialoge zeigen gekennzeichnete Beispielfälle: eine fehlende HTTPS-Freigabe und ein lokales Test-Update von 1.2.0 auf 1.2.1. Die Update-Aufnahmen stammen aus einem echten Programmaustausch mit Dashboard-Neustart in einem isolierten Testordner; die gezeigte Version 1.2.1 ist seit dem 29.10.2026 öffentlich verfügbar. [Aufnahmen und Ablauf](docs/screenshots/README.md)
+Die Bilder zeigen die Workbench mit echten lokalen WoltLab-Testprojekten. Passwörter bleiben verborgen. Die veröffentlichte Version steht im Badge oben, nicht in den Bildern. Zwei Aufnahmen sind Beispiele: die Systemprüfung mit fehlender HTTPS-Freigabe und ein Update-Dialog. Die Versionsnummer in diesem Dialog ist ein Beispiel und nicht die installierte Version. [Aufnahmen und Ablauf](docs/screenshots/README.md)
 
-## Schnellstart
+</details>
 
-Lade zuerst das Repository herunter ([ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) oder Git) und entpacke es. Die folgenden Befehle werden im Projektordner ausgeführt; dort liegen auch die Windows-Starter.
+## Starten
 
-### Voraussetzungen einmalig installieren
+Lade das Repository als [ZIP](https://github.com/benjarogit/wsc-local/releases/latest/download/wsc-local.zip) oder per Git und öffne diesen Ordner. Dort liegen auch die Windows-Starter.
+
+<details>
+<summary><strong>Welche Programme einmalig gebraucht werden</strong></summary>
 
 **Geführte Einrichtung:** Linux/macOS: `bash ./setup.sh --install-deps`. Windows: **`Install-wsc-local.cmd` doppelklicken** (oder `Start-wsc-local.ps1 -InstallDependencies`). Danach den normalen Starter öffnen. Wenn das Dashboard bereits läuft, bietet **Systemprüfung → Fehlendes einrichten** denselben Ablauf mit Vorschau an.
 
@@ -65,6 +88,8 @@ Alternativ kannst du die Voraussetzungen selbst installieren:
 - Internet für Container-Images und den Core-Download. Ein eigenes Installations-ZIP ist ebenfalls möglich.
 
 Die [Plattform-Anleitung](docs/platforms.md) beschreibt Linux, macOS und Windows/WSL2 einschließlich der Zertifikatsfreigabe. Node.js wird nur für die Entwicklungstests benötigt.
+
+</details>
 
 ### Linux und macOS
 
@@ -87,7 +112,8 @@ Später reicht `./start.sh` oder `./panel.sh`. Ohne Browserstart: `./start.sh --
 
 Bei mehreren Distributionen: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Details und Befehle](docs/platforms.md#windows-mit-wsl2)
 
-## In drei Schritten zur fertigen Suite
+<details>
+<summary><strong>Was beim Einrichten genau passiert</strong></summary>
 
 1. **Projekt vorbereiten:** Name, Suite-Version und Quelle wählen. Nginx/PHP-FPM mit MariaDB ist der Standard. Apache, passende PHP-Profile, MySQL 8 und eigene Adminwerte stehen unter den optionalen Einstellungen.
 2. **Sprache und Login-Daten prüfen:** Oben DE oder EN wählen; diese Sprache übernimmt die Suite bei der Einrichtung. Den sicher erzeugten Adminzugang ansehen und bei Bedarf Name, E-Mail und Passwort ändern.
@@ -95,9 +121,23 @@ Bei mehreren Distributionen: `Start-wsc-local.ps1 -Distribution Ubuntu`. [Detail
 
 Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschritte zeigen den Fortschritt. Nach Neuladen verbindet sich die Oberfläche wieder mit laufenden Vorgängen – auch wenn die erste Startantwort verloren gegangen ist.
 
-## Oberfläche und Funktionen
+</details>
 
-- **Projekte:** Zustand, Website, Administration und Start/Stopp direkt an der Karte. **Verwalten** öffnet die Bereiche Übersicht, Zugangsdaten, Dienste, Sicherungen und Werkzeuge.
+## Bereiche im Dashboard
+
+| Bereich | Wofür |
+|---|---|
+| Projektkarte | Zustand, Website öffnen, Administration, Start und Stopp |
+| Verwalten | Übersicht, Zugangsdaten, Dienste, Sicherungen, Werkzeuge |
+| Systemprüfung | Fehlt Python, Docker oder die lokale HTTPS-Freigabe, steht hier der nächste Schritt |
+| Updates | Neue Workbench-Version prüfen und installieren. Das Forum selbst wird dabei nicht aktualisiert |
+| Hilfe | Kurzer Einstieg in derselben Oberfläche |
+
+Informationssymbole öffnen Erklärungen. Bestätigungen erscheinen in Dialogen mit Abbrechen und Tastaturbedienung. [Werkzeuge und Umzug im Detail](docs/tools.md)
+
+<details>
+<summary><strong>Projekte, Zugangsdaten, Dienste</strong></summary>
+
 - **ACP öffnen:** Meldet dich mit dem gespeicherten Adminzugang direkt in der Administration an. Die Sitzung wird über eine kurz gültige Einmal-Übergabe übertragen; Passwörter stehen nicht in URLs. Bei geändertem Passwort oder Zwei-Faktor-Anmeldung bietet der Dialog die normale ACP-Anmeldung an.
 - **Zugangsdaten:** Anzeigen und Kopieren von Admin- und getrennten Datenbankdaten. Passwörter bleiben zunächst verborgen. Nach der Installation änderst du den Adminzugang in WoltLab.
 - **Dienste:** Status und Logs von Webserver, PHP und Datenbank. Den optionalen Mailpit-Testdienst schaltest du separat ein. Für Test-E-Mails in WoltLab: SMTP `mail:1025`, ohne Anmeldung.
@@ -107,9 +147,10 @@ Es gibt keine manuelle WoltLab-Installer-Klickstrecke. Spinner und Arbeitsschrit
 - **Eigener Code (optional):** Unter Werkzeuge ein lokales Git nur für Pakete und Styles anlegen, Arbeitskopien für weitere Agenten-Fenster und wahlweise ein privates GitHub-Repository `wsc-<projekt>` verbinden. Die laufende Installation und Zugangsdaten bleiben außerhalb. Fehlen Git oder die GitHub-CLI, zeigt ein Dialog den Befehl für das System. Die Workbench installiert sie nicht selbst. Die Anmeldung auf github.com fragt deine Zugangsdaten ab. Das Dashboard speichert kein Passwort und kein Token. Das Informationssymbol erklärt die Schritte. Beim Projekt-Löschen bleibt ein verknüpftes GitHub-Repository bestehen.
 - **Entfernen:** Projektdateien, Datenbank, Container, Netzwerke und lokale Zugangsdaten nach Bestätigung des Projektnamens entfernen. Gemeinsame Basisimages, Download-Caches und die lokale CA bleiben erhalten.
 
-Informationssymbole öffnen Erklärungen. Bestätigungen, Eingaben und Vorschauen erscheinen in Dialogen mit Abbrechen und Tastaturbedienung. [Werkzeuge und Umzugsablauf im Detail](docs/tools.md)
+</details>
 
-### Sprache und Darstellung
+<details>
+<summary><strong>Sprache und Hell oder Dunkel</strong></summary>
 
 **Deutsch ist der Standard**, unabhängig von der Browsersprache. Über den **DE/EN-Schalter mit Globus-Icon** oben wechselst du die Dashboard-Sprache; die Auswahl bleibt in diesem Browser gespeichert. Die aktuellen Projektbereiche werden beim Wechsel wieder geöffnet. CLI-Ausgaben und technische Dienstprotokolle bleiben in ihrer Originalsprache.
 
@@ -117,8 +158,10 @@ Bei **Einrichten** übernimmt eine neue WoltLab-Installation die aktuelle Dashbo
 
 Monitor, Sonne und Mond wählen **System, Hell oder Dunkel** direkt aus. Der aktive Modus ist markiert; System folgt der Geräteeinstellung. Die Darstellung ändert die Workbench, nicht das Design deiner WoltLab-Website.
 
+</details>
 
-## Suite-Versionen und Installationsarchive
+<details>
+<summary><strong>Welche WoltLab-Version</strong></summary>
 
 Die Profile orientieren sich am [offiziellen WoltLab-Handbuch](https://manual.woltlab.com/de/php-compatibility/). Alpha und Legacy erfordern eine bewusste Bestätigung.
 
@@ -130,7 +173,10 @@ Eigene ZIPs wählst du direkt im Dashboard aus, maximal 256 MiB und mit `install
 
 Die geprüften WSC-6.2/6.3-Dateien benötigen eine gezielte Korrektur für lokale Ports. Die Workbench ersetzt ausschließlich den exakt erkannten Codeblock und dokumentiert Originaldatei sowie Prüfsummen unter `config/compatibility/`. Nach WoltLab-Updates muss diese Kompatibilität erneut geprüft werden.
 
-## CLI und teilbare Projektprofile
+</details>
+
+<details>
+<summary><strong>Dieselben Aufgaben in der Kommandozeile</strong></summary>
 
 ```bash
 ./wsc --version
@@ -158,7 +204,10 @@ Ein unter **Übersicht** heruntergeladenes Projektprofil enthält nur Suite-, PH
 
 Das neue Projekt bekommt eigene Zugangsdaten und Ports. Das Profil enthält keine Website-Dateien oder Datenbankinhalte; dafür dienen Sicherung und Export.
 
-## Daten, HTTPS und Umzug
+</details>
+
+<details>
+<summary><strong>Wo Dateien, Passwörter und HTTPS liegen</strong></summary>
 
 Projekte liegen standardmäßig unter `~/.local/share/wsc-local/projects/`, Geheimnisse getrennt unter `~/.config/wsc-local/secrets/`. `WSC_LOCAL_HOME` und `XDG_CONFIG_HOME` ändern diese Pfade. Unter Windows gelten die Pfade innerhalb von WSL.
 
@@ -168,7 +217,10 @@ Exporte entfernen Workbench-eigene lokale Datenbankzugangsdaten aus `config.inc.
 
 `./wsc import QUELLE projektname` erkennt ältere wsc-local-Dateien, alte Snapshots und Workbench-Exportpakete. Alte rohe Datenbankordner werden nicht zwischen Datenbankprofilen kopiert; ein vollständiger Stand benötigt einen passenden Dump bzw. Export. [Teststand und Grenzen](docs/user-test.md)
 
-## Aktualisieren und alte Installation
+</details>
+
+<details>
+<summary><strong>Die Workbench selbst aktualisieren</strong></summary>
 
 Ab **1.2.0** meldet die Workbench neue stabile Releases direkt im Dashboard. Unter **Updates** kannst du nach Vorschau automatisch aktualisieren oder die manuelle Anleitung öffnen. Git- und ZIP-Installationen werden erkannt. Prüfsummen, Schutz lokaler Änderungen, Wiederherstellungsstand und automatischer Dashboard-Neustart gehören zum Ablauf; WoltLab-Projekte und Zugangsdaten bleiben erhalten.
 
@@ -184,7 +236,10 @@ Ab **1.2.0** meldet die Workbench neue stabile Releases direkt im Dashboard. Unt
 
 Der frühere Einzel-Stack ist ausdrücklich über `./setup.sh --legacy` und `./start.sh --legacy` verfügbar. `tools.sh` und `reset.sh` gehören zu diesem alten Stack; für Workbench-Projekte verwende das Dashboard beziehungsweise `./wsc`.
 
-## Tests, Herkunft und Release
+</details>
+
+<details>
+<summary><strong>Prüfungen und Herkunft</strong></summary>
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -198,3 +253,5 @@ Für die lokale Kurzprüfung gibt es `python3 scripts/check.py`; mit `--ui` lauf
 [wsc-dockerized](https://github.com/SoftCreatRMedia/wsc-dockerized) liefert WoltLab-spezifische Anregungen; [DDEV](https://github.com/ddev/ddev) projektbezogene Konfiguration; [Lando](https://docs.lando.dev/plugins/) Profile und optionale Dienste; [XAMPP](https://github.com/ApacheFriends/xampp-control-windows) direkte Dienststeuerung. Die Workbench bleibt ausschließlich auf WoltLab ausgerichtet. Font Awesome Free ist lokal samt [Lizenz und Quellen](panel/vendor/fontawesome/) eingebunden.
 
 [Produktgrundsätze](docs/product.md) · [Änderungen und Release-Hinweise](CHANGELOG.md) · [Sicherheitsmeldungen](SECURITY.md) · [GitHub-Releases](https://github.com/benjarogit/wsc-local/releases)
+
+</details>

@@ -51,6 +51,20 @@ class ReleaseCheckTests(unittest.TestCase):
             problems = check.release_problems(root)
         self.assertTrue(any('keine gültige Version' in problem for problem in problems))
 
+    def test_screenshot_doc_version_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write(root, 'VERSION', '1.2.3\n')
+            self.write(root, 'CHANGELOG.md', '# Änderungen\n\n## 1.2.3 – 2026-01-01\n')
+            for name in ('README.md', 'README.en.md'):
+                self.write(root, name, check.LATEST_URL + '\n' + check.ZIP_URL + '\n')
+            (root / 'docs/screenshots').mkdir(parents=True)
+            self.write(root, 'docs/screenshots/README.md', 'Produktstand 1.2.0\n')
+            problems = check.release_problems(root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn('docs/screenshots/README.md', problems[0])
+        self.assertIn('1.2.0', problems[0])
+
     def test_matching_metadata_has_no_problems(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
