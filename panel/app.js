@@ -170,6 +170,52 @@
   }
 
   let hostInstallation=null;
+  let hostPlatform=null;
+  const toolInstallPlans = {
+    git: {
+      title: 'Git installieren',
+      description: 'Git merkt sich Änderungen an deinen Dateien. Die Workbench installiert es nicht von selbst.',
+      url: 'https://git-scm.com/downloads',
+      link: 'git-scm.com/downloads',
+      linux: [['Ubuntu und Debian', 'sudo apt install git'], ['Fedora', 'sudo dnf install git'], ['Arch und CachyOS', 'sudo pacman -S git']],
+      macos: [['macOS', 'brew install git']],
+      windows: [['Windows', 'winget install --id Git.Git -e --source winget']]
+    },
+    gh: {
+      title: 'GitHub-CLI einrichten',
+      description: 'Die GitHub-CLI (gh) öffnet die Anmeldung im Browser. Dort gibst du deine GitHub-Zugangsdaten ein. Die Workbench installiert gh nicht von selbst.',
+      url: 'https://cli.github.com/',
+      link: 'cli.github.com',
+      linux: [['Ubuntu und Debian', 'Nicht im Standard-Archiv. Folge der Anleitung auf cli.github.com und installiere danach gh.'], ['Fedora', 'sudo dnf install gh'], ['Arch und CachyOS', 'sudo pacman -S github-cli']],
+      macos: [['macOS', 'brew install gh']],
+      windows: [['Windows', 'winget install --id GitHub.cli -e --source winget']]
+    }
+  };
+  function toolInstallTarget() {
+    const kind = hostPlatform && hostPlatform.kind;
+    if (kind === 'macos') return 'macos';
+    if (kind === 'windows') return 'windows';
+    if (kind === 'wsl2' || kind === 'wsl1') return 'wsl';
+    if (kind === 'linux') return 'linux';
+    return 'unknown';
+  }
+  async function explainMissingTool(tool) {
+    const plan = toolInstallPlans[tool];
+    const target = toolInstallTarget();
+    const rows = target === 'macos' ? plan.macos : target === 'windows' ? plan.windows : plan.linux;
+    const shown = target === 'unknown' ? [...plan.linux, ...plan.macos, ...plan.windows] : rows;
+    const steps = [
+      t('Öffne ein Terminal auf deinem Rechner.'),
+      t('Führe den Befehl für dein System aus. Die Workbench startet ihn nicht von selbst.'),
+      t('Starte danach die Workbench neu. Erst dann findet sie das Programm.')
+    ];
+    const notes = [];
+    if (shown.length > 1) notes.push(t('Wähle den Befehl deiner Distribution.'));
+    if (target === 'macos' || target === 'unknown') notes.push(t('Ohne Homebrew nimmst du das Paket von der offiziellen Seite.'));
+    if (target === 'wsl' || target === 'unknown') notes.push(t('Installiere das Programm in der Linux-Umgebung. Ein Programm nur unter Windows reicht der Workbench nicht.'));
+    const body = H`<ol class="dialog-steps">${steps.map((step) => H`<li>${esc(step)}</li>`).join('')}</ol>${notes.map((note) => H`<p>${esc(note)}</p>`).join('')}<ul class="dialog-steps">${shown.map(([label, command]) => H`<li>${esc(t(label))}: <code>${esc(command)}</code></li>`).join('')}</ul><p>${esc(t('Offizielle Quelle:'))} <a href="${esc(plan.url)}" target="_blank" rel="noopener">${esc(plan.link)} ↗</a></p>`;
+    await ask({title:t(plan.title), description:t(plan.description), body, confirm:t('Verstanden'), cancel:t('Abbrechen')});
+  }
   async function installHost(button) {
     if(!hostInstallation)return;
     const accepted=await ask({title:t('Voraussetzungen einrichten'),description:t('Die Einrichtung läuft in deinem Systemterminal. Bestätige dort bei Bedarf Systemabfragen.'),body:H`<ul>${hostInstallation.steps.map(step=>H`<li>${esc(t(step))}</li>`).join('')}</ul><p>${esc(t('Bereits installierte Programme werden nicht ersetzt. Ein Neustart, erneutes Anmelden oder die erste Docker-Desktop-Freigabe kann erforderlich sein.'))}</p><p><code>${esc(hostInstallation.command)}</code></p>`,confirm:t('Systemterminal öffnen')});
@@ -195,7 +241,7 @@
     window.setTimeout(() => item.remove(), 4500);
   }
 
-  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right',code_init:'folder-tree',code_commit:'box-archive',code_worktree:'folder-tree',code_github_login:'globe',code_github_create:'globe',code_push:'upload',code_activity:'heart-pulse',code_signup:'globe'};
+  const actionIcons = {install:'gear',start:'play',stop:'stop',doctor:'heart-pulse',logs:'server',snapshot:'box-archive',restore:'arrow-rotate-left',export:'truck-arrow-right',remove:'trash-can',recovery_install:'life-ring',recovery_remove:'xmark',uploads:'upload',tls_enable:'shield-halved',tls_disable:'shield-halved',mail_start:'play',mail_stop:'stop',guide_domain:'globe',guide_directory:'folder-tree',guide_migration:'truck-arrow-right',code_init:'folder-tree',code_commit:'box-archive',code_worktree:'folder-tree',code_git_help:'circle-info',code_gh_help:'circle-info',code_github_login:'globe',code_github_create:'globe',code_push:'upload',code_activity:'heart-pulse',code_signup:'globe'};
   const projectViews = new Map();
   function projectCard(project) {
     const phase = project.installation?.state || (project.site_ready ? 'ready' : 'prepared');
@@ -229,10 +275,12 @@
       const githubHint = code.github ? H`<p class="hint">${t('GitHub:')} <a href="${esc(code.github.url)}" target="_blank" rel="noopener">${esc(code.github.url)} ↗</a></p>` : '';
       const worktreeHint = (code.worktrees || []).length ? H`<p class="hint">${t('Arbeitskopien:')} ${(code.worktrees || []).map(item => H`<code>${esc(item.path)}</code>`).join(', ')}</p>` : '';
       const heading = H`<div class="heading-with-info"><h4>Eigener Code</h4>${infoButton('code',t('Eigenen Code und GitHub erklären'))}</div>`;
+      const gitMissing = code.git_available ? '' : H`<p class="hint">${t('Git fehlt. Git merkt sich Änderungen an deinen Dateien. „Git installieren“ zeigt den Befehl für dein System. Das Info-Symbol erklärt die weiteren Schritte. Danach startest du die Workbench neu.')}</p>`;
       if (!code.enabled) {
-        return H`<div class="tool-group">${heading}<p class="hint">${t('Optional: eigenes Git nur für Pakete und Styles. Die laufende Installation bleibt außerhalb.')}</p><div class="actions">${action('code_init',t('Repository anlegen'),'',code.git_available?'':'disabled')}</div>${code.git_available?'':H`<p class="hint">${t('Git fehlt. Installiere Git und starte die Workbench erneut.')}</p>`}</div>`;
+        return H`<div class="tool-group">${heading}<p class="hint">${t('Optional: eigenes Git nur für Pakete und Styles. Die laufende Installation bleibt außerhalb. GitHub ist erst der optionale dritte Schritt.')}</p><div class="actions">${action('code_init',t('Repository anlegen'),'',code.git_available?'':'disabled')}${code.git_available?'':action('code_git_help',t('Git installieren'))}</div>${gitMissing}</div>`;
       }
-      return H`<div class="tool-group">${heading}<p class="hint">${t('Nur packages/ und styles/. Geheimnisse und site/ gehören nicht in Git. GitHub-Passwort und Token werden hier nicht eingegeben.')}${code.dirty?t(' Es gibt uncommittete Änderungen.'):''}</p>${pathHint}${githubHint}${worktreeHint}<div class="actions">${action('code_commit',t('Commit'))}${action('code_worktree',t('Arbeitskopie'))}<a class="button" href="${esc(code.signup_url || 'https://github.com/signup')}" target="_blank" rel="noopener">${icon('globe')}${t('Bei GitHub registrieren')} ↗</a>${action('code_github_login',code.gh_authenticated?t('GitHub-Anmeldung prüfen'):t('Bei GitHub anmelden'),'',code.gh_available?'':'disabled')}${action('code_github_create',t('Privates Repository erstellen'),'',(code.gh_available && !code.github)?'':'disabled')}${action('code_push',t('Push'),'',code.github?'':'disabled')}${action('code_activity',t('Letzte Aktivität'),'',code.github?'':'disabled')}</div>${code.gh_available?'':H`<p class="hint">${t('GitHub CLI (gh) fehlt. Installationshilfe:')} <a href="https://cli.github.com/" target="_blank" rel="noopener">cli.github.com ↗</a></p>`}</div>`;
+      const ghMissing = code.gh_available ? '' : H`<p class="hint">${t('Die GitHub-CLI (gh) fehlt. Sie öffnet die Anmeldung im Browser. „GitHub-CLI einrichten“ zeigt den Befehl und die offizielle Quelle. Danach startest du die Workbench neu.')}</p>`;
+      return H`<div class="tool-group">${heading}<p class="hint">${t('Nur packages/ und styles/. Die laufende Installation bleibt außerhalb. Im Browser gibst du deine GitHub-Zugangsdaten ein. Dieses Dashboard speichert kein Passwort und kein Token.')}${code.dirty?t(' Es gibt uncommittete Änderungen.'):''}</p><p class="hint">${t('„Bei GitHub registrieren“ öffnet github.com/signup. Konto und Passwort legst du dort an.')}</p>${pathHint}${githubHint}${worktreeHint}<div class="actions">${code.git_available?'':action('code_git_help',t('Git installieren'))}${action('code_commit',t('Commit'))}${action('code_worktree',t('Arbeitskopie'))}<a class="button" href="${esc(code.signup_url || 'https://github.com/signup')}" target="_blank" rel="noopener">${icon('globe')}${t('Bei GitHub registrieren')} ↗</a>${code.gh_available?'':action('code_gh_help',t('GitHub-CLI einrichten'))}${action('code_github_login',code.gh_authenticated?t('GitHub-Anmeldung prüfen'):t('Bei GitHub anmelden'),'',code.gh_available?'':'disabled')}${action('code_github_create',t('Privates Repository erstellen'),'',(code.gh_available && !code.github)?'':'disabled')}${action('code_push',t('Push'),'',code.github?'':'disabled')}${action('code_activity',t('Letzte Aktivität'),'',code.github?'':'disabled')}</div>${gitMissing}${ghMissing}</div>`;
     };
     return H`<article class="project" data-project="${name}" data-url="${esc(localUrl(project.url))}">
       <div class="project-head"><div><h3 class="project-title">${name}</h3><p class="project-subtitle">WoltLab ${esc(project.suite)} · ${project.webserver==='apache'?'Apache':'Nginx'} · PHP ${esc(project.php)}${project.experimental?' · Alpha':project.legacy?' · Legacy':''}</p></div><span class="badge ${badge}">${esc(state)}</span></div>
@@ -325,6 +373,10 @@
 
   async function run(action, name, button) {
     if (action === 'repair-ports') action = 'start';
+    if (action === 'code_git_help' || action === 'code_gh_help') {
+      await explainMissingTool(action === 'code_git_help' ? 'git' : 'gh');
+      return;
+    }
     let snapshot = '';
     const prompts = {
       stop: H`Projekt „${name}“ anhalten? Dateien und Datenbank bleiben erhalten.`,
@@ -430,8 +482,8 @@
       prompts.restore += H`\nAusgewählt: ${snapshot}`;
     }
     if (action === 'code_github_login') {
-      const steps = H`<ol class="dialog-steps"><li>${t('Die Workbench nimmt kein GitHub-Passwort und kein Token entgegen.')}</li><li>${t('Ein Systemterminal öffnet die Anmeldung. Der Browser zeigt github.com.')}</li><li>${t('Ohne Konto zuerst registrieren. Mit Konto den Einmalcode auf der GitHub-Seite bestätigen.')}</li><li>${t('Die Sitzung bleibt in der Workbench-Anmeldung. Eine andere gh-Anmeldung bleibt unverändert.')}</li></ol>`;
-      if (!await ask({title:t('Bei GitHub anmelden'),description:t('Du tippst die Zugangsdaten nicht in dieses Dashboard.'),body:steps,confirm:t('Anmeldung im Browser öffnen')})) return;
+      const steps = H`<ol class="dialog-steps"><li>${t('Ein Systemterminal öffnet die Anmeldung. Der Browser zeigt die GitHub-Seite.')}</li><li>${t('Dort gibst du deine GitHub-Zugangsdaten ein oder bestätigst den Einmalcode. Beides passiert auf github.com.')}</li><li>${t('Danach ist die Workbench mit diesem Konto verknüpft.')}</li><li>${t('Die Sitzung bleibt in der Workbench-Anmeldung. Eine andere gh-Anmeldung bleibt unverändert.')}</li><li>${t('Ohne Konto zuerst „Bei GitHub registrieren“. Konto und Passwort legst du auf github.com/signup an.')}</li></ol>`;
+      if (!await ask({title:t('Bei GitHub anmelden'),description:t('Im Browser gibst du deine GitHub-Zugangsdaten ein. Dieses Dashboard speichert kein Passwort und kein Token.'),body:steps,confirm:t('Anmeldung im Browser öffnen')})) return;
     } else if (guides[action]) {
       if (!await ask({title:guides[action].title,description:guides[action].description,body:guideBody(action),confirm:action==='guide_migration'?t('Exportpaket erstellen'):t('Sicherung erstellen & Anleitung öffnen')})) return;
     } else if (prompts[action] && !await ask({title:({snapshot:t('Sicherung erstellen'),restore:t('Sicherung wiederherstellen'),export:t('Server-Export erstellen'),recovery_install:t('Offizielles Recovery Tool einrichten'),recovery_remove:t('Recovery Tool entfernen'),stop:t('Projekt stoppen'),tls_disable:t('HTTPS abschalten'),code_init:t('Repository anlegen'),code_github_create:t('Privates Repository erstellen'),code_push:t('Push zu GitHub')})[action] || t('Aktion bestätigen'),description:prompts[action],confirm:t('Bestätigen'),danger:action==='restore' || action==='tls_disable' || action==='code_push'})) return;
@@ -567,7 +619,7 @@
     systemCheck=(async()=>{
       const button=document.getElementById('system-refresh');button.disabled=true;button.classList.add('is-busy');button.innerHTML=spinnerMarkup+t('Wird geprüft …');
       try {
-        const data=await api('/api/system');systemReady=data.ready;hostInstallation=data.installation;
+        const data=await api('/api/system');systemReady=data.ready;hostInstallation=data.installation;hostPlatform=data.host || null;
         document.getElementById('host-summary').textContent=H`${data.host.label} · ${data.ready?t('Bereit für WoltLab'):t('Vorbereitung erforderlich')}`;
         document.getElementById('system-dot').classList.toggle('ready',data.ready);document.getElementById('system-dot').classList.toggle('missing',!data.ready);
         document.getElementById('system-report').innerHTML=H`<div class="system-summary ${data.ready?'ready':'missing'}"><strong>${data.ready?t('Dein Gerät ist bereit.'):t('Diese Voraussetzungen fehlen noch.')}</strong><p>${esc(data.host.label)} · ${esc(data.host.architecture)}</p>${!data.ready&&data.installation?.supported?H`<button class="button primary" data-action="host_install">${icon('gear')}Fehlendes einrichten</button>`:''}</div><div class="system-checks">${data.checks.map(check=>H`<article class="system-check"><span class="check-symbol ${check.status}" aria-hidden="true">${check.status==='ready'?'✓':'!'}</span><div><h2>${esc(check.label)}</h2><p>${esc(check.detail)}</p>${check.help?H`<p class="check-help">${esc(check.help)}</p>`:''}${check.status!=='ready'&&check.url?H`<a href="${esc(check.url)}" target="_blank" rel="noopener">Installationsanleitung ↗</a>`:''}</div><span class="badge ${check.status==='ready'?'ready':'failed'}">${check.status==='ready'?t('Bereit'):t('Erforderlich')}</span></article>`).join('')}</div>`;

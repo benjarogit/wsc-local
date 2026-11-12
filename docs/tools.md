@@ -32,11 +32,15 @@ Quellen: [Datensicherung](https://manual.woltlab.com/de/backup/), [Serverumzug](
 
 ## Eigener Code und GitHub
 
-**Repository anlegen** erzeugt ein lokales Git nur für eigene Pakete und Styles. Die laufende Installation, Datenbank und Zugangsdaten bleiben außerhalb. GitHub ist dafür nicht nötig.
+**Eigener Code** ist ein optionales Git nur für eigene Pakete und Styles. Die laufende Installation, `site/`, die Datenbank, TLS und Zugangsdaten bleiben außerhalb. GitHub ist erst der optionale dritte Schritt und für das lokale Repository nicht nötig.
 
-**Bei GitHub registrieren** öffnet die Kontoseite von GitHub. Das Konto entsteht dort, nicht in der Workbench.
+**Git installieren**, wenn Git fehlt. Git merkt sich Änderungen an den Dateien. Der Dialog nennt den Befehl für das erkannte System (Linux, macOS oder Windows) und verlinkt [git-scm.com/downloads](https://git-scm.com/downloads). Die Workbench installiert Git nicht selbst. Danach die Workbench neu starten.
 
-**Bei GitHub anmelden** öffnet ein Systemterminal. Die GitHub-CLI startet die Browser-Anmeldung. Ein Einmalcode erscheint im Terminal und wird auf github.com bestätigt. Passwort und Token werden nicht in das Dashboard eingetippt. Die Sitzung liegt getrennt von einer bereits vorhandenen `gh`-Anmeldung.
+**GitHub-CLI einrichten**, wenn `gh` fehlt. Die GitHub-CLI öffnet die Anmeldung im Browser. Der Dialog nennt den Befehl für Fedora, Arch und CachyOS. Unter Ubuntu und Debian liegt `gh` nicht im Standard-Archiv; dort gilt die Anleitung auf [cli.github.com](https://cli.github.com/). Die Workbench installiert `gh` nicht selbst. Danach die Workbench neu starten.
+
+**Bei GitHub registrieren** öffnet [github.com/signup](https://github.com/signup). Konto und Passwort legt man dort an.
+
+**Bei GitHub anmelden** öffnet ein Systemterminal. Der Browser zeigt die GitHub-Seite. Dort werden die GitHub-Zugangsdaten eingegeben oder der Einmalcode bestätigt. Das Dashboard speichert kein Passwort und kein Token. Danach ist die Workbench mit diesem Konto verknüpft. Die Sitzung liegt unter `GH_CONFIG_DIR` in `~/.config/wsc-local/gh` und ersetzt eine andere `gh`-Anmeldung nicht.
 
 **Privates Repository erstellen** legt `wsc-<projekt>` an und setzt nur `origin`. **Push** sendet die Commits erst nach einer weiteren Bestätigung. **Letzte Aktivität** zeigt Commits und Pull Requests nur dieses Repositorys.
 

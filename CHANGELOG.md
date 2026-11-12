@@ -1,5 +1,21 @@
 # Änderungen / Changelog
 
+## 1.2.5 – 2026-11-12
+
+### Deutsch
+
+- Fehlt Git oder die GitHub-CLI, erklärt „Eigener Code“ in Alltagssprache, was fehlt, und zeigt den Befehl für das erkannte System. Die Workbench installiert beide Programme nicht selbst. Unter Ubuntu und Debian liegt `gh` nicht im Standard-Archiv; dort gilt die Anleitung auf cli.github.com.
+- Die Anmeldung sagt, dass die GitHub-Zugangsdaten im Browser auf github.com eingegeben oder der Einmalcode dort bestätigt wird. Danach ist die Workbench mit diesem Konto verknüpft. Das Dashboard speichert kein Passwort und kein Token.
+- Sicherheitsmeldungen zur Workbench laufen über `SECURITY.md` und die private GitHub-Meldung. Dependabot-Alarme, Sicherheitsupdates und Secret Scanning mit Push-Schutz sind für das öffentliche Repository eingeschaltet. Die bestehenden kostenlosen Workflows bleiben unverändert.
+
+### English
+
+- If Git or the GitHub CLI is missing, “Custom code” explains what is missing in plain language and shows the command for the detected system. The Workbench does not install either program itself. On Ubuntu and Debian, `gh` is not in the default archive; the instructions on cli.github.com apply there.
+- Sign-in states that GitHub credentials are entered in the browser on github.com, or the one-time code is confirmed there. The Workbench is then linked to that account. The dashboard does not store a password or a token.
+- Security reports for the Workbench go through `SECURITY.md` and GitHub private reporting. Dependabot alerts, security updates and secret scanning with push protection are enabled for the public repository. The existing free workflows stay unchanged.
+
+**Geltungsbereich / Scope:** Die Workbench aktualisiert sich selbst, nicht die WoltLab-Suite. WSC 6.3 bleibt ein inoffizieller Entwicklungsbuild; native macOS-/Windows-Docker-Abnahmen bleiben gesonderte Plattformtests.
+
 ## 1.2.4 – 2026-11-12
 
 ### Deutsch

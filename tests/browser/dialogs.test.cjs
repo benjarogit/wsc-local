@@ -18,7 +18,7 @@ async function fixture(options={}){
  await page.route('**/api/**',async route=>{
   const req=route.request(),url=new URL(req.url());let data={};let status=200;
   if(url.pathname==='/api/instances')data={items:removed?[]:[{name:'e2e-project',suite:'6.3',php:'8.5',webserver:'nginx-php-fpm',database:'mariadb',url:'https://e2e-project.localhost:8081',running:!options.prepared,site_ready:!options.prepared,files_available:!options.prepared,core_available:!!options.prepared,experimental:true,tls_enabled:true,recovery_enabled:recovery,installation:{state:options.prepared?'prepared':'ready'},services:[{name:'web',state:'running'},{name:'php',state:'running'},{name:'database',state:'running'}],code:options.code || {enabled:false,git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',worktrees:[]}}]};
-  else if(url.pathname==='/api/system')data={ready:!options.missingHost,host:{label:'Test Linux',architecture:'x64'},checks:[],installation:{supported:true,steps:['Install packages'],command:'bash ./setup.sh --install-deps'}};
+  else if(url.pathname==='/api/system')data={ready:!options.missingHost,host:{label:options.hostLabel || 'Test Linux',architecture:'x64',kind:options.hostKind || 'linux'},checks:[],installation:{supported:true,steps:['Install packages'],command:'bash ./setup.sh --install-deps'}};
   else if(url.pathname==='/api/updates'){
    if(options.updatesOffline)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'GitHub offline',guide:{steps:['Download the release ZIP']}})});
    data={current:upgraded?'1.2.1':'1.2.0',latest:options.updatesAvailable?'1.2.1':'1.2.0',available:!!options.updatesAvailable&&!upgraded,can_apply:!!options.updatesAvailable&&!options.updatesBlocked&&!upgraded,problems:options.updatesBlocked?['Lokale Codeänderungen gefunden. Sichere sie und nutze die Anleitung.']:[],mode:'git',release_url:'https://github.com/benjarogit/wsc-local/releases/tag/v1.2.1',notes:'Release notes',guide:{steps:['Lokale Codeänderungen separat sichern oder committen. Keine Dateien oder Änderungen löschen.']},state:{}};
@@ -118,10 +118,12 @@ test('custom code tools stay optional and confirm before creating a repository',
  const enabled=await fixture({code:{enabled:true,path:'/isolated/project/code',git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',github:null,worktrees:[],dirty:false}});
  assert.match(await enabled.card.locator('[data-panel=tools]').innerText(),/packages\/ und styles/);
  await enabled.card.locator('[data-info=code]').click();
- assert.match(await enabled.page.locator('#action-description').innerText(),/kein GitHub-Passwort/);
+ assert.match(await enabled.page.locator('#action-description').innerText(),/GitHub-Zugangsdaten/);
+ assert.match(await enabled.page.locator('#action-content').innerText(),/cli\.github\.com/);
  await enabled.page.locator('#action-accept').click();
  await enabled.card.locator('[data-action=code_github_login]').click();
- assert.match(await enabled.page.locator('#action-description').innerText(),/nicht in dieses Dashboard/);
+ assert.match(await enabled.page.locator('#action-description').innerText(),/GitHub-Zugangsdaten/);
+ assert.match(await enabled.page.locator('#action-content').innerText(),/auf github\.com/);
  await enabled.page.locator('#action-cancel').click();
  assert.equal(enabled.calls.filter(call=>call.action==='code_github_login').length,0);
  assert.equal(await enabled.card.locator('[data-action=code_commit]').count(),1);
@@ -135,4 +137,61 @@ test('custom code tools stay optional and confirm before creating a repository',
  assert.deepEqual(enabled.errors,[]);
  await context.close();
  await enabled.context.close();
+});
+
+test('custom code explains missing git and gh and where GitHub credentials are entered',async()=>{
+ const missingGit=await fixture({code:{enabled:false,git_available:false,gh_available:false,gh_authenticated:false,signup_url:'https://github.com/signup',worktrees:[]}});
+ const gitText=await missingGit.card.locator('[data-panel=tools]').innerText();
+ assert.match(gitText,/Git merkt sich/);
+ assert.match(gitText,/dritte Schritt/);
+ await missingGit.card.locator('[data-info=code]').click();
+ assert.match(await missingGit.page.locator('#action-content').innerText(),/nicht von selbst/);
+ assert.match(await missingGit.page.locator('#action-content').innerText(),/cli\.github\.com/);
+ await missingGit.page.locator('#action-accept').click();
+ await missingGit.card.locator('[data-action=code_git_help]').click();
+ await missingGit.page.locator('#action-dialog').waitFor({state:'visible'});
+ const gitDialog=await missingGit.page.locator('#action-content').innerText();
+ assert.match(gitDialog,/sudo apt install git/);
+ assert.match(gitDialog,/sudo dnf install git/);
+ assert.match(gitDialog,/sudo pacman -S git/);
+ assert.equal(await missingGit.page.locator('#action-content a').getAttribute('href'),'https://git-scm.com/downloads');
+ assert.match(gitDialog,/Workbench neu/);
+ assert.doesNotMatch(gitDialog,/winget/);
+ await missingGit.page.locator('#action-cancel').click();
+ await missingGit.card.locator('[data-action=code_git_help]').click();
+ await missingGit.page.locator('#action-accept').click();
+ assert.equal(missingGit.calls.length,0);
+
+ const missingGh=await fixture({code:{enabled:true,path:'/isolated/project/code',git_available:true,gh_available:false,gh_authenticated:false,signup_url:'https://github.com/signup',github:null,worktrees:[],dirty:false}});
+ const ghText=await missingGh.card.locator('[data-panel=tools]').innerText();
+ assert.match(ghText,/öffnet die Anmeldung/);
+ assert.match(ghText,/Konto und Passwort/);
+ assert.equal(await missingGh.card.locator('a[href="https://github.com/signup"]').count(),1);
+ assert.equal(await missingGh.card.locator('[data-action=code_github_login]').isDisabled(),true);
+ await missingGh.card.locator('[data-action=code_gh_help]').click();
+ const ghDialog=await missingGh.page.locator('#action-dialog').innerText();
+ assert.match(ghDialog,/GitHub-Zugangsdaten/);
+ assert.match(ghDialog,/Nicht im Standard-Archiv/);
+ assert.match(ghDialog,/sudo dnf install gh/);
+ assert.match(ghDialog,/github-cli/);
+ assert.equal(await missingGh.page.locator('#action-content a').getAttribute('href'),'https://cli.github.com/');
+ await missingGh.page.locator('#action-cancel').click();
+ assert.equal(missingGh.calls.filter(call=>call.action==='code_github_login').length,0);
+ assert.equal(missingGh.calls.length,0);
+
+ const ready=await fixture({code:{enabled:true,path:'/isolated/project/code',git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',github:null,worktrees:[],dirty:false}});
+ await ready.card.locator('[data-action=code_github_login]').click();
+ const login=await ready.page.locator('#action-dialog').innerText();
+ assert.match(login,/Im Browser gibst du deine GitHub-Zugangsdaten ein/);
+ assert.match(login,/speichert kein Passwort und kein Token/);
+ assert.match(login,/auf github\.com/);
+ assert.match(login,/Einmalcode/);
+ await ready.page.locator('#action-cancel').click();
+ assert.equal(ready.calls.filter(call=>call.action==='code_github_login').length,0);
+ assert.deepEqual(missingGit.errors,[]);
+ assert.deepEqual(missingGh.errors,[]);
+ assert.deepEqual(ready.errors,[]);
+ await missingGit.context.close();
+ await missingGh.context.close();
+ await ready.context.close();
 });

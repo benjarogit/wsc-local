@@ -189,6 +189,12 @@ Native macOS-/Windows-Paketinstallationen und vollständige WSL2-/Docker-Desktop
 - Weichen die Programmdateien von der beim Start geladenen Version des laufenden Dashboards ab, zeigt der Update-Bereich einen Neustart-Hinweis und blockiert das automatische Update bis zum Neustart. Ein Regressionstest deckt diesen Zustand ab.
 - Neue Tests für die Release-Metadatenprüfung; die vollständige lokale Prüfung umfasst Python-Tests, Syntax, Shell-Einstiegspunkte, Whitespace und optional die Chromium-Tests.
 
+## GitHub-Sicherheit und Einsteigerhilfe (12.11.2026)
+
+- Fehlt Git oder `gh`, zeigt „Eigener Code“ den Befehl für das erkannte System und installiert nichts selbst. Unter Ubuntu und Debian verweist die GitHub-CLI auf die offizielle Anleitung, weil `gh` nicht im Standard-Archiv liegt. Die Anmeldung sagt, dass die Zugangsdaten auf github.com eingegeben werden.
+- `SECURITY.md` ist die Security Policy. Private Vulnerability Reporting, Dependabot-Alarme, Dependabot-Sicherheitsupdates sowie Secret Scanning mit Push-Schutz sind für das öffentliche Repository eingeschaltet. Code-Scanning über `codeql.yml` und Security Advisories bleiben an.
+- Die Workflows bleiben die vorhandenen kostenlosen: `workbench.yml` auf Push und Pull Request, `codeql.yml` auf `main` und wöchentlich, `release.yml` nur für Tags auf `main`, Dependabot wöchentlich für Actions und npm.
+
 ## Automatische Versionsanzeige, Repository-Prüfung und neue Workflows (29.10.2026)
 
 - Die README zeigt die aktuelle Version über einen Release-Badge und verlinkt `releases/latest`; der ZIP-Download heißt stabil `wsc-local.zip`. `python3 scripts/check.py --metadata` lehnt feste Versionsverweise in beiden README-Dateien ab, damit die Anzeige nicht wieder manuell gepflegt wird.

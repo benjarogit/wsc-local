@@ -1,6 +1,6 @@
 # AGENTS.md – Arbeitsübergabe
 
-Stand: 12.11.2026, Workbench **1.2.4**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
+Stand: 12.11.2026, Workbench **1.2.5**. Diese Datei ist der Einstieg für die nächste Person oder den nächsten Agenten. Sie beschreibt Zweck, Prüfungen, Architektur, Regeln und den aktuellen Stand.
 
 ## Zweck
 
@@ -60,7 +60,7 @@ Der Server bindet nur an Loopback. Änderungen an der Oberfläche müssen ohne F
 ## Regeln für Änderungen
 
 - **Projekt- und Nutzerdaten schützen.** Keine Zugangsdaten, `.env`, `var/`, `snapshots/`, `certs/`, `woltlab/` oder Projektordner committen. Foren-Code gehört nicht in dieses Workbench-Repository; optionaler eigener Code liegt unter `~/.local/share/wsc-local/projects/<name>/code`.
-- **Optionalen eigenen Code isolieren.** `site/`, Datenbank, TLS und Geheimnisse bleiben außerhalb von `code/`. GitHub-Passwort und Token werden nicht in die Workbench eingetippt; die Anmeldung läuft im Browser und bleibt unter `GH_CONFIG_DIR` in `~/.config/wsc-local/gh`. Nur das von der Workbench angelegte private Repository `wsc-<projekt>` verwalten; fremde Remotes und Force-Push sind aus.
+- **Optionalen eigenen Code isolieren.** `site/`, Datenbank, TLS und Geheimnisse bleiben außerhalb von `code/`. Die Anmeldung öffnet github.com; dort werden die Zugangsdaten eingegeben oder der Einmalcode bestätigt. Das Dashboard speichert kein Passwort und kein Token. Die Sitzung bleibt unter `GH_CONFIG_DIR` in `~/.config/wsc-local/gh`. Fehlt Git oder die GitHub-CLI, wird das erklärt und nicht still installiert. Nur das von der Workbench angelegte private Repository `wsc-<projekt>` verwalten; fremde Remotes und Force-Push sind aus.
 - **WoltLab nicht stillschweigend patchen.** Kompatibilitätskorrekturen nur für exakt erkannte Codeblöcke, mit Original, Prüfsumme und Dokumentation.
 - **Destruktive Aktionen bestätigen.** Projekt entfernen, Wiederherstellen und Update nur nach sichtbarer Bestätigung.
 - **Keine neuen Suite-Versionen freigeben, ohne sie zu testen.** 6.3 bleibt inoffiziell; andere Stacks nicht als getestet darstellen.
@@ -83,7 +83,8 @@ Ein bereits veröffentlichter Tag wird nicht überschrieben. Ein Release gilt er
 
 ## Aktueller Stand und offene Punkte
 
-- Release 1.2.4 ist der aktuelle Stand: optionaler eigener Code unter `projects/<name>/code`, Arbeitskopien und wahlweise ein privates GitHub-Repository ohne Passwort oder Token im Dashboard. 1.2.3 bleibt die automatische Versionsanzeige, der stabile ZIP-Download, die Repository-Prüfung und die Workflows.
+- Release 1.2.5 ist der aktuelle Stand: Einsteigerhilfe, wenn Git oder die GitHub-CLI fehlt, und Zugangsdaten nur auf github.com. 1.2.4 bleibt der optionale eigene Code, die Arbeitskopien und das private Repository `wsc-<projekt>`.
+- GitHub-Sicherheit für das öffentliche Repository: `SECURITY.md`, private Schwachstellenmeldung, Dependabot-Alarme und Sicherheitsupdates, Secret Scanning mit Push-Schutz. Code-Scanning und Security Advisories bleiben an. Die kostenlosen Workflows bleiben `workbench.yml`, `codeql.yml`, `release.yml` und das wöchentliche Dependabot für Actions und npm. Keine zusätzlichen kostenpflichtigen Runner.
 - Jede Veröffentlichung lädt zusätzlich `wsc-local.zip` und `wsc-local-SHA256SUMS.txt` als stabile Namen hoch; die README verlinkt sie über `releases/latest`.
 - Der Update-Lock erkennt tote Prozesse, wiederverwendete PIDs und alte unvollständige Sperren. Eine laufende Sperre blockiert weiterhin.
 - Ein laufendes Dashboard liest die Release-Version beim Start. Weicht `VERSION` auf der Platte davon ab, nennt der Update-Bereich beide Werte und blockiert das automatische Update bis zum Neustart.
