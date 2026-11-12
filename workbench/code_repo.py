@@ -373,7 +373,7 @@ def terminal_login_command(status: Path, kind: str | None = None) -> list[str]:
         "if ! command -v gh >/dev/null 2>&1; then echo 'GitHub CLI (gh) fehlt.' >&2; echo 1 > "
         + shlex.quote(str(status))
         + "; read -r _; exit 1; fi; "
-        "gh auth login -h github.com -p https -w; "
+        "printf '\\n' | gh auth login --hostname github.com --git-protocol https --web --skip-ssh-key; "
         f"echo $? > {shlex.quote(str(status))}; "
         "printf '\\nFertig. Dieses Fenster kannst du schließen.\\n'; read -r _ || true"
     )
@@ -439,7 +439,7 @@ def github_login(root: Path | None = None, timeout: float = 3600) -> str:
             if process.poll() not in (None, 0):
                 raise RuntimeError(
                     "Das Systemterminal konnte nicht geöffnet werden. Manuell: "
-                    f"GH_CONFIG_DIR={shlex.quote(str(gh_config_dir()))} gh auth login -h github.com -p https -w"
+                    f"GH_CONFIG_DIR={shlex.quote(str(gh_config_dir()))} gh auth login --hostname github.com --git-protocol https --web --skip-ssh-key"
                 )
             time.sleep(1)
         raise RuntimeError("Die GitHub-Anmeldung meldet keinen Abschluss. Prüfe das Terminal und versuche es erneut.")

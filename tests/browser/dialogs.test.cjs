@@ -117,6 +117,13 @@ test('custom code tools stay optional and confirm before creating a repository',
  assert.equal(calls.filter(call=>call.action==='code_init').length,1);
  const enabled=await fixture({code:{enabled:true,path:'/isolated/project/code',git_available:true,gh_available:true,gh_authenticated:false,signup_url:'https://github.com/signup',github:null,worktrees:[],dirty:false}});
  assert.match(await enabled.card.locator('[data-panel=tools]').innerText(),/packages\/ und styles/);
+ await enabled.card.locator('[data-info=code]').click();
+ assert.match(await enabled.page.locator('#action-description').innerText(),/kein GitHub-Passwort/);
+ await enabled.page.locator('#action-accept').click();
+ await enabled.card.locator('[data-action=code_github_login]').click();
+ assert.match(await enabled.page.locator('#action-description').innerText(),/nicht in dieses Dashboard/);
+ await enabled.page.locator('#action-cancel').click();
+ assert.equal(enabled.calls.filter(call=>call.action==='code_github_login').length,0);
  assert.equal(await enabled.card.locator('[data-action=code_commit]').count(),1);
  assert.equal(await enabled.card.locator('[data-action=code_push]').isDisabled(),true);
  await enabled.card.locator('[data-action=code_push]').evaluate(button=>button.disabled=false);

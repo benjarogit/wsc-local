@@ -30,6 +30,16 @@ Auf dem Zielserver werden Dateien und Datenbank eingespielt und neue Datenbankzu
 
 Quellen: [Datensicherung](https://manual.woltlab.com/de/backup/), [Serverumzug](https://manual.woltlab.com/de/server-migration/).
 
+## Eigener Code und GitHub
+
+**Repository anlegen** erzeugt ein lokales Git nur für eigene Pakete und Styles. Die laufende Installation, Datenbank und Zugangsdaten bleiben außerhalb. GitHub ist dafür nicht nötig.
+
+**Bei GitHub registrieren** öffnet die Kontoseite von GitHub. Das Konto entsteht dort, nicht in der Workbench.
+
+**Bei GitHub anmelden** öffnet ein Systemterminal. Die GitHub-CLI startet die Browser-Anmeldung. Ein Einmalcode erscheint im Terminal und wird auf github.com bestätigt. Passwort und Token werden nicht in das Dashboard eingetippt. Die Sitzung liegt getrennt von einer bereits vorhandenen `gh`-Anmeldung.
+
+**Privates Repository erstellen** legt `wsc-<projekt>` an und setzt nur `origin`. **Push** sendet die Commits erst nach einer weiteren Bestätigung. **Letzte Aktivität** zeigt Commits und Pull Requests nur dieses Repositorys.
+
 ## Uploadlimits
 
 Der erste Dialog nimmt eine Größe wie `256M` oder `1G` entgegen. Danach zeigt die Workbench die geplanten PHP- und Webserverwerte. Erst „Änderungen anwenden“ schreibt die Konfiguration und startet betroffene Dienste neu. Abbrechen verwirft die Vorschau.

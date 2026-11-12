@@ -110,7 +110,7 @@ class CodeRepoTests(unittest.TestCase):
         self.assertFalse(str(worktree).startswith(str(self.root / "code") + os.sep) or worktree == self.root / "code")
         status = code_repo.code_status(self.name, json.loads((self.root / "wsc-local.json").read_text()), self.root)
         self.assertEqual(status["worktrees"][0]["branch"], "agent-1")
-        self.assertEqual(status["worktrees"][0]["path"], str(worktree))
+        self.assertEqual(Path(status["worktrees"][0]["path"]).resolve(), worktree.resolve())
 
     def test_worktree_list_accepts_resolved_symlink_paths(self):
         real = self.home / "real"
