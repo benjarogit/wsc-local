@@ -21,6 +21,18 @@ Für eine neue Testinstallation kann die CLI HTTPS auf Port 443 reservieren. Mit
 
 **Standard HTTPS port.** For a new test installation, run `./wsc create test-forum --suite 6.3 --experimental --standard-https --zip /path/to/core.zip`, then `./wsc install test-forum`. The project uses `https://test-forum.localhost` with port 443 bound to `127.0.0.1`. HTTP and mail keep separate local ports. WSC Local uses the canonical domain without a port suffix and skips the Core workaround for high ports. If a required port is already in use, startup stops with the original port configuration in place.
 
+## Verifiziertes Core-ZIP aus lokalen Quellen
+
+Bei einem lokal gebauten Core-Installer kannst du Archiv und Quellstand für die spätere Abnahme festhalten. Lege das Projekt zunächst ohne ZIP an. Gib dann alle drei Angaben aus dem Buildnachweis gemeinsam an:
+
+```bash
+./wsc install-zip test-forum /pfad/zum/core.zip --sha256 SHA256 --source https://github.com/WoltLab/WCF --source-commit COMMIT
+```
+
+Der Import prüft die SHA-256-Prüfsumme vor dem Entpacken und speichert eine identische Kopie mit der Quellenreferenz. Das Verfahren ist für ein neues Projekt ohne Suite-Dateien vorgesehen. Nach einer Unterbrechung kannst du denselben Importbefehl erneut ausführen. Die eigentliche Einrichtung erfolgt nach dem vollständigen Import getrennt mit `./wsc install test-forum`.
+
+**Verified local Core ZIP.** Create the project without a ZIP first. Then run the command above with the expected SHA-256, HTTPS repository URL and full Git commit from the build record. The Workbench checks the checksum before unpacking and retains an identical archive with its source reference. This option requires a new project without Suite files. To resume an interrupted import, run the same command again. Once the import finishes, run `./wsc install test-forum` separately to start setup.
+
 ## Buffer Pool
 
 WoltLab bewertet einen InnoDB-Buffer-Pool von genau 128 MiB als Hinweis und alles darüber als empfohlen. Weniger als 128 MiB gilt dort als Fehler. Die Workbench lässt 128 MiB als Standard und bietet optional 256 oder 512 MiB an: beim Anlegen unter **Technik und Adminzugang** und danach unter **Verwalten → Übersicht**. Die Systemprüfung der Workbench zeigt 128 MiB als Hinweis. Das Gerät bleibt dabei bereit.

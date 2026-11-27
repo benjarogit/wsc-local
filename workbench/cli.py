@@ -16,6 +16,7 @@ import shutil
 import shlex
 import socket
 import ssl
+import stat
 import subprocess
 import sys
 import tarfile
@@ -24,6 +25,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zipfile
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree
@@ -39,6 +42,8 @@ SECRETS = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ws
 PROFILES = json.loads((ROOT / "workbench/profiles.json").read_text(encoding="utf-8"))["profiles"]
 HANDBOOK = "https://manual.woltlab.com/de/"
 STANDARD_HTTPS_PORT = 443
+CORE_ZIP_IMPORT_LOCK = ".core-zip-import.lock"
+CORE_ZIP_IMPORT_PENDING = ".core-zip-import-pending.json"
 
 
 def instance_paths(name: str) -> tuple[Path, Path]:
@@ -234,10 +239,15 @@ def create_project(args: argparse.Namespace) -> str:
     if not getattr(args, "standard_https", False):
         return _create_project(args)
 
-    # Keep the reservation check and project creation exclusive. The OS releases
-    # the lock if the creator exits before writing its configuration.
     PROJECTS.mkdir(parents=True, exist_ok=True)
-    with (PROJECTS / ".standard-https.lock").open("a+b") as lock:
+    with project_write_lock(PROJECTS / ".standard-https.lock", "Die Reservierung für HTTPS auf Port 443 wird bereits geprüft. Bitte erneut versuchen."):
+        return _create_project(args)
+
+
+@contextmanager
+def project_write_lock(path: Path, busy_message: str):
+    # The OS releases this lock if its owner exits unexpectedly.
+    with path.open("a+b") as lock:
         lock.seek(0)
         try:
             if os.name == "nt":
@@ -247,9 +257,9 @@ def create_project(args: argparse.Namespace) -> str:
                 import fcntl
                 fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except OSError as exc:
-            raise RuntimeError("Die Reservierung für HTTPS auf Port 443 wird bereits geprüft. Bitte erneut versuchen.") from exc
+            raise RuntimeError(busy_message) from exc
         try:
-            return _create_project(args)
+            yield
         finally:
             if os.name == "nt":
                 msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
@@ -408,9 +418,13 @@ def port_taken(port: int) -> bool:
 
 
 def install_zip(zip_path: Path, destination: Path) -> None:
+    project_root = destination.parent
+    config_path = project_root / "wsc-local.json"
+    cfg = json.loads(config_path.read_text(encoding="utf-8")) if config_path.is_file() else None
+    if cfg is not None:
+        ensure_core_zip_target_writable(project_root, cfg)
     if not zip_path.is_file():
         raise ValueError(f"ZIP nicht gefunden: {zip_path}")
-    import zipfile
     if not zipfile.is_zipfile(zip_path):
         raise ValueError("Die Datei ist kein gültiges ZIP-Archiv.")
     with tempfile.TemporaryDirectory(prefix="wsc-zip-") as temp_dir:
@@ -433,10 +447,113 @@ def install_zip(zip_path: Path, destination: Path) -> None:
         # mark it 0700, which prevents the separate Nginx container user from
         # traversing the bind-mounted document root and returns a misleading 404.
         destination.chmod(destination.stat().st_mode | 0o755)
-    project_root = destination.parent
-    config_path = project_root / "wsc-local.json"
-    if config_path.is_file():
-        write_browser_preflight(project_root, json.loads(config_path.read_text(encoding="utf-8")))
+    if cfg is not None:
+        write_browser_preflight(project_root, cfg)
+
+
+def import_core_zip(name: str, source_zip: Path, sha256: str, source_url: str, source_commit: str) -> str:
+    """Import a pinned local installer before any Suite files exist."""
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", sha256) or not re.fullmatch(r"[0-9a-fA-F]{40}", source_commit):
+        raise ValueError("Erwartet werden ein SHA-256-Wert und ein vollständiger Git-Commit.")
+    if not re.fullmatch(r"https://[A-Za-z0-9.-]+(?:/[A-Za-z0-9._-]+)+/?", source_url):
+        raise ValueError("Die Core-Quelle muss eine HTTPS-Repository-Adresse sein.")
+    sha256, source_commit = sha256.lower(), source_commit.lower()
+    _, root, _ = read_project(name)
+    with project_write_lock(root / CORE_ZIP_IMPORT_LOCK, "Für dieses Projekt wird bereits ein ZIP importiert."):
+        label = f"wcf-local-{source_commit}-{sha256}"
+        identity = dict(core_version=label, core_sha256=sha256, core_source=source_url, core_source_commit=source_commit)
+        pending_path = root / CORE_ZIP_IMPORT_PENDING
+        if pending_path.is_symlink():
+            raise ValueError("Der Nachweis zum laufenden ZIP-Import darf keine Verknüpfung sein.")
+        pending = None
+        if pending_path.exists():
+            pending = json.loads(pending_path.read_text(encoding="utf-8"))
+            if not isinstance(pending, dict) or pending.get("identity") != identity:
+                raise ValueError("Wiederhole den unterbrochenen Core-ZIP-Import mit demselben Archiv und Quellstand.")
+
+        site = root / "site"
+        installer_files = ("WCFSetup.tar.gz", "test.php", "install.php")
+        preflight = {"wsc-local-check.html", "wsc-local-browser-check.php"}
+        allowed = preflight | set(installer_files) if pending is not None else preflight
+        if site.is_symlink() or not site.is_dir() or any(p.name not in allowed or p.is_symlink() or not p.is_file() for p in site.iterdir()):
+            raise ValueError("Ein verifiziertes Core-ZIP benötigt ein neues Projekt ohne vorhandene Suite-Dateien.")
+
+        downloads = DATA / "downloads"
+        downloads.mkdir(parents=True, exist_ok=True)
+        cached_zip = downloads / f"{label}-core.zip"
+        with tempfile.TemporaryDirectory(prefix=".core-zip-", dir=downloads) as cache_folder, tempfile.TemporaryDirectory(prefix=".core-import-", dir=root) as stage_folder:
+            candidate = Path(cache_folder) / "core.zip"
+            shutil.copyfile(source_zip, candidate)
+            candidate.chmod(0o600)
+            if file_hash(candidate) != sha256:
+                raise ValueError("Die SHA-256-Prüfung des lokalen Core-ZIP ist fehlgeschlagen.")
+
+            try:
+                with zipfile.ZipFile(candidate) as archive:
+                    members = archive.infolist()
+                    if (sorted(item.orig_filename for item in members) != sorted(installer_files)
+                            or any(stat.S_IFMT(item.external_attr >> 16) not in (0, stat.S_IFREG) for item in members)):
+                        raise ValueError("Das Core-ZIP darf nur install.php, test.php und WCFSetup.tar.gz enthalten.")
+            except zipfile.BadZipFile as exc:
+                raise ValueError("Das Core-ZIP ist kein gültiges ZIP-Archiv.") from exc
+
+            stage = Path(stage_folder)
+            install_zip(candidate, stage / "site")
+            payload = stage / "site"
+            try:
+                with tarfile.open(payload / "WCFSetup.tar.gz", "r:gz") as setup:
+                    packages = [member for member in setup if member.name == "install/packages/com.woltlab.wcf.tar"]
+                    if len(packages) != 1 or not packages[0].isfile() or not packages[0].size:
+                        raise ValueError("Das ZIP enthält kein eindeutiges reguläres WoltLab-Core-Paket.")
+            except tarfile.TarError as exc:
+                raise ValueError("Das ZIP enthält kein WoltLab-Core-Paket.") from exc
+            if cached_zip.is_symlink() or (cached_zip.exists() and file_hash(cached_zip) != sha256):
+                raise ValueError("Das gespeicherte Core-ZIP stimmt nicht mit seiner Archividentität überein.")
+            if not cached_zip.exists():
+                candidate.replace(cached_zip)
+
+            manifest = {"identity": identity, "files": {path: file_hash(payload / path) for path in installer_files}}
+            if pending is not None and pending != manifest:
+                raise ValueError("Der unterbrochene Core-ZIP-Import passt nicht mehr zum geprüften Archiv.")
+            for path, checksum in manifest["files"].items():
+                if (site / path).exists() and file_hash(site / path) != checksum:
+                    raise ValueError("Vorhandene Setup-Dateien stimmen nicht mit dem unterbrochenen Import überein.")
+
+            if pending is None:
+                staged_pending = stage / CORE_ZIP_IMPORT_PENDING
+                staged_pending.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+                staged_pending.replace(pending_path)
+
+            cfg, _, _ = read_project(name)
+            cfg.update(identity)
+            metadata = stage / "wsc-local.json"
+            metadata.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            published = []
+            try:
+                for path in installer_files:
+                    destination = site / path
+                    if not destination.exists():
+                        (payload / path).replace(destination)
+                        published.append(destination)
+                metadata.replace(root / "wsc-local.json")
+            except OSError:
+                for destination in published:
+                    destination.unlink(missing_ok=True)
+                raise
+            pending_path.unlink()
+    return f"Core-ZIP mit geprüfter SHA-256 und Quellencommit für '{name}' hinterlegt."
+
+
+def require_finished_core_zip_import(root: Path) -> None:
+    pending = root / CORE_ZIP_IMPORT_PENDING
+    if pending.exists() or pending.is_symlink():
+        raise ValueError("Der Core-ZIP-Import ist unterbrochen. Wiederhole den Import mit demselben Archiv und Quellstand.")
+
+
+def ensure_core_zip_target_writable(root: Path, cfg: dict[str, Any]) -> None:
+    require_finished_core_zip_import(root)
+    if cfg.get("core_source_commit"):
+        raise ValueError("Ein Projekt mit verifiziertem Core-ZIP lässt sich nicht mit einem anderen ZIP überschreiben.")
 
 
 def write_browser_preflight(root: Path, cfg: dict[str, Any]) -> None:
@@ -644,11 +761,18 @@ def ensure_apache_preflight_gate(config_path: Path, gate_token: str = "1") -> bo
 
 
 def download_core_project(name: str, version: str, expected_sha256: str | None = None) -> str:
+    _, root, _ = read_project(name)
+    with project_write_lock(root / CORE_ZIP_IMPORT_LOCK, "Für dieses Projekt läuft bereits ein Core-Import oder eine Installation."):
+        return _download_core_project(name, version, expected_sha256)
+
+
+def _download_core_project(name: str, version: str, expected_sha256: str | None = None) -> str:
     cfg, root, _ = read_project(name)
+    ensure_core_zip_target_writable(root, cfg)
     if cfg["suite_version"] == "6.3":
         if version not in {None, "latest", "6.3"}:
             raise ValueError("Für WSC 6.3 wird automatisch der neueste Alpha-Testbuild geladen; eigene Archive bitte mit wsc install-zip einspielen.")
-        return download_experimental_63(name, root)
+        return _download_experimental_63(name, root)
     version = version or "6.2.8"
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Core-Version bitte vollständig angeben, zum Beispiel 6.2.8.")
@@ -676,7 +800,7 @@ def download_core_project(name: str, version: str, expected_sha256: str | None =
     return f"WoltLab Suite Core {version} heruntergeladen und als ZIP geprüft."
 
 
-def download_experimental_63(name: str, root: Path) -> str:
+def _download_experimental_63(name: str, root: Path) -> str:
     """Download a community-built WSC 6.3 alpha archive and verify its published digest."""
     api_url = "https://api.github.com/repos/YoureCom/wsc-63-testbuilds/releases?per_page=100"
     def fetch(url: str, limit: int, *, github_api: bool = False) -> bytes:
@@ -887,6 +1011,13 @@ def verify_page_language(page: str, language: str) -> None:
 
 
 def install_woltlab(name: str, language: str | None = None) -> str:
+    _, root, _ = read_project(name)
+    with project_write_lock(root / CORE_ZIP_IMPORT_LOCK, "Für dieses Projekt läuft bereits ein Core-Import oder eine Installation."):
+        require_finished_core_zip_import(root)
+        return _prepare_woltlab_installation(name, language)
+
+
+def _prepare_woltlab_installation(name: str, language: str | None = None) -> str:
     cfg, root, _ = read_project(name)
     if (root / "site/global.php").exists():
         raise ValueError("WoltLab-Dateien sind bereits eingerichtet. Bei einer unterbrochenen Einrichtung zuerst Diagnose und Sicherung verwenden.")
@@ -1290,6 +1421,7 @@ def buffer_pool_system_check() -> dict[str, str]:
 def action(name: str, command: str, *args: str) -> str:
     if args[:2] == ("up", "-d"):
         cfg, root, _ = read_project(name)
+        require_finished_core_zip_import(root)
         if not cfg.get("browser_gate_token"):
             cfg["browser_gate_token"] = os.urandom(16).hex()
             (root / "wsc-local.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -2281,6 +2413,9 @@ def parser() -> argparse.ArgumentParser:
     x = sub.add_parser("buffer-pool", help="InnoDB-Buffer-Pool anzeigen oder auf 128, 256 oder 512 MiB setzen")
     x.add_argument("name"); x.add_argument("size", nargs="?", type=int, choices=BUFFER_POOL_SIZES)
     x = sub.add_parser("install-zip"); x.add_argument("name"); x.add_argument("zip")
+    x.add_argument("--sha256", help="Erwartete SHA-256 des lokalen Core-ZIP")
+    x.add_argument("--source", help="HTTPS-Repository-Adresse des Core-Quellstands")
+    x.add_argument("--source-commit", help="Vollständiger Git-Commit des Core-Quellstands")
     x = sub.add_parser("download-core"); x.add_argument("name"); x.add_argument("--version"); x.add_argument("--sha256")
     x = sub.add_parser("uploads"); x.add_argument("name"); x.add_argument("--size", required=True); x.add_argument("--apply", action="store_true"); x.add_argument("--yes", action="store_true")
     r = sub.add_parser("recovery"); rs = r.add_subparsers(dest="recovery_action", required=True)
@@ -2346,7 +2481,17 @@ def main(argv: list[str] | None = None) -> int:
                 print(set_buffer_pool(args.name, args.size))
         elif args.command == "export": print(f"Server-Export erstellt: {snapshot(args.name, export=True)}")
         elif args.command == "install-zip":
-            _, root, _ = read_project(args.name); install_zip(Path(args.zip).expanduser().resolve(), root / "site"); print("Core-/Paket-ZIP sicher in das Projekt entpackt.")
+            source_zip = Path(args.zip).expanduser().resolve()
+            provenance = (args.sha256, args.source, args.source_commit)
+            if any(value is not None for value in provenance):
+                if not all(provenance):
+                    raise ValueError("--sha256, --source und --source-commit müssen gemeinsam angegeben werden.")
+                print(import_core_zip(args.name, source_zip, *provenance))
+            else:
+                _, root, _ = read_project(args.name)
+                with project_write_lock(root / CORE_ZIP_IMPORT_LOCK, "Für dieses Projekt wird bereits ein ZIP importiert."):
+                    install_zip(source_zip, root / "site")
+                print("Core-/Paket-ZIP sicher in das Projekt entpackt.")
         elif args.command == "download-core": print(download_core_project(args.name, args.version, args.sha256))
         elif args.command == "uploads": print(update_upload_limits(args.name, args.size, args.apply, args.yes))
         elif args.command == "recovery": print(recovery_install(args.name, args.yes) if args.recovery_action == "install" else recovery_remove(args.name, args.yes))
