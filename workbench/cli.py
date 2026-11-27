@@ -38,6 +38,7 @@ PROJECTS = DATA / "projects"
 SECRETS = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "wsc-local/secrets"
 PROFILES = json.loads((ROOT / "workbench/profiles.json").read_text(encoding="utf-8"))["profiles"]
 HANDBOOK = "https://manual.woltlab.com/de/"
+STANDARD_HTTPS_PORT = 443
 
 
 def instance_paths(name: str) -> tuple[Path, Path]:
@@ -230,6 +231,31 @@ networks:
 
 
 def create_project(args: argparse.Namespace) -> str:
+    if not getattr(args, "standard_https", False):
+        return _create_project(args)
+
+    # Keep the reservation check and project creation exclusive. The OS releases
+    # the lock if the creator exits before writing its configuration.
+    PROJECTS.mkdir(parents=True, exist_ok=True)
+    with (PROJECTS / ".standard-https.lock").open("a+b") as lock:
+        lock.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise RuntimeError("Die Reservierung für HTTPS auf Port 443 wird bereits geprüft. Bitte erneut versuchen.") from exc
+        try:
+            return _create_project(args)
+        finally:
+            if os.name == "nt":
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+
+
+def _create_project(args: argparse.Namespace) -> str:
     if getattr(args, "profile", None):
         profile_path = Path(args.profile).expanduser().resolve()
         if not profile_path.is_file():
@@ -265,13 +291,19 @@ def create_project(args: argparse.Namespace) -> str:
     if webserver_profile not in {"nginx-php-fpm", "apache"}:
         raise ValueError("Webserverprofil muss nginx-php-fpm oder apache sein.")
     reserved = reserved_ports()
-    port = args.port or next((p for p in range(8080, 8500) if all(p + offset not in reserved and not port_taken(p + offset) for offset in range(3))), None)
+    standard_https = getattr(args, "standard_https", False)
+    if standard_https and (STANDARD_HTTPS_PORT in reserved or port_taken(STANDARD_HTTPS_PORT)):
+        raise ValueError("Der HTTPS-Standardport 443 ist bereits belegt oder für ein anderes Projekt reserviert.")
+    offsets = (0, 2) if standard_https else (0, 1, 2)
+    port = args.port or next((p for p in range(8080, 8500) if all(p + offset not in reserved and not port_taken(p + offset) for offset in offsets)), None)
     if port is None:
-        raise ValueError("Kein freies lokales Port-Trio zwischen 8080 und 8501 gefunden.")
+        raise ValueError("Keine freien lokalen Projektports zwischen 8080 und 8501 gefunden.")
     if port < 1024 or port > 65533:
         raise ValueError("Projektport muss zwischen 1024 und 65533 liegen.")
-    if any(p in reserved or port_taken(p) for p in (port, port + 1, port + 2)):
-        raise ValueError(f"Mindestens einer der Ports {port}–{port + 2} wird bereits verwendet.")
+    occupied = next((port + offset for offset in offsets if port + offset in reserved or port_taken(port + offset)), None)
+    if occupied is not None:
+        raise ValueError(f"Der lokale Projektport {occupied} wird bereits verwendet.")
+    https_port = STANDARD_HTTPS_PORT if standard_https else port + 1
     password = os.urandom(24).hex()
     project = f"wsc-{args.name}"
     cfg = {
@@ -289,7 +321,7 @@ def create_project(args: argparse.Namespace) -> str:
         "host": "127.0.0.1",
         "http_port": port,
         "url": f"http://127.0.0.1:{port}",
-        "https_port": port + 1,
+        "https_port": https_port,
         "mail_port": port + 2,
         "mail_service": "mailpit",
         "browser_gate_token": os.urandom(16).hex(),
@@ -314,7 +346,7 @@ def create_project(args: argparse.Namespace) -> str:
     (root / "tls/fullchain.pem").touch()
     (root / "tls/privkey.pem").touch()
     admin_password = os.urandom(24).hex()
-    secret.write_text(f"HTTP_PORT={port}\nHTTPS_PORT={port + 1}\nMAIL_PORT={port + 2}\nHOST_UID={os.getuid() if hasattr(os, 'getuid') else 1000}\nHOST_GID={os.getgid() if hasattr(os, 'getgid') else 1000}\nMYSQL_DATABASE=woltlab\nMYSQL_USER=wsc\nMYSQL_PASSWORD={password}\nMYSQL_ROOT_PASSWORD={os.urandom(24).hex()}\nWSC_ADMIN_USERNAME=admin\nWSC_ADMIN_EMAIL=admin@example.test\nWSC_ADMIN_PASSWORD={admin_password}\n", encoding="utf-8")
+    secret.write_text(f"HTTP_PORT={port}\nHTTPS_PORT={https_port}\nMAIL_PORT={port + 2}\nHOST_UID={os.getuid() if hasattr(os, 'getuid') else 1000}\nHOST_GID={os.getgid() if hasattr(os, 'getgid') else 1000}\nMYSQL_DATABASE=woltlab\nMYSQL_USER=wsc\nMYSQL_PASSWORD={password}\nMYSQL_ROOT_PASSWORD={os.urandom(24).hex()}\nWSC_ADMIN_USERNAME=admin\nWSC_ADMIN_EMAIL=admin@example.test\nWSC_ADMIN_PASSWORD={admin_password}\n", encoding="utf-8")
     secret.chmod(0o600)
     (root / "wsc-local.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (root / "compose.yaml").write_text(compose_text(root, cfg), encoding="utf-8")
@@ -334,7 +366,7 @@ def create_project(args: argparse.Namespace) -> str:
     database_label = "MySQL 8" if database_profile == "mysql8" else "MariaDB 10.11"
     webserver_label = "Apache · PHP" if webserver_profile == "apache" else "Nginx/PHP-FPM"
     profile_label = " · LEGACY (EOL)" if profile["legacy"] else " · ALPHA (inoffiziell)" if profile.get("unofficial") else ""
-    next_step = f"\nLokales HTTPS wird bei der automatischen Einrichtung aktiviert: wsc install {args.name}" if profile.get("requires_https") else ""
+    next_step = f"\nLokales HTTPS wird bei der automatischen Einrichtung aktiviert: wsc install {args.name}" if standard_https or profile.get("requires_https") else ""
     return f"Projekt '{args.name}' angelegt: {root}\nProfil: WSC {profile['suite']}{profile_label} · PHP {php} · {webserver_label} · {database_label}\nAdresse nach dem Start: {cfg['url']}\nWSC-Core-ZIP: {'eingespielt' if args.zip or getattr(args, 'download_core', False) else 'noch nicht vorhanden – offizielles Core laden oder wsc install-zip ' + args.name + ' DATEI.zip'}{next_step}"
 
 
@@ -812,7 +844,7 @@ def write_install_state(root: Path, state: str, stage: str, error: str = "") -> 
 
 def apply_local_port_compatibility(root: Path, cfg: dict[str, Any]) -> None:
     """Correct the verified WSC 6.2/6.3 host comparison for local authorities."""
-    if cfg.get("suite_version") not in {"6.2", "6.3"}:
+    if cfg.get("https_port") == STANDARD_HTTPS_PORT or cfg.get("suite_version") not in {"6.2", "6.3"}:
         return
     path = root / "site/lib/system/request/RequestHandler.class.php"
     original = path.read_text(encoding="utf-8")
@@ -881,7 +913,7 @@ def _install_woltlab(name: str) -> str:
         raise ValueError("Das WoltLab-Installationsarchiv fehlt. Erstelle das Projekt erneut und lade dabei ein gültiges Suite-Archiv.")
     language = resolve_install_language(cfg.get("installation_language"))
     values = parse_env(secret)
-    if profile_for(cfg["suite_version"]).get("requires_https") and not cfg.get("tls_enabled"):
+    if (cfg["https_port"] == STANDARD_HTTPS_PORT or profile_for(cfg["suite_version"]).get("requires_https")) and not cfg.get("tls_enabled"):
         write_install_state(root, "running", "Lokales HTTPS-Zertifikat einrichten")
         local_tls(name, True, confirmed=True)
         cfg, root, secret = read_project(name)
@@ -895,7 +927,7 @@ def _install_woltlab(name: str) -> str:
     port = cfg["https_port"] if cfg.get("tls_enabled") else cfg["http_port"]
     scheme = "https" if cfg.get("tls_enabled") else "http"
     expected_host = cfg.get("domain", "127.0.0.1")
-    host_header = f"{expected_host}:{port}"
+    host_header = https_authority(expected_host, port) if scheme == "https" else f"{expected_host}:{port}"
     # Docker publishes these local ports on IPv4 loopback. Some libc resolvers
     # return ::1 first for *.localhost, where nothing is listening. Keep the
     # project's hostname in URLs (and thus cookie scope), but dial IPv4 below.
@@ -1273,10 +1305,12 @@ def action(name: str, command: str, *args: str) -> str:
     # Ports can become occupied between project creation and first start.
     # Recover automatically and keep the project's files and database intact.
     if result.returncode and args[:2] == ("up", "-d") and re.search(r"address already in use|port is already allocated|bind: address", output, re.I):
+        cfg, root, secret = read_project(name)
+        if cfg["https_port"] == STANDARD_HTTPS_PORT:
+            raise RuntimeError("Ein lokaler Projektport ist belegt. Projekte mit HTTPS auf Port 443 behalten ihre Portzuordnung.\n\n" + output)
         stopped = compose(name, "down", "--remove-orphans")
         if stopped.returncode:
             raise RuntimeError("Der belegte Port wurde erkannt, aber Docker konnte die teilweise gestarteten Container nicht sauber anhalten. Bitte unter „Prüfen“ die Docker-Logs ansehen.\n\n" + (stopped.stderr or stopped.stdout).strip())
-        cfg, root, secret = read_project(name)
         env = dict(line.split("=", 1) for line in secret.read_text(encoding="utf-8").splitlines() if "=" in line)
         old_ports = {int(env[key]) for key in ("HTTP_PORT", "HTTPS_PORT", "MAIL_PORT") if key in env}
         tried = set(old_ports)
@@ -1592,6 +1626,10 @@ def recovery_remove(name: str, confirmed: bool = False) -> str:
     return "Recovery-Datei und gegebenenfalls die offizielle Authentifizierungsdatei entfernt. Prüfe zusätzlich im Browser, dass /wsc-recovery.php nicht mehr erreichbar ist."
 
 
+def https_authority(domain: str, port: int) -> str:
+    return domain if port == STANDARD_HTTPS_PORT else f"{domain}:{port}"
+
+
 def local_tls(name: str, enable: bool, confirmed: bool = False) -> str:
     cfg, root, _ = read_project(name)
     if not cfg.get("browser_gate_token"):
@@ -1679,7 +1717,7 @@ server {{
         config_path.write_text(content.rstrip() + server, encoding="utf-8")
         cfg["tls_enabled"] = True
         cfg["domain"] = domain
-        cfg["url"] = f"https://{domain}:{cfg['https_port']}"
+        cfg["url"] = f"https://{https_authority(domain, cfg['https_port'])}"
     else:
         if not cfg.get("tls_enabled"):
             return "TLS war für dieses Projekt nicht eingerichtet."
@@ -2230,6 +2268,7 @@ def parser() -> argparse.ArgumentParser:
     update.add_argument("--json", action="store_true", help="Update-Plan als JSON ausgeben")
     c = sub.add_parser("create", help="Neues WoltLab-Projekt anlegen")
     c.add_argument("name"); c.add_argument("--suite", default="6.2"); c.add_argument("--php"); c.add_argument("--database", choices=("mariadb", "mysql8"), default=None); c.add_argument("--webserver", choices=("nginx-php-fpm", "apache"), default=None); c.add_argument("--buffer-pool", dest="buffer_pool", type=int, choices=BUFFER_POOL_SIZES, default=128); c.add_argument("--profile"); c.add_argument("--port", type=int); c.add_argument("--zip"); c.add_argument("--download-core", action="store_true"); c.add_argument("--version"); c.add_argument("--sha256"); c.add_argument("--legacy", dest="legacy_ack", action="store_true"); c.add_argument("--experimental", dest="experimental_ack", action="store_true", help="inoffizielles Entwicklungsprofil ausdrücklich bestätigen")
+    c.add_argument("--standard-https", action="store_true", help="HTTPS auf dem lokalen Standardport 443 ohne Portzusatz in der Adresse")
     x = sub.add_parser("install", help="WoltLab automatisch einrichten"); x.add_argument("name"); x.add_argument("--language", choices=("de", "en"), help="Installationssprache; Standard: Systemsprache bzw. gespeicherte Auswahl")
     l = sub.add_parser("list", help="Projekte anzeigen")
     rm = sub.add_parser("remove", help="Projekt und lokale Daten endgültig entfernen")

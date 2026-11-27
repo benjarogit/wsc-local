@@ -15,6 +15,12 @@ Dieselbe Liste gibt die Kommandozeile aus:
 
 Eigene Dateien unter **Werkzeuge → Eigener Code** sind davon getrennt. Sie erscheinen in der Liste erst, wenn sie in WoltLab installiert sind.
 
+## Lokaler HTTPS-Standardport
+
+Für eine neue Testinstallation kann die CLI HTTPS auf Port 443 reservieren. Mit `./wsc create test-forum --suite 6.3 --experimental --standard-https --zip /pfad/zum/core.zip` und `./wsc install test-forum` erhält das Projekt die Adresse `https://test-forum.localhost`. Docker bindet den Port an `127.0.0.1`. HTTP und Mail behalten eigene lokale Ports. WSC Lokal nutzt die kanonische Domain ohne Portzusatz und überspringt die Core-Anpassung für hohe Ports. Wenn ein anderes Projekt oder ein Dienst einen benötigten Port belegt, bricht der Start mit der bisherigen Portzuordnung ab. Diese Option gilt beim Anlegen eines neuen Projekts.
+
+**Standard HTTPS port.** For a new test installation, run `./wsc create test-forum --suite 6.3 --experimental --standard-https --zip /path/to/core.zip`, then `./wsc install test-forum`. The project uses `https://test-forum.localhost` with port 443 bound to `127.0.0.1`. HTTP and mail keep separate local ports. WSC Local uses the canonical domain without a port suffix and skips the Core workaround for high ports. If a required port is already in use, startup stops with the original port configuration in place.
+
 ## Buffer Pool
 
 WoltLab bewertet einen InnoDB-Buffer-Pool von genau 128 MiB als Hinweis und alles darüber als empfohlen. Weniger als 128 MiB gilt dort als Fehler. Die Workbench lässt 128 MiB als Standard und bietet optional 256 oder 512 MiB an: beim Anlegen unter **Technik und Adminzugang** und danach unter **Verwalten → Übersicht**. Die Systemprüfung der Workbench zeigt 128 MiB als Hinweis. Das Gerät bleibt dabei bereit.
